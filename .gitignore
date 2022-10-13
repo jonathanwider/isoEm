@@ -1,0 +1,8 @@
+*.gz
+data
+*.idea
+*.ipynb_checkpoints
+*.nc
+*.jpg
+*.png
+*.pt
