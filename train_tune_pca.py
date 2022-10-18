@@ -30,7 +30,7 @@ def train_tune_pca(dataset_description, model_training_description, base_folder,
         predictions = predict_pca(validation_ds[:][0], pca, pca_targets, model)
         r2 = get_r2(predictions, validation_ds[:][1])
         r2_mean = get_weighted_average(r2, full_dataset_description)
-        print("N_PC_IN: {} N_PC_OUT: {}, R2, weighted mean: {}".format(n_in, n_out, r2_mean))
+        print("N_PC_IN: {} N_PC_OUT: {}, R2 weighted mean: {}".format(n_in, n_out, r2_mean))
         if r2_mean > r2_max:
             n_in_max = n_in
             n_out_max = n_out

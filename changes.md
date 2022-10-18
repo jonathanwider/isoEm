@@ -80,9 +80,17 @@ TODOs:
 - [x] Train Monthly network
     
 - [ ] Write Plotting functions from compare notebooks
+- [ ] fix problem that makes it possible to run runs with the same config twice
 - [x] Test Ico Data loading
 - [ ] Precip weighting, monthly in compare notebooks
 - [ ] make crossprediction possible
+    - [x] Load data from zenodo
+    - [ ] Investigate:
+        - [ ] Calendar
+        - [ ] Timesteps
+        - [ ] Mean state
+        - [ ] Grid Shape
+        - [ ] Variable Names
     - [ ] Think about which timesteps we want to use in crossprediction. All? Only new test set? Does the new testset need to align with the old one?
 
 More todo's: 

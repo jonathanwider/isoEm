@@ -194,7 +194,7 @@ def load_data_for_comparison(base_folder, conditions):
     rescaled_predictions_list = []
     ground_truth_list = []
     for i in range(len(predictions_list)):
-        rp, gt = get_rescaled_predictions_and_gt(base_folder, descriptions_list[i], predictions_list[i])
+        rp, gt = get_rescaled_predictions_and_gt(descriptions_list[i], predictions_list[i])
         rescaled_predictions_list.append(rp)
         ground_truth_list.append(gt)
     return descriptions_list, rescaled_predictions_list, ground_truth_list

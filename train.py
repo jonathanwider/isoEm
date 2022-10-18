@@ -439,10 +439,12 @@ def train_unet(dataset_description, model_training_description, base_folder):
     loss_dict = {}
     if dataset_description["TIMESCALE"] == "YEARLY":
         loss_dict["MSELoss"] = nn.MSELoss()
-        loss_dict["AreaWeightedMSELoss"] = get_area_weighted_mse_loss(dataset_description, model_training_description)
+        if dataset_description["GRID_TYPE"] == "Flat":
+            loss_dict["AreaWeightedMSELoss"] = get_area_weighted_mse_loss(dataset_description, model_training_description)
     elif dataset_description["TIMESCALE"] == "MONTHLY":
         loss_dict["Masked_MSELoss"] = get_area_weighted_mse_loss(dataset_description, model_training_description)
-        loss_dict["Masked_AreaWeightedMSELoss"] = get_masked_area_weighted_mse_loss(dataset_description, model_training_description)
+        if dataset_description["GRID_TYPE"] == "Flat":
+            loss_dict["Masked_AreaWeightedMSELoss"] = get_masked_area_weighted_mse_loss(dataset_description, model_training_description)
     else:
         raise NotImplementedError("Invalid timescale")
     criterion = loss_dict[model_training_description["LOSS"]]

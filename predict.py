@@ -43,7 +43,10 @@ def predict_save_randomforest_pixelwise(dataset_description, model_training_desc
     assert "DATASET_FOLDER" in model_training_description.keys()
     dataset_description = find_and_load_dataset_description(model_training_description["DATASET_FOLDER"],
                                                             dataset_description)
-    _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+    if model_training_description["CREATE_VALIDATIONSET"]:
+        _, _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+    else:
+        _, test_ds = load_data(dataset_description, model_training_description, base_folder)
     x_te = test_ds[:][0].numpy()
 
     predictions = predict_randomforest(x_te, model)
@@ -108,7 +111,12 @@ def predict_save_linreg_pixelwise(dataset_description, model_training_descriptio
     assert "DATASET_FOLDER" in model_training_description.keys()
     dataset_description = find_and_load_dataset_description(model_training_description["DATASET_FOLDER"],
                                                             dataset_description)
-    _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+
+    if model_training_description["CREATE_VALIDATIONSET"]:
+        _, _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+    else:
+        _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+
     x_te = test_ds[:][0].numpy()
 
     predictions = predict_linreg(x_te, models)
@@ -172,7 +180,10 @@ def predict_save_pca(dataset_description, model_training_description, base_folde
     """
     dataset_description = find_and_load_dataset_description(model_training_description["DATASET_FOLDER"],
                                                             dataset_description)
-    _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+    if model_training_description["CREATE_VALIDATIONSET"]:
+        _, _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+    else:
+        _, test_ds = load_data(dataset_description, model_training_description, base_folder)
     x_te = test_ds[:][0].numpy()
 
     predictions = predict_pca(x_te, pca, pca_targets, model)
