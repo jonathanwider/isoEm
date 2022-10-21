@@ -132,24 +132,24 @@ def undo_scaling(model_training_description, predictions, train_targets):
     rescaled_predictions = np.zeros_like(predictions)
     for j, mode in enumerate(model_training_description["S_MODE_TARGETS"]):
         if mode == "Global":
-            std = np.mean(np.std(train_targets, axis=0, keepdims=True), axis=(1, 2), keepdims=True)
+            std = np.mean(np.nanstd(train_targets, axis=0, keepdims=True), axis=(1, 2), keepdims=True)
             std[std == 0] = 1
-            mean = np.mean(train_targets, axis=(0, 1, 2), keepdims=True)
+            mean = np.nanmean(train_targets, axis=(0, 1, 2), keepdims=True)
             rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
         elif mode == "Pixelwise":
-            std = np.std(train_targets, axis=0, keepdims=True)
+            std = np.nanstd(train_targets, axis=0, keepdims=True)
             std[std == 0] = 1
-            mean = np.mean(train_targets, axis=0, keepdims=True)
+            mean = np.nanmean(train_targets, axis=0, keepdims=True)
             rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
         elif mode == "Global_mean_pixelwise_std":
-            std = np.mean(np.std(train_targets, axis=0, keepdims=True), axis=(1, 2), keepdims=True)
+            std = np.mean(np.nanstd(train_targets, axis=0, keepdims=True), axis=(1, 2), keepdims=True)
             std[std == 0] = 1
-            mean = np.mean(train_targets, axis=0, keepdims=True)
+            mean = np.nanmean(train_targets, axis=0, keepdims=True)
             rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
         elif mode == "Pixelwise_mean_global_std":
-            std = np.std(train_targets, axis=0, keepdims=True)
+            std = np.nanstd(train_targets, axis=0, keepdims=True)
             std[std == 0] = 1
-            mean = np.mean(train_targets, axis=(0, 1, 2), keepdims=True)
+            mean = np.nanmean(train_targets, axis=(0, 1, 2), keepdims=True)
             rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
         elif mode == "None":
             rescaled_predictions[:, j, ...] = predictions[:, j, ...]
@@ -164,6 +164,31 @@ def get_rescaled_predictions_and_gt(descriptions, predictions):
     @param descriptions: Descriptions for dataset and (model and training)
     @param predictions: Predictions of the ML model. Potentially to be rescaled.
     @return: Rescaled predictions and ground truth for the test set.
+    """
+    assert "DATASET_DESCRIPTION" in descriptions.keys()
+    assert "MODEL_TRAINING_DESCRIPTION" in descriptions.keys()
+
+    dataset_description = descriptions["DATASET_DESCRIPTION"]
+    model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
+
+    assert "DATASET_FOLDER" in model_training_description.keys()
+
+    dataset = find_and_load_dataset(model_training_description["DATASET_FOLDER"], dataset_description, use_prints=False)
+
+    train_targets = dataset["train"]["targets"]
+    test_targets = dataset["test"]["targets"]
+    rescaled_predictions = undo_scaling(model_training_description, predictions, train_targets)
+
+    return rescaled_predictions, test_targets
+
+
+def get_rescaled_predictions_and_gt_split_into_months(descriptions, predictions):
+    """
+    For a given dataset and model description, load the ground truth test set and rescale the predictions.
+    Then split the data into subarray for each month given in descriptions["DATASET_DESCRIPTION"]["MONTHS_USED"]
+    @param descriptions: Descriptions for dataset and (model and training)
+    @param predictions: Predictions of the ML model. Potentially to be rescaled.
+    @return: List of rescaled predictions and targets for the months of the year (Jan: 0, Dec: 11).
     """
     assert "DATASET_DESCRIPTION" in descriptions.keys()
     assert "MODEL_TRAINING_DESCRIPTION" in descriptions.keys()
