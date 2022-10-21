@@ -11,8 +11,9 @@
 | DSET_NB                    | Create multiple data sets with identical arguments                                                                  |
 | GRID_TYPE                  | Flat or icosahedral                                                                                                 |
 |                            |                                                                                                                     |
-| CALENDAR                   |                                                                                                                     |
-| T_UNITS                    |                                                                                                                     |
+| CALENDAR                   | Calendar used by the climate model (filled automatically)                                                           |
+| T_UNITS                    | Time units used by the climate model (filled automatically)                                                         |
+| REFERENCE_DATE             | Reference date used by the climate model (filled automatically)                                                     |
 |                            |                                                                                                                     |
 |                            |                                                                                                                     |
 | DO_SHUFFLE                 | Whether timesteps are shuffled or not                                                                               |

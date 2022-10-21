@@ -196,15 +196,24 @@ def get_rescaled_predictions_and_gt_split_into_months(descriptions, predictions)
     dataset_description = descriptions["DATASET_DESCRIPTION"]
     model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
 
+    assert dataset_description["TIMESCALE"] == "MONTHLY"
     assert "DATASET_FOLDER" in model_training_description.keys()
 
     dataset = find_and_load_dataset(model_training_description["DATASET_FOLDER"], dataset_description, use_prints=False)
 
+    _, t_months, _ = util.get_year_mon_day_from_timesteps(dataset_description["TIMESTEPS_TEST"],
+                                                          dataset_description["REFERENCE_DATE"])
+
     train_targets = dataset["train"]["targets"]
     test_targets = dataset["test"]["targets"]
     rescaled_predictions = undo_scaling(model_training_description, predictions, train_targets)
+    rescaled_predictions_months = []
+    test_targets_months = []
+    for i in range(12):
+        rescaled_predictions_months.append(rescaled_predictions[t_months == i])
+        test_targets_months.append(test_targets[t_months == i])
 
-    return rescaled_predictions, test_targets
+    return rescaled_predictions_months, test_targets_months
 
 
 def load_data_for_comparison(base_folder, conditions):
