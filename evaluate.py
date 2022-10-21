@@ -200,20 +200,22 @@ def get_rescaled_predictions_and_gt_split_into_months(descriptions, predictions)
     assert "DATASET_FOLDER" in model_training_description.keys()
 
     dataset = find_and_load_dataset(model_training_description["DATASET_FOLDER"], dataset_description, use_prints=False)
-
-    _, t_months, _ = util.get_year_mon_day_from_timesteps(dataset_description["TIMESTEPS_TEST"],
+    _, t_months, _ = util.get_year_mon_day_from_timesteps(np.array(dataset_description["TIMESTEPS_TEST"]),
                                                           dataset_description["REFERENCE_DATE"])
 
     train_targets = dataset["train"]["targets"]
     test_targets = dataset["test"]["targets"]
+    test_masks = dataset["test"]["masks"]
     rescaled_predictions = undo_scaling(model_training_description, predictions, train_targets)
     rescaled_predictions_months = []
+    test_masks_months = []
     test_targets_months = []
     for i in range(12):
         rescaled_predictions_months.append(rescaled_predictions[t_months == i])
         test_targets_months.append(test_targets[t_months == i])
+        test_masks_months.append(test_masks[t_months == i])
 
-    return rescaled_predictions_months, test_targets_months
+    return rescaled_predictions_months, test_targets_months, test_masks_months
 
 
 def load_data_for_comparison(base_folder, conditions):
@@ -227,8 +229,21 @@ def load_data_for_comparison(base_folder, conditions):
     predictions_list, descriptions_list = load_compatible_available_runs(base_folder, conditions)
     rescaled_predictions_list = []
     ground_truth_list = []
+    masks_list = []
     for i in range(len(predictions_list)):
-        rp, gt = get_rescaled_predictions_and_gt(descriptions_list[i], predictions_list[i])
+        if descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "MONTHLY":
+            rp, gt, masks = get_rescaled_predictions_and_gt_split_into_months(descriptions_list[i], predictions_list[i])
+            masks_list.append(masks)
+        elif descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY":
+            rp, gt = get_rescaled_predictions_and_gt(descriptions_list[i], predictions_list[i])
+        else:
+            raise NotImplementedError("Invalid timescale.")
         rescaled_predictions_list.append(rp)
         ground_truth_list.append(gt)
-    return descriptions_list, rescaled_predictions_list, ground_truth_list
+
+    if descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "MONTHLY":
+        return descriptions_list, rescaled_predictions_list, ground_truth_list, masks_list
+    elif descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY":
+        return descriptions_list, rescaled_predictions_list, ground_truth_list
+    else:
+        raise NotImplementedError("Invalid timescale.")

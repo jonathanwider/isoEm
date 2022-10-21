@@ -473,7 +473,7 @@ def load_variables_and_timesteps_months(description, dataset_folder):
         assert(pvar in res_masks.keys())
     for pvar in res_masks.keys():
         assert(pvar in util.flatten(description["TARGET_VARIABLES"].values()))
-    return res_variables, res_masks, sel_i
+    return res_variables, res_masks, t_full[sel_i]
 
 
 def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
