@@ -52,5 +52,6 @@ def download_required_files(output_directory="Datasets/"):
             print("Downloading required data for {} climate model.".format(climate_model))
             os.makedirs(tmp_folder)
             download_file(filenames[climate_model][0], os.path.join(tmp_folder, "isotopes.nc"))
-            download_file(filenames[climate_model][1], os.path.join(tmp_folder, "temp.nc"))
-            download_file(filenames[climate_model][2], os.path.join(tmp_folder, "precip.nc"))
+            download_file(filenames[climate_model][1], os.path.join(tmp_folder, "prec.nc"))
+            download_file(filenames[climate_model][2], os.path.join(tmp_folder, "tsurf.nc"))
+    print("Done")

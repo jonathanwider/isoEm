@@ -22,7 +22,7 @@ def train_tune_pca(dataset_description, model_training_description, base_folder,
     n_out_max = None
     r2_max = - np.inf
 
-    for n_in, n_out in zip(n_pc_in, n_pc_out):
+    for i, (n_in, n_out) in enumerate(zip(n_pc_in, n_pc_out)):
         d_tmp = {**model_training_description,
                  "N_PC_PREDICTORS": n_in,
                  "N_PC_TARGETS": n_out}
@@ -30,11 +30,11 @@ def train_tune_pca(dataset_description, model_training_description, base_folder,
         predictions = predict_pca(validation_ds[:][0], pca, pca_targets, model)
         r2 = get_r2(predictions, validation_ds[:][1])
         r2_mean = get_weighted_average(r2, full_dataset_description)
-        print("N_PC_IN: {} N_PC_OUT: {}, R2 weighted mean: {}".format(n_in, n_out, r2_mean))
         if r2_mean > r2_max:
             n_in_max = n_in
             n_out_max = n_out
             r2_max = r2_mean
+        print("[{}/{}], N_PC_IN={}, N_PC_OUT={}, R2={}. Best: {}".format(i+1, len(n_pc_in), n_in, n_out, r2_mean, r2_max), end="\r")
     print("Best results: N_PC_IN: {} N_PC_OUT: {}, R2_mean, validationset: {}".format(n_in_max, n_out_max, r2_max))
     print("Retrain including validation set.")
 

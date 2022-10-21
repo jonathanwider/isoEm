@@ -11,6 +11,8 @@ import torch.utils.data as data_utils
 import torch.nn as nn
 from torch.nn import BatchNorm3d as IcoBatchNorm2d
 
+from torch.utils.tensorboard import SummaryWriter
+
 from functools import partial
 
 from ico_unet import UNet, IcoUNet
@@ -386,7 +388,7 @@ def get_area_weighted_mse_loss(dataset_description, model_training_description):
     return partial(weighted_mse_loss, weights=area_weights)
 
 
-def train_unet(dataset_description, model_training_description, base_folder):
+def train_unet(dataset_description, model_training_description, base_folder, use_tensorboard=False):
     dataset_description = find_and_load_dataset_description(base_folder, dataset_description)
     assert model_training_description["MODEL_TYPE"] in ["UNet_Flat", "UNet_Ico"]
     assert "DEPTH" in model_training_description.keys()
@@ -412,6 +414,14 @@ def train_unet(dataset_description, model_training_description, base_folder):
         assert model_training_description["NORMALIZATION"] != torch.nn.BatchNorm2d
     else:
         raise NotImplementedError("Only UNet_Ico and UNet_Flat implemented in this method")
+
+    if use_tensorboard:
+        s1 = util.create_hash_from_description(dataset_description)
+        s2 = util.create_hash_from_description(model_training_description)
+        s3 = "_log"
+        folder_name = os.path.join(base_folder, s1 + s2 + s3)
+        print("To open tensorboard, run tensorboard --logdir={}".format(folder_name))
+        writer = SummaryWriter(folder_name)
 
     # initialize model, loss and optimizer and move to device
     if model_training_description["MODEL_TYPE"] == "UNet_Flat":
@@ -453,7 +463,7 @@ def train_unet(dataset_description, model_training_description, base_folder):
     # criterion = criterion.to(device)
 
     # save number of parameters in the description file
-    model_training_description["#params"] = sum(x.numel() for x in unet.parameters())
+    # model_training_description["#params"] = sum(x.numel() for x in unet.parameters())
     if type(model_training_description["NUM_EPOCHS"]) == int:
         assert model_training_description["CREATE_VALIDATIONSET"] is False
         train_loader, test_loader, train_dataset, test_dataset = load_data(dataset_description,
@@ -462,6 +472,8 @@ def train_unet(dataset_description, model_training_description, base_folder):
         # start training
         print("Starting training")
         for epoch in range(model_training_description["NUM_EPOCHS"]):
+            running_loss = 0
+            n_batches = 0
             for i, data in enumerate(train_loader):
                 # print(predictors.shape)
                 unet.train()
@@ -487,6 +499,8 @@ def train_unet(dataset_description, model_training_description, base_folder):
                     raise NotImplementedError("Timescale not implemented")
 
                 loss.backward()
+                running_loss += loss.item()
+                n_batches += 1
 
                 optimizer.step()
 
@@ -494,6 +508,8 @@ def train_unet(dataset_description, model_training_description, base_folder):
                     epoch + 1, model_training_description["NUM_EPOCHS"], i + 1,
                     len(train_dataset) // model_training_description["BATCH_SIZE"],
                     loss.item()), end="")
+            if use_tensorboard:
+                writer.add_scalar('training loss', running_loss/n_batches, epoch)
             print("")
 
             total_MSE = 0
@@ -511,15 +527,19 @@ def train_unet(dataset_description, model_training_description, base_folder):
 
                 elif dataset_description["TIMESCALE"] == "MONTHLY":
                     predictors, targets, masks = data
-                    predictors = predictors.to(model_training_description["DEVICE"])
-                    targets = targets.to(model_training_description["DEVICE"])
-                    masks = masks.to(model_training_description["DEVICE"])
-                    outputs = unet(predictors)
-                    total_MSE += criterion(outputs, targets, masks)
-                    n_batches += 1
+                    with torch.no_grad():
+                        predictors = predictors.to(model_training_description["DEVICE"])
+                        targets = targets.to(model_training_description["DEVICE"])
+                        masks = masks.to(model_training_description["DEVICE"])
+                        outputs = unet(predictors)
+                        total_MSE += criterion(outputs, targets, masks)
+                        n_batches += 1
                 else:
                     raise NotImplementedError("Timescale not implemented")
             print('Test MSE: {0}'.format(total_MSE / n_batches))
+            if use_tensorboard:
+                writer.add_scalar('test loss', total_MSE, epoch)
+
         return unet
 
     elif model_training_description["NUM_EPOCHS"] == "early_stopping":
@@ -536,6 +556,8 @@ def train_unet(dataset_description, model_training_description, base_folder):
         epoch = 0
 
         while increase_counter <= model_training_description["PATIENCE"]:
+            running_loss = 0
+            n_batches = 0
             for i, data in enumerate(train_loader):
                 unet.train()
                 if dataset_description["TIMESCALE"] == "YEARLY":
@@ -561,11 +583,17 @@ def train_unet(dataset_description, model_training_description, base_folder):
 
                 loss.backward()
 
+                running_loss += loss.item()
+                n_batches += 1
+
                 optimizer.step()
                 if i % 30 == 0:
                     print('\rEpoch [{0}], Iter [{1}/{2}] Loss: {3:.4f}'.format(
                         epoch + 1, i + 1, len(train_dataset) // model_training_description["BATCH_SIZE"],
                         loss.item()), end="")
+
+            if use_tensorboard:
+                writer.add_scalar('training loss', running_loss / n_batches, epoch)
             print("")
 
             total_MSE = 0
@@ -583,16 +611,19 @@ def train_unet(dataset_description, model_training_description, base_folder):
 
                 elif dataset_description["TIMESCALE"] == "MONTHLY":
                     predictors, targets, masks = data
-                    predictors = predictors.to(model_training_description["DEVICE"])
-                    targets = targets.to(model_training_description["DEVICE"])
-                    masks = masks.to(model_training_description["DEVICE"])
-                    outputs = unet(predictors)
-                    total_MSE += criterion(outputs, targets, masks)
-                    n_batches += 1
+                    with torch.no_grad():
+                        predictors = predictors.to(model_training_description["DEVICE"])
+                        targets = targets.to(model_training_description["DEVICE"])
+                        masks = masks.to(model_training_description["DEVICE"])
+                        outputs = unet(predictors)
+                        total_MSE += criterion(outputs, targets, masks)
+                        n_batches += 1
                 else:
                     raise NotImplementedError("Timescale not implemented")
 
             validation_mse = total_MSE / n_batches
+            if use_tensorboard:
+                writer.add_scalar('validation loss', validation_mse, epoch)
             # print('Validation MSE: {0}'.format(validation_mse))
             if validation_mse < best_validation_mse:
                 increase_counter = 0
@@ -621,17 +652,19 @@ def train_unet(dataset_description, model_training_description, base_folder):
 
             elif dataset_description["TIMESCALE"] == "MONTHLY":
                 predictors, targets, masks = data
-                predictors = predictors.to(model_training_description["DEVICE"])
-                targets = targets.to(model_training_description["DEVICE"])
-                masks = masks.to(model_training_description["DEVICE"])
-                outputs = unet(predictors)
-                total_MSE += criterion(outputs, targets, masks)
-                n_batches += 1
+                with torch.no_grad():
+                    predictors = predictors.to(model_training_description["DEVICE"])
+                    targets = targets.to(model_training_description["DEVICE"])
+                    masks = masks.to(model_training_description["DEVICE"])
+                    outputs = unet(predictors)
+                    total_MSE += criterion(outputs, targets, masks)
+                    n_batches += 1
             else:
                 raise NotImplementedError("Timescale not implemented")
-
         test_mse = total_MSE / n_batches
         print('Test MSE: {0}'.format(test_mse))
+        if use_tensorboard:
+            writer.add_scalar('test loss', test_mse, epoch)
         return unet
     else:
         raise NotImplementedError("Only early stopping and int number of epochs implemented.")
