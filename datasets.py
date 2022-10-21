@@ -155,6 +155,10 @@ def load_variables_and_timesteps(description, dataset_folder):
         raise ValueError("No date following the YYYY-MM-DD convention found")
     ref_date = datetime.strptime(match.group(), '%Y-%m-%d').date()
 
+    description["CALENDAR"] = cals[0]
+    description["T_UNITS"] = units[0]
+    description["REFERENCE_DATE"] = ref_date
+
     assert (cals == "360_day").all()
     assert (units == units[0]).all()
 
@@ -376,6 +380,10 @@ def load_variables_and_timesteps_months(description, dataset_folder):
         raise ValueError("No date following the YYYY-MM-DD convention found")
     ref_date = datetime.strptime(match.group(), '%Y-%m-%d').date()
 
+    description["CALENDAR"] = cals[0]
+    description["T_UNITS"] = units[0]
+    description["REFERENCE_DATE"] = ref_date
+
     c_dates = get_shared_timesteps(description, dataset_folder)
     c_years, _, _ = get_year_mon_day_from_timesteps(c_dates, ref_date)
     rel_years = c_years - ref_date.year
@@ -501,6 +509,11 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
 
     match = re.search(r'\d{4}-\d{2}-\d{2}', units[0])
     ref_date = datetime.strptime(match.group(), '%Y-%m-%d').date()
+
+    description["CALENDAR"] = cals[0]
+    description["T_UNITS"] = units[0]
+    description["REFERENCE_DATE"] = ref_date
+
     # get shared years.
     c_dates = get_shared_timesteps(description, dataset_folder)
     c_years, _, _ = get_year_mon_day_from_timesteps(c_dates, ref_date)

@@ -11,6 +11,8 @@
 | DSET_NB                    | Create multiple data sets with identical arguments                                                                  |
 | GRID_TYPE                  | Flat or icosahedral                                                                                                 |
 |                            |                                                                                                                     |
+| CALENDAR                   |                                                                                                                     |
+| T_UNITS                    |                                                                                                                     |
 |                            |                                                                                                                     |
 |                            |                                                                                                                     |
 | DO_SHUFFLE                 | Whether timesteps are shuffled or not                                                                               |
