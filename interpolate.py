@@ -224,23 +224,44 @@ def run_script(descriptions, script_folder, interpolation_type="cons1", resoluti
         call([script, "-f", f_arg, "-g", g_arg, "-i", i_arg])
 
     elif descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":
+        assert descriptions["DATASET_DESCRIPTION"]["CLIMATE_MODEL"] == "iHadCM3", \
+            "original grid description files missing for this models."
+
         files_5_nb = "tmp_5_nbs"
         files_6_nb = "tmp_6_nbs"
         script = os.path.join(script_folder, "ico_to_model.sh")
         o_arg = "default_grid.txt"
         i_arg = interpolation_type
 
-        g_arg = "{}grid_description_r_{}_nbs_6_ico.txt".format(script_folder, descriptions["DATASET_DESCRIPTION"]["RESOLUTION"])
+        g_arg = "{}grid_description_r_{}_nbs_6_ico.txt".format(script_folder,
+                                                               descriptions["DATASET_DESCRIPTION"]["RESOLUTION"])
         call([script, "-f", files_6_nb, "-g", g_arg, "-o", o_arg, "-i", i_arg])
 
-        g_arg = "{}grid_description_r_{}_nbs_5_ico.txt".format(script_folder, descriptions["DATASET_DESCRIPTION"]["RESOLUTION"])
+        g_arg = "{}grid_description_r_{}_nbs_5_ico.txt".format(script_folder,
+                                                               descriptions["DATASET_DESCRIPTION"]["RESOLUTION"])
         call([script, "-f", files_5_nb, "-g", g_arg, "-o", o_arg, "-i", i_arg])
 
     else:
         raise NotImplementedError("Invalid grid type")
 
 
-def interpolate_climate_model_data_to_ico_grid(model_name, variable_name):
+def interpolate_climate_model_data_to_ico_grid(model_name, variable_name, script_folder="Scripts/",
+                                               dataset_folder="Datasets/", resolution=5, interpolation="cons1"):
     """
-    
+    Interpolate raw data from one grid to another.
+    @param dataset_folder: File in which the climate model datasets are stored
+    @param script_folder: File in which the scripts are stored
+    @param model_name: Name of the climate model whose data we want to interpolate
+    @param variable_name: Name of the variable (and dataset) that we want to interpolate
+    @param resolution: Resolution level of the used icosahedron
+    @param interpolation: Type of interpolation used by CDO, inplemented are cons1 and NN
+    @return:
     """
+    path = os.path.join(dataset_folder, model_name, "Original", "{}.nc".format(variable_name))
+    script = os.path.join(script_folder, "model_to_ico.sh")
+    files = path
+    i_arg = interpolation
+    f_arg = files
+    g_arg = "{}grid_description_r_{}_nbs_6_ico.txt {}grid_description_r_{}_nbs_5_ico.txt".format(script_folder, resolution,
+                                                                                                 script_folder, resolution)
+    call([script, "-f", f_arg, "-g", g_arg, "-i", i_arg])
