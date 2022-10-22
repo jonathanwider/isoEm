@@ -37,9 +37,9 @@ def interpolate_predictions(descriptions, predictions, output_folder, script_fol
                                      descriptions["DATASET_DESCRIPTION"]["TIMESTEPS_TEST"], script_folder)
 
     if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Flat":
-        run_script(descriptions, script_folder, resolution=resolution, interpolation=interpolation)
-        ds_5_nbs = nc.Dataset("tmp_r_{}_nbs_5_{}.nc".format(resolution, interpolation))
-        ds_6_nbs = nc.Dataset("tmp_r_{}_nbs_6_{}.nc".format(resolution, interpolation))
+        run_script(descriptions, script_folder, resolution=resolution, interpolation_type=interpolation)
+        ds_5_nbs = nc.Dataset(os.path.join(script_folder,"tmp_r_{}_nbs_5_{}.nc".format(resolution, interpolation)))
+        ds_6_nbs = nc.Dataset(os.path.join(script_folder,"tmp_r_{}_nbs_6_{}.nc".format(resolution, interpolation)))
 
         ico = Icosahedron(r=resolution)
         regions, vertices = ico.get_voronoi_regions_vertices()
@@ -56,48 +56,48 @@ def interpolate_predictions(descriptions, predictions, output_folder, script_fol
 
         res = np.zeros((ds_6_nbs.variables[list(
             descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]][:].data.shape[:-1] + (
-                                    len(indices_6_nbs) + 10)))
+                                    len(indices_6_nbs) + 10,)))
         res[..., indices_6_nbs] = ds_6_nbs.variables[list(
             descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]][:].data
         res[..., indices_5_nbs] = ds_5_nbs.variables[list(
             descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]][:].data
 
-        dataset_description = dict({"RESULTS_INTERPOLATED": True, "GRID_TYPE": "Ico"},
+        dataset_description = dict({"RESULTS_INTERPOLATED": True},
                                    **descriptions["DATASET_DESCRIPTION"])
+        dataset_description["GRID_TYPE"] = "Ico"
         model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
 
-        descriptions = {"MODEL_TRAINING_DESCRIPTION": model_training_description,
+        new_descriptions = {"MODEL_TRAINING_DESCRIPTION": model_training_description,
                         "DATASET_DESCRIPTION": dataset_description}
 
     elif descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":
         run_script(descriptions, script_folder, resolution=descriptions["DATASET_DESCRIPTION"]["RESOLUTION"],
-                   interpolation=interpolation)
-        ds_6_nbs = nc.Dataset(
-            "tmp_r_{}_nbs_6_{}.nc".format(descriptions["DATASET_DESCRIPTION"]["RESOLUTION"], interpolation))
+                   interpolation_type=interpolation)
+        ds_6_nbs = nc.Dataset(os.path.join(script_folder,
+            "tmp_r_{}_nbs_6_{}.nc".format(descriptions["DATASET_DESCRIPTION"]["RESOLUTION"], interpolation)))
         res = ds_6_nbs.variables[list(descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]][:].data
 
         print("When interpolating back to flat grid, only the 6nbs file is used, "
               "because otherwise we have wrong results due to overlap")
 
-        dataset_description = dict({"RESULTS_INTERPOLATED": True, "GRID_TYPE": "Flat"},
+        dataset_description = dict({"RESULTS_INTERPOLATED": True},
                                    **descriptions["DATASET_DESCRIPTION"])
+        dataset_description["GRID_TYPE"] = "Flat"
         model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
 
-        descriptions = {"MODEL_TRAINING_DESCRIPTION": model_training_description,
+        new_descriptions = {"MODEL_TRAINING_DESCRIPTION": model_training_description,
                         "DATASET_DESCRIPTION": dataset_description}
 
     else:
         raise NotImplementedError("Invalid grid type")
 
-    s1 = util.create_hash_from_description(dataset_description)
-    s2 = util.create_hash_from_description(model_training_description)
-    folder_name = os.path.join(script_folder, s1 + s2)
+    s1 = util.create_hash_from_description(new_descriptions["DATASET_DESCRIPTION"])
+    s2 = util.create_hash_from_description(new_descriptions["MODEL_TRAINING_DESCRIPTION"])
+    folder_name = os.path.join(output_folder, s1 + s2)
     predictions_file = os.path.join(folder_name, "predictions.gz")
     descriptions_file = os.path.join(folder_name, "descriptions.gz")
 
     if util.test_if_folder_exists(folder_name):
-        print(model_training_description)
-        print(util.create_hash_from_description(model_training_description))
         raise FileExistsError("Specified configuration of dataset, model and training configuration already exists.")
     else:
         os.makedirs(folder_name)
@@ -108,7 +108,7 @@ def interpolate_predictions(descriptions, predictions, output_folder, script_fol
 
     print("writing descriptions")
     with gzip.open(descriptions_file, 'wb') as f:
-        pickle.dump(descriptions, f)
+        pickle.dump(new_descriptions, f)
     print("done")
 
 
