@@ -258,6 +258,13 @@ def interpolate_climate_model_data_to_ico_grid(model_name, variable_name, script
     @return:
     """
     path = os.path.join(dataset_folder, model_name, "Original", "{}.nc".format(variable_name))
+
+    tmp_path_5_nbs = os.path.join(dataset_folder, model_name, "Original", "{}_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
+    tmp_path_6_nbs = os.path.join(dataset_folder, model_name, "Original", "{}_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation))
+
+    new_path_5_nbs = os.path.join(dataset_folder, model_name, "Interpolated", "{}_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
+    new_path_6_nbs = os.path.join(dataset_folder, model_name, "Interpolated", "{}_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation))
+
     script = os.path.join(script_folder, "model_to_ico.sh")
     files = path
     i_arg = interpolation
@@ -265,3 +272,6 @@ def interpolate_climate_model_data_to_ico_grid(model_name, variable_name, script
     g_arg = "{}grid_description_r_{}_nbs_6_ico.txt {}grid_description_r_{}_nbs_5_ico.txt".format(script_folder, resolution,
                                                                                                  script_folder, resolution)
     call([script, "-f", f_arg, "-g", g_arg, "-i", i_arg])
+
+    os.rename(tmp_path_5_nbs, new_path_5_nbs)
+    os.rename(tmp_path_6_nbs, new_path_6_nbs)
