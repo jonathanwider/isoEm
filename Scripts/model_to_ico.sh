@@ -37,6 +37,7 @@ if [ "$INTERPOLATION" == "cons1" ]; then
 	do
 	  nbs=$(echo "$grid"| cut -d '_' -f 6)
 	  res=$(echo "$grid"| cut -d '_' -f 4)
+	  echo "${SCRIPT_DIR}/${grid}" "$SCRIPT_DIR/${FILES_ARR[0]}"
 	  cdo gencon,"${SCRIPT_DIR}/${grid}" "$SCRIPT_DIR/${FILES_ARR[0]}" "$SCRIPT_DIR/weights_${INTERPOLATION}_nbs_${nbs}_res_${res}.nc"
 	done
 elif [ "$INTERPOLATION" == "NN" ]; then

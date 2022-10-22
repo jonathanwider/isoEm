@@ -77,9 +77,10 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_dataype, necessary_dimensions)
         dst.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(target_var_attribute_dict)
         dst.createVariable("t", "float64", "t")
+        dst["t"].setncatts(src["t"].__dict__)
         dst.createVariable("t_bnds", "float64", ("t", "bnds"))
-        dst.variables["t"][:] = t_test
-
+        dst.variables["t"][:] = list(t_test)
+        
         # extract t_bnds from source file
         src_t = src.variables["t"][:].data
         t_bnds = []
@@ -216,27 +217,30 @@ def run_script(descriptions, script_folder, interpolation_type="cons1", resoluti
     """
     if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Flat":
         script = os.path.join(script_folder, "model_to_ico.sh")
-        print(os.listdir(script_folder))
-        print(script_folder, script)
         files = os.path.join(script_folder, "tmp.nc")
         i_arg = interpolation_type
         f_arg = files
-        g_arg = "grid_description_r_{}_nbs_6_ico.txt grid_description_r_{}_nbs_5_ico.txt".format(resolution, resolution)
+        g_arg = "{}grid_description_r_{}_nbs_6_ico.txt {}grid_description_r_{}_nbs_5_ico.txt".format(script_folder, resolution, script_folder, resolution)
         call([script, "-f", f_arg, "-g", g_arg, "-i", i_arg])
 
     elif descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":
         files_5_nb = "tmp_5_nbs"
         files_6_nb = "tmp_6_nbs"
         script = os.path.join(script_folder, "ico_to_model.sh")
-        print(script_folder, script)
         o_arg = "default_grid.txt"
         i_arg = interpolation_type
 
-        g_arg = "grid_description_r_{}_nbs_6_ico.txt".format(descriptions["DATASET_DESCRIPTION"]["RESOLUTION"])
+        g_arg = "{}grid_description_r_{}_nbs_6_ico.txt".format(script_folder, descriptions["DATASET_DESCRIPTION"]["RESOLUTION"])
         call([script, "-f", files_6_nb, "-g", g_arg, "-o", o_arg, "-i", i_arg])
 
-        g_arg = "grid_description_r_{}_nbs_5_ico.txt".format(descriptions["DATASET_DESCRIPTION"]["RESOLUTION"])
+        g_arg = "{}grid_description_r_{}_nbs_5_ico.txt".format(script_folder, descriptions["DATASET_DESCRIPTION"]["RESOLUTION"])
         call([script, "-f", files_5_nb, "-g", g_arg, "-o", o_arg, "-i", i_arg])
 
     else:
         raise NotImplementedError("Invalid grid type")
+
+
+def interpolate_climate_model_data_to_ico_grid(model_name, variable_name):
+    """
+    
+    """

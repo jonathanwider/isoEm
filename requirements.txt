@@ -150,7 +150,7 @@ pyyaml==6.0
     # via ray
 pyzmq==22.3.0
     # via jupyter-client
-ray==1.10.0
+ray==1.13.0
     # via -r requirements.txt
 redis==4.2.0
     # via ray
