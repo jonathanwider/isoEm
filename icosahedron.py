@@ -356,6 +356,7 @@ def all_rotations_icosahedron():
             all_perms[5*new_NP + rot_state] = np.concatenate(([new_NP], NP_neighbors, [antipode(new_NP)], antipode(NP_neighbors)))
     return all_perms
 
+
 def plot_voronoi(data, regions, vertices, cmap=None, norm=None, elev=0, azim=0, figsize=(10, 10)):
     """ Plot flattened data on the sphere using voronoi regions. Display data colorcoded"""
     import matplotlib.pyplot as plt

@@ -1,26 +1,32 @@
-
-
 from evaluate import get_rescaled_predictions_and_gt
+import util
 import netCDF4 as nc
 import numpy as np
 import os
+
+import gzip
+import pickle
+
 from icosahedron import Icosahedron
 
 from subprocess import call
 
 
-def interpolate_predictions(descriptions, predictions, script_folder="Scripts/"):
+def interpolate_predictions(descriptions, predictions, output_folder, script_folder="Scripts/", resolution=5,
+                            interpolation="cons1"):
     """
     Provide functions to interpolate between grids.
     Ideally the function would proceed in the following steps:
     1) load predictions, undo the standardization
     2) create netcdf4 (temporary)
     3) do the interpolation by calling the script files
-    4) create a gz file from the interpolated file or alternatively, write a loader that can handle .nc files.
-    @param descriptions:
-    @param predictions:
-    @param script_folder: Folder in which the shell scripts to do the cdo interpolations with are stored in. This
-    is the place where we need to store files to be interpolated.
+    4) create a gz file from the interpolated file.
+    @param descriptions: Descriptions of model and dataset
+    @param predictions: Predictions to be interpolated
+    @param output_folder: Folder to store the results in
+    @param script_folder: Folder in which the interpolation shell scripts must be stored in (+grid description files)
+    @param resolution: Resolution of the icosahedron used in the interpolation
+    @param interpolation: Type of interpolation used (cons1 or NN)
     @return:
     """
     assert len(descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].keys()) == 1
@@ -29,7 +35,81 @@ def interpolate_predictions(descriptions, predictions, script_folder="Scripts/")
 
     netcdf_from_rescaled_predictions(descriptions, rescaled_predictions,
                                      descriptions["DATASET_DESCRIPTION"]["TIMESTEPS_TEST"], script_folder)
-    run_script(descriptions, script_folder)
+
+    if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Flat":
+        run_script(descriptions, script_folder, resolution=resolution, interpolation=interpolation)
+        ds_5_nbs = nc.Dataset("tmp_r_{}_nbs_5_{}.nc".format(resolution, interpolation))
+        ds_6_nbs = nc.Dataset("tmp_r_{}_nbs_6_{}.nc".format(resolution, interpolation))
+
+        ico = Icosahedron(r=resolution)
+        regions, vertices = ico.get_voronoi_regions_vertices()
+        indices_six_nb = []
+        indices_five_nb = []
+        for i in range(len(regions)):
+            if len(regions[i]) > 5:
+                indices_six_nb.append(i)
+            else:
+                indices_five_nb.append(i)
+        # create numpy arrays
+        indices_6_nbs = np.array(indices_six_nb)
+        indices_5_nbs = np.array(indices_five_nb)
+
+        res = np.zeros((ds_6_nbs.variables[list(
+            descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]][:].data.shape[:-1] + (
+                                    len(indices_6_nbs) + 10)))
+        res[..., indices_6_nbs] = ds_6_nbs.variables[list(
+            descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]][:].data
+        res[..., indices_5_nbs] = ds_5_nbs.variables[list(
+            descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]][:].data
+
+        dataset_description = dict({"RESULTS_INTERPOLATED": True, "GRID_TYPE": "Ico"},
+                                   **descriptions["DATASET_DESCRIPTION"])
+        model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
+
+        descriptions = {"MODEL_TRAINING_DESCRIPTION": model_training_description,
+                        "DATASET_DESCRIPTION": dataset_description}
+
+    elif descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":
+        run_script(descriptions, script_folder, resolution=descriptions["DATASET_DESCRIPTION"]["RESOLUTION"],
+                   interpolation=interpolation)
+        ds_6_nbs = nc.Dataset(
+            "tmp_r_{}_nbs_6_{}.nc".format(descriptions["DATASET_DESCRIPTION"]["RESOLUTION"], interpolation))
+        res = ds_6_nbs.variables[list(descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]][:].data
+
+        print("When interpolating back to flat grid, only the 6nbs file is used, "
+              "because otherwise we have wrong results due to overlap")
+
+        dataset_description = dict({"RESULTS_INTERPOLATED": True, "GRID_TYPE": "Flat"},
+                                   **descriptions["DATASET_DESCRIPTION"])
+        model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
+
+        descriptions = {"MODEL_TRAINING_DESCRIPTION": model_training_description,
+                        "DATASET_DESCRIPTION": dataset_description}
+
+    else:
+        raise NotImplementedError("Invalid grid type")
+
+    s1 = util.create_hash_from_description(dataset_description)
+    s2 = util.create_hash_from_description(model_training_description)
+    folder_name = os.path.join(script_folder, s1 + s2)
+    predictions_file = os.path.join(folder_name, "predictions.gz")
+    descriptions_file = os.path.join(folder_name, "descriptions.gz")
+
+    if util.test_if_folder_exists(folder_name):
+        print(model_training_description)
+        print(util.create_hash_from_description(model_training_description))
+        raise FileExistsError("Specified configuration of dataset, model and training configuration already exists.")
+    else:
+        os.makedirs(folder_name)
+
+    print("writing predictions")
+    with gzip.open(predictions_file, 'wb') as f:
+        pickle.dump(predictions, f)
+
+    print("writing descriptions")
+    with gzip.open(descriptions_file, 'wb') as f:
+        pickle.dump(descriptions, f)
+    print("done")
 
 
 def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test, output_folder):
@@ -54,7 +134,8 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         original_dimensions = nc.Dataset(filename).variables[
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].dimensions
         necessary_dimensions = (original_dimensions[0], original_dimensions[2], original_dimensions[3])
-        original_dataype = nc.Dataset(filename).variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].datatype
+        original_dataype = nc.Dataset(filename).variables[
+            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].datatype
 
         src = nc.Dataset(filename)
         dst = nc.Dataset(output_file, "w")
@@ -74,13 +155,15 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         target_var_attribute_dict = nc.Dataset(filename).variables[
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].__dict__
         dst.createVariable(
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_dataype, necessary_dimensions)
-        dst.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(target_var_attribute_dict)
+            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_dataype,
+            necessary_dimensions)
+        dst.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(
+            target_var_attribute_dict)
         dst.createVariable("t", "float64", "t")
         dst["t"].setncatts(src["t"].__dict__)
         dst.createVariable("t_bnds", "float64", ("t", "bnds"))
         dst.variables["t"][:] = list(t_test)
-        
+
         # extract t_bnds from source file
         src_t = src.variables["t"][:].data
         t_bnds = []
@@ -159,8 +242,10 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         target_var_attribute_dict_6_nbs = nc.Dataset(filename_6_nbs).variables[
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].__dict__
         dst_6_nbs.createVariable(
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_dataype_6_nbs, necessary_dimensions_6_nbs)
-        dst_6_nbs.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(target_var_attribute_dict_6_nbs)
+            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_dataype_6_nbs,
+            necessary_dimensions_6_nbs)
+        dst_6_nbs.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(
+            target_var_attribute_dict_6_nbs)
         dst_6_nbs.createVariable("t", "float64", "t")
         dst_6_nbs.createVariable("t_bnds", "float64", ("t", "bnds"))
         dst_6_nbs.variables["t"][:] = t_test
@@ -168,13 +253,16 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         target_var_attribute_dict_5_nbs = nc.Dataset(filename_5_nbs).variables[
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].__dict__
         dst_5_nbs.createVariable(
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_dataype_5_nbs, necessary_dimensions_5_nbs)
-        dst_5_nbs.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(target_var_attribute_dict_5_nbs)
+            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_dataype_5_nbs,
+            necessary_dimensions_5_nbs)
+        dst_5_nbs.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(
+            target_var_attribute_dict_5_nbs)
         dst_5_nbs.createVariable("t", "float64", "t")
         dst_5_nbs.createVariable("t_bnds", "float64", ("t", "bnds"))
         dst_5_nbs.variables["t"][:] = t_test
 
-        rescaled_predictions_5_nbs, rescaled_predictions_6_nbs = split_5_nbs_6_nbs(rescaled_predictions, dataset_description)
+        rescaled_predictions_5_nbs, rescaled_predictions_6_nbs = split_5_nbs_6_nbs(rescaled_predictions,
+                                                                                   dataset_description)
 
         dst_5_nbs.variables["dO18"][:] = rescaled_predictions_5_nbs
         dst_5_nbs.close()
@@ -213,6 +301,8 @@ def run_script(descriptions, script_folder, interpolation_type="cons1", resoluti
     @param descriptions: Descriptions of dataset and (model and training)
     @param script_folder: Should contain the two scripts: ico_to_model.sh and model_to_ico.sh as
     well as grid description files for the icosahedral grid and model grids.
+    @param interpolation_type: The type of interpolation used.
+    @param resolution: Resolution of the icosahedron.
     @return:
     """
     if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Flat":
@@ -220,7 +310,10 @@ def run_script(descriptions, script_folder, interpolation_type="cons1", resoluti
         files = os.path.join(script_folder, "tmp.nc")
         i_arg = interpolation_type
         f_arg = files
-        g_arg = "{}grid_description_r_{}_nbs_6_ico.txt {}grid_description_r_{}_nbs_5_ico.txt".format(script_folder, resolution, script_folder, resolution)
+        g_arg = "{}grid_description_r_{}_nbs_6_ico.txt {}grid_description_r_{}_nbs_5_ico.txt".format(script_folder,
+                                                                                                     resolution,
+                                                                                                     script_folder,
+                                                                                                     resolution)
         call([script, "-f", f_arg, "-g", g_arg, "-i", i_arg])
 
     elif descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":
@@ -259,18 +352,24 @@ def interpolate_climate_model_data_to_ico_grid(model_name, variable_name, script
     """
     path = os.path.join(dataset_folder, model_name, "Original", "{}.nc".format(variable_name))
 
-    tmp_path_5_nbs = os.path.join(dataset_folder, model_name, "Original", "{}_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
-    tmp_path_6_nbs = os.path.join(dataset_folder, model_name, "Original", "{}_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation))
+    tmp_path_5_nbs = os.path.join(dataset_folder, model_name, "Original",
+                                  "{}_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
+    tmp_path_6_nbs = os.path.join(dataset_folder, model_name, "Original",
+                                  "{}_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation))
 
-    new_path_5_nbs = os.path.join(dataset_folder, model_name, "Interpolated", "{}_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
-    new_path_6_nbs = os.path.join(dataset_folder, model_name, "Interpolated", "{}_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation))
+    new_path_5_nbs = os.path.join(dataset_folder, model_name, "Interpolated",
+                                  "{}_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
+    new_path_6_nbs = os.path.join(dataset_folder, model_name, "Interpolated",
+                                  "{}_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation))
 
     script = os.path.join(script_folder, "model_to_ico.sh")
     files = path
     i_arg = interpolation
     f_arg = files
-    g_arg = "{}grid_description_r_{}_nbs_6_ico.txt {}grid_description_r_{}_nbs_5_ico.txt".format(script_folder, resolution,
-                                                                                                 script_folder, resolution)
+    g_arg = "{}grid_description_r_{}_nbs_6_ico.txt {}grid_description_r_{}_nbs_5_ico.txt".format(script_folder,
+                                                                                                 resolution,
+                                                                                                 script_folder,
+                                                                                                 resolution)
     call([script, "-f", f_arg, "-g", g_arg, "-i", i_arg])
 
     os.rename(tmp_path_5_nbs, new_path_5_nbs)
