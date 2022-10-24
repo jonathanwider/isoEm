@@ -236,14 +236,10 @@ def load_data_for_comparison(base_folder, conditions):
             masks_list.append(masks)
         elif descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY":
             rp, gt = get_rescaled_predictions_and_gt(descriptions_list[i], predictions_list[i])
+            masks_list.append(None)
         else:
             raise NotImplementedError("Invalid timescale.")
         rescaled_predictions_list.append(rp)
         ground_truth_list.append(gt)
 
-    if descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "MONTHLY":
-        return descriptions_list, rescaled_predictions_list, ground_truth_list, masks_list
-    elif descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY":
-        return descriptions_list, rescaled_predictions_list, ground_truth_list
-    else:
-        raise NotImplementedError("Invalid timescale.")
+    return descriptions_list, rescaled_predictions_list, ground_truth_list, masks_list

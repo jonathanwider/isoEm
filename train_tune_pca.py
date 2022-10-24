@@ -7,10 +7,10 @@ import numpy as np
 
 def train_tune_pca(dataset_description, model_training_description, base_folder, n_pc_in=None, n_pc_out=None):
 
-    assert dataset_description["GRID_TYPE"] == "Flat"
+    # assert dataset_description["GRID_TYPE"] == "Flat"
     assert model_training_description["CREATE_VALIDATIONSET"] is True
     assert model_training_description["SHUFFLE_VALIDATIONSET"] is False
-    assert model_training_description["MODEL_TYPE"] == "PCA_Flat"
+    # assert model_training_description["MODEL_TYPE"] == "PCA_Flat"
 
     assert "N_PC_PREDICTORS" not in model_training_description.keys()
     assert "N_PC_TARGETS" not in model_training_description.keys()
@@ -29,7 +29,12 @@ def train_tune_pca(dataset_description, model_training_description, base_folder,
         pca, pca_targets, model = train_pca(full_dataset_description, d_tmp, base_folder)
         predictions = predict_pca(validation_ds[:][0], pca, pca_targets, model)
         r2 = get_r2(predictions, validation_ds[:][1])
-        r2_mean = get_weighted_average(r2, full_dataset_description)
+        if dataset_description["GRID_TYPE"] == "Flat":
+            r2_mean = get_weighted_average(r2, full_dataset_description)
+        elif dataset_description["GRID_TYPE"] == "Ico":
+            r2_mean = np.mean(r2, axis=(1,2))
+        else:
+            raise NotImplementedError("Invalid grid type")
         if r2_mean > r2_max:
             n_in_max = n_in
             n_out_max = n_out
