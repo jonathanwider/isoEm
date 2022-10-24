@@ -7,8 +7,9 @@ import numpy as np
 
 def train_tune_pca(dataset_description, model_training_description, base_folder, n_pc_in=None, n_pc_out=None):
 
-    # assert dataset_description["GRID_TYPE"] == "Flat"
+    assert dataset_description["TIMESCALE"] == "YEARLY"  # to be more precise, we want to be sure not to have any nans
     assert model_training_description["CREATE_VALIDATIONSET"] is True
+
     assert model_training_description["SHUFFLE_VALIDATIONSET"] is False
     # assert model_training_description["MODEL_TYPE"] == "PCA_Flat"
 
@@ -52,7 +53,12 @@ def train_tune_pca(dataset_description, model_training_description, base_folder,
     # do predictions on test set.
     predictions = predict_pca(test_ds[:][0], pca, pca_targets, model)
     r2 = get_r2(predictions, test_ds[:][1])
-    r2_mean = get_weighted_average(r2, full_dataset_description)
+    if dataset_description["GRID_TYPE"] == "Flat":
+        r2_mean = get_weighted_average(r2, full_dataset_description)
+    elif dataset_description["GRID_TYPE"] == "Ico":
+        r2_mean = np.mean(r2, axis=(1, 2))
+    else:
+        raise NotImplementedError("Invalid grid type")
 
     print("Result on test set: {}".format(r2_mean))
 
