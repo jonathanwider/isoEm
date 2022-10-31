@@ -103,6 +103,7 @@ def load_data(dataset_description, model_training_description, base_folder, use_
         dataset["test"]["predictors"].astype(np.float32))
     test_targets = torch.from_numpy(
         dataset["test"]["targets"].astype(np.float32))
+
     if dataset_description_full["TIMESCALE"] == "MONTHLY":
         assert model_training_description["MODEL_TYPE"] == "UNet_Flat"
         train_masks = torch.from_numpy(dataset["train"]["masks"].astype(bool))
@@ -135,9 +136,82 @@ def load_data(dataset_description, model_training_description, base_folder, use_
         test_masks = ~test_masks
         train_masks = ~train_masks
 
+    if dataset_description["TIMESCALE"] == "MONTHLY":
         test_targets[test_targets > 1e5] = np.nan
         train_targets[train_targets > 1e5] = np.nan
 
+    train_predictors, train_targets, test_predictors, test_targets = standardize(train_predictors, train_targets,
+                                                                                 test_predictors, test_targets,
+                                                                                 dataset_description_full,
+                                                                                 model_training_description)
+
+    if dataset_description_full["TIMESCALE"] == "MONTHLY":
+        test_dataset = data_utils.TensorDataset(test_predictors, test_targets, test_masks)
+    else:
+        test_dataset = data_utils.TensorDataset(test_predictors, test_targets)
+
+    if model_training_description["CREATE_VALIDATIONSET"]:
+        assert "SHUFFLE_VALIDATIONSET" in model_training_description.keys()
+        if dataset_description_full["TIMESCALE"] == "MONTHLY":
+            tmp_train_dataset = data_utils.TensorDataset(train_predictors, train_targets, train_masks)
+        else:
+            tmp_train_dataset = data_utils.TensorDataset(train_predictors, train_targets)
+        l = len(tmp_train_dataset)
+        # split dataset into train and validataion set:
+        if model_training_description["SHUFFLE_VALIDATIONSET"]:
+            train_dataset, validation_dataset = data_utils.random_split(tmp_train_dataset, [int(0.9 * l), l - int(0.9 * l)])
+        else:
+            train_dataset = torch.utils.data.Subset(tmp_train_dataset, range(int(0.1 * l), l))
+            # Use first 10% as valiationset
+            validation_dataset = torch.utils.data.Subset(tmp_train_dataset, range(int(0.1 * l)))
+
+        if model_training_description["MODEL_TYPE"] in ["UNet_Flat", "UNet_Ico"]:
+            train_loader = data_utils.DataLoader(train_dataset, batch_size=model_training_description["BATCH_SIZE"],
+                                                 shuffle=True)
+            validation_loader = data_utils.DataLoader(validation_dataset,
+                                                      batch_size=model_training_description["BATCH_SIZE"], shuffle=True)
+            test_loader = data_utils.DataLoader(test_dataset, batch_size=model_training_description["BATCH_SIZE"],
+                                                shuffle=False)
+            return train_loader, validation_loader, test_loader, train_dataset, validation_dataset, test_dataset
+
+        elif model_training_description["MODEL_TYPE"] in ["LinReg_Pixelwise", "RandomForest_Pixelwise", "PCA_Flat", "PCA_Ico"]:
+            return train_dataset, validation_dataset, test_dataset
+
+        else:
+            raise NotImplementedError("Specified model type not implemented")
+
+    else:
+        if dataset_description_full["TIMESCALE"] == "MONTHLY":
+            train_dataset = data_utils.TensorDataset(train_predictors, train_targets, train_masks)
+        else:
+            train_dataset = data_utils.TensorDataset(train_predictors, train_targets)
+
+        if model_training_description["MODEL_TYPE"] in ["UNet_Flat", "UNet_Ico"]:
+            train_loader = data_utils.DataLoader(train_dataset,
+                                                 batch_size=model_training_description["BATCH_SIZE"], shuffle=True)
+            test_loader = data_utils.DataLoader(test_dataset,
+                                                batch_size=model_training_description["BATCH_SIZE"], shuffle=False)
+            return train_loader, test_loader, train_dataset, test_dataset
+
+        elif model_training_description["MODEL_TYPE"] in ["LinReg_Pixelwise", "RandomForest_Pixelwise", "PCA_Flat", "PCA_Ico"]:
+            return train_dataset, test_dataset
+
+        else:
+            raise NotImplementedError("Specified model type not implemented")
+
+
+def standardize(train_predictors, train_targets, test_predictors, test_targets, dataset_description, model_training_description):
+    """
+    Standardize the data with the procedures selected in model_training_description.
+
+    @param train_predictors: Unstandardized train_predictors
+    @param train_targets: Unstandardized test_targets
+    @param test_predictors: Unstandardized test_predictors
+    @param test_targets: Unstandardized test_targets
+    @param dataset_description: Parameters of the dataset
+    @param model_training_description: Parameters of model and training
+    @return: Rescaled versions of train_predictors, train_targets, test_predictors, test_targets
+    """
     n_predictors = train_predictors.shape[1]
     n_targets = train_targets.shape[1]
 
@@ -205,61 +279,11 @@ def load_data(dataset_description, model_training_description, base_folder, use_
         train_predictors = torch.unsqueeze(train_predictors, dim=2)
         test_predictors = torch.unsqueeze(test_predictors, dim=2)
 
-    if dataset_description_full["TIMESCALE"] == "MONTHLY":
+    if dataset_description["TIMESCALE"] == "MONTHLY":
         test_targets = torch.nan_to_num(test_targets, nan=1e20)
         train_targets = torch.nan_to_num(train_targets, nan=1e20)
-        test_dataset = data_utils.TensorDataset(test_predictors, test_targets, test_masks)
-    else:
-        test_dataset = data_utils.TensorDataset(test_predictors, test_targets)
 
-    if model_training_description["CREATE_VALIDATIONSET"]:
-        assert "SHUFFLE_VALIDATIONSET" in model_training_description.keys()
-        if dataset_description_full["TIMESCALE"] == "MONTHLY":
-            tmp_train_dataset = data_utils.TensorDataset(train_predictors, train_targets, train_masks)
-        else:
-            tmp_train_dataset = data_utils.TensorDataset(train_predictors, train_targets)
-        l = len(tmp_train_dataset)
-        # split dataset into train and validataion set:
-        if model_training_description["SHUFFLE_VALIDATIONSET"]:
-            train_dataset, validation_dataset = data_utils.random_split(tmp_train_dataset, [int(0.9 * l), l - int(0.9 * l)])
-        else:
-            train_dataset = torch.utils.data.Subset(tmp_train_dataset, range(int(0.1 * l), l))
-            # Use first 10% as valiationset
-            validation_dataset = torch.utils.data.Subset(tmp_train_dataset, range(int(0.1 * l)))
-
-        if model_training_description["MODEL_TYPE"] in ["UNet_Flat", "UNet_Ico"]:
-            train_loader = data_utils.DataLoader(train_dataset, batch_size=model_training_description["BATCH_SIZE"],
-                                                 shuffle=True)
-            validation_loader = data_utils.DataLoader(validation_dataset,
-                                                      batch_size=model_training_description["BATCH_SIZE"], shuffle=True)
-            test_loader = data_utils.DataLoader(test_dataset, batch_size=model_training_description["BATCH_SIZE"],
-                                                shuffle=False)
-            return train_loader, validation_loader, test_loader, train_dataset, validation_dataset, test_dataset
-
-        elif model_training_description["MODEL_TYPE"] in ["LinReg_Pixelwise", "RandomForest_Pixelwise", "PCA_Flat", "PCA_Ico"]:
-            return train_dataset, validation_dataset, test_dataset
-
-        else:
-            raise NotImplementedError("Specified model type not implemented")
-
-    else:
-        if dataset_description_full["TIMESCALE"] == "MONTHLY":
-            train_dataset = data_utils.TensorDataset(train_predictors, train_targets, train_masks)
-        else:
-            train_dataset = data_utils.TensorDataset(train_predictors, train_targets)
-
-        if model_training_description["MODEL_TYPE"] in ["UNet_Flat", "UNet_Ico"]:
-            train_loader = data_utils.DataLoader(train_dataset,
-                                                 batch_size=model_training_description["BATCH_SIZE"], shuffle=True)
-            test_loader = data_utils.DataLoader(test_dataset,
-                                                batch_size=model_training_description["BATCH_SIZE"], shuffle=False)
-            return train_loader, test_loader, train_dataset, test_dataset
-
-        elif model_training_description["MODEL_TYPE"] in ["LinReg_Pixelwise", "RandomForest_Pixelwise", "PCA_Flat", "PCA_Ico"]:
-            return train_dataset, test_dataset
-
-        else:
-            raise NotImplementedError("Specified model type not implemented")
+    return train_predictors, train_targets, test_predictors, test_targets
 
 
 def train_global_model(X_train, Y_train):
