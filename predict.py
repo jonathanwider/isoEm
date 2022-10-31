@@ -300,3 +300,39 @@ def predict_save_unet(dataset_description, model_training_description, base_fold
     with gzip.open(descriptions_file, 'wb') as f:
         pickle.dump(descriptions, f)
     print("done")
+
+
+def interpolate_data_between_grids(data, in_description, out_description):
+    """
+    When doing cross-prediction, data can lie on different grids.
+    We use interpolation to go from one grid to another.
+    Latitudes and Longitudes are extracted from the descriptions of the datasets.
+
+    Assume data has shape (..., n_lats, n_lons).
+    @param data: Data to be interpolated
+    @param in_description: Description of the data set we interpolate from
+    @param out_description: Description of the data set we interpolate to
+    @return: Interpolated data set.
+    """
+
+    from scipy.interpolate import RegularGridInterpolator
+
+    # for latitudes, one can specify invalid latitudes by using "LATITUDES_SLICE". These are already excluded here
+    lat_in = in_description["LATITUDES"]
+    lon_in = in_description["LONGITUDES"]
+
+    lat_out = out_description["LATITUDES"]
+    lon_out = out_description["LONGITUDES"]
+
+    lat_mg_out, lon_mg_out = np.meshgrid(lat_out, lon_out, indexing='ij')
+
+    ds = data.shape
+    data = data.reshape(-1, ds[-2], ds[-1])  # flatten everything but lat and lon
+
+    res = np.zeros((data.shape[0], len(lat_out), len(lon_out)))
+
+    for i in range(len(data)):
+        interp = RegularGridInterpolator((lat_in, lon_in), data[i], bounds_error=False, fill_value=None)
+        res[i] = interp((lat_mg_out, lon_mg_out))
+
+    return res
