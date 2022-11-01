@@ -68,7 +68,7 @@ def preprocess_required_files(output_directory="Datasets/", low=-100, high=100):
     @param high: Upper limit for the d18O range.
     """
     for m in ["ECHAM5", "GISS", "iCESM", "iHadCM3", "isoGSM"]:
-        print("Preprocessing {} climate model data.")
+        print("Preprocessing {} climate model data.".format(m))
         for f in ["isotopes.nc","prec.nc", "tsurf.nc"]:
             file = os.path.join(output_directory, m, "Original", f)
             script = os.path.join("./preprocess.sh")
