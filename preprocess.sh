@@ -30,10 +30,7 @@ shift $((OPTIND-1))
 
 FILES_ARR=($FILES)
 
-echo $DMIN
-echo $DMAX
-echo $FI
-# do the interpolation
+# do the preprocessing
 for file in $FILES; do
   filename="${file%.*}" # get rid of file ending
   if [[ "$file" == *"isotopes"* ]];then
