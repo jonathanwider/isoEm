@@ -2,24 +2,26 @@
 
 function help {
   echo "Use cdo to preprocess dataset. First the valid range of the isotope dataset is set to (-100,100), then yearly averages are computed and stored in new files"
-  echo "Usage: [-f \"file1,file2,...\"], [-dmin \"d18O_min\"] [-dmax \"d18O_max\"]"
+  echo "Usage: [-f \"file1,file2,...\"], [-l \"d18O_min\"] [-u \"d18O_max\"]"
   echo "Options"
   echo "  -f Name of the file to be preprocessed."
+  echo "  -l Lower bound of the isotope range. Default: -100."
+  echo "  -u Upper bound of the isotope range. Default: 100."
+  echo "  -h Display help"
 }
 
 # Defaults
-SCRIPT_DIR="."
 DMIN=-100
 DMAX=100
 
 # read options
-while getopts ":f:g:o:i:h" OPTION; do
+while getopts ":f:l:u:h" OPTION; do
   case $OPTION in
     f) FILES=$OPTARG
        ;;
-    dmin) DMIN=$OPTARG
+    l) DMIN=$OPTARG
        ;;
-    dmax) DMAX=$OPTARG
+    u) DMAX=$OPTARG
        ;;
     h) help
   esac
@@ -28,6 +30,8 @@ shift $((OPTIND-1))
 
 FILES_ARR=($FILES)
 
+echo $DMIN
+echo $DMAX
 echo $FI
 # do the interpolation
 for file in $FILES; do
