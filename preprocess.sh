@@ -31,14 +31,16 @@ FILES_ARR=($FILES)
 echo $FI
 # do the interpolation
 for file in $FILES; do
+  filename="${file%.*}" # get rid of file ending
   if [[ "$file" == *"isotopes"* ]];then
     # if the file name contains isotopes then
     # current default behaviour: Overwrite existing file.
-    cdo setvrange,$DMIN,$DMAX file file
+    cdo setvrange,$DMIN,$DMAX "$file" "${filename}_vrg.nc"
+    cdo yearmean "${filename}_vrg.nc" "${filename}_yearly.nc"
   elif [[ "$file" == *"tsurf"* ]];then
-    :  # can be implemented later if needed
+    cdo yearmean "${file}" "${filename}_yearly.nc"
   elif [[ "$file" == *"prec"* ]];then
-    :  # can be implemented later if needed
+    cdo yearmean "${file}" "${filename}_yearly.nc"
   else
     echo "Invalid filename! Filename must contain one element of [isotopes, tsurf, prec]." 1>&2
     exit 1
