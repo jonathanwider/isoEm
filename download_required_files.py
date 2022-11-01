@@ -1,6 +1,8 @@
 import requests
 import os
 
+from subprocess import call
+
 
 def download_file(url, filename):
     """
@@ -55,3 +57,29 @@ def download_required_files(output_directory="Datasets/"):
             download_file(filenames[climate_model][1], os.path.join(tmp_folder, "prec.nc"))
             download_file(filenames[climate_model][2], os.path.join(tmp_folder, "tsurf.nc"))
     print("Done")
+
+
+def preprocess_required_files(output_directory="Datasets/", low=-100, high=100):
+    """
+    Apply preprocessing to the downloaded datasets.
+
+    @param output_directory: Dataset we downloaded the files to.
+    @param low: Lower limit for the d18O range.
+    @param high: Upper limit for the d18O range.
+    """
+    for m in ["ECHAM5", "GISS", "iCESM", "iHadCM3", "isoGSM"]:
+        for f in ["isotopes.nc","prec.nc", "tsurf.nc"]:
+            file = os.path.join(output_directory, m, "Original", f)
+            script = os.path.join("./preprocess.sh")
+
+            call([script, "-f", file, "-u", str(high), "-l", str(low)])
+
+
+def main(output_directory="Datasets/", low=-100, high=100):
+    download_required_files(output_directory=output_directory)
+    preprocess_required_files(output_directory=output_directory, low=low, high=high)
+
+
+if __name__ == "__main__":
+    main()
+    
