@@ -353,14 +353,14 @@ def interpolate_climate_model_data_to_ico_grid(model_name, variable_name, script
     path = os.path.join(dataset_folder, model_name, "Original", "{}.nc".format(variable_name))
 
     tmp_path_5_nbs = os.path.join(dataset_folder, model_name, "Original",
-                                  "{}_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
+                                  "{}_yearly_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
     tmp_path_6_nbs = os.path.join(dataset_folder, model_name, "Original",
-                                  "{}_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation))
+                                  "{}_yearly_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation))
 
     new_path_5_nbs = os.path.join(dataset_folder, model_name, "Interpolated",
-                                  "{}_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
+                                  "{}_yearly_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
     new_path_6_nbs = os.path.join(dataset_folder, model_name, "Interpolated",
-                                  "{}_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation))
+                                  "{}_yearly_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation))
 
     script = os.path.join(script_folder, "model_to_ico.sh")
     files = path

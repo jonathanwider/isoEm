@@ -41,25 +41,25 @@ def get_required_datasets(description, dataset_folder):
     for dst in description["DATASETS_USED"]:
         if description["GRID_TYPE"] == "Flat":
             if description["TIMESCALE"] == "YEARLY":
-                d_path = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Original", "{}.nc".format(dst))
+                d_path = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Original", "{}_yearly.nc".format(dst))
                 datasets[dst] = netCDF4.Dataset(d_path, "a")
             elif description["TIMESCALE"] == "MONTHLY":
-                d_path = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Original", "{}_monthly.nc".format(dst))
+                d_path = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Original", "{}.nc".format(dst))
                 datasets[dst] = netCDF4.Dataset(d_path, "a")
             else:
                 raise NotImplementedError("Only MONTHLY and YEARLY timescales implemented.")
         elif description["GRID_TYPE"] == "Ico":
             if description["INTERPOLATE_CORNERS"]:
                 name6 = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Interpolated",
-                                     "{}_r_{}_nbs_6_{}.nc".format(dst, description["RESOLUTION"], description["INTERPOLATION"]))
+                                     "{}_yearly_r_{}_nbs_6_{}.nc".format(dst, description["RESOLUTION"], description["INTERPOLATION"]))
                 name5 = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Interpolated",
-                                     "{}_r_{}_nbs_5_{}.nc".format(dst, description["RESOLUTION"], description["INTERPOLATION"]))
+                                     "{}_yearly_r_{}_nbs_5_{}.nc".format(dst, description["RESOLUTION"], description["INTERPOLATION"]))
                 datasets[dst] = {}
                 datasets[dst]["6_nb"] = netCDF4.Dataset(name6, "a")
                 datasets[dst]["5_nb"] = netCDF4.Dataset(name5, "a")
             else:
                 name6 = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Interpolated",
-                                     "{}_r_{}_nbs_6_{}.nc".format(dst, description["RESOLUTION"], description["INTERPOLATION"]))
+                                     "{}_yearly_r_{}_nbs_6_{}.nc".format(dst, description["RESOLUTION"], description["INTERPOLATION"]))
                 datasets[dst] = {}
                 datasets[dst]["6_nb"] = netCDF4.Dataset(name6, "a")
         else:
@@ -105,6 +105,7 @@ def get_shared_timesteps(description, dataset_folder):
     """
     load the datasets for which we require that variables are present at each timestep.
     Then extract the shared timesteps.
+    Timesteps are considered shared if year and month match in between all necessary files.
     """
     from functools import reduce
 
@@ -121,8 +122,42 @@ def get_shared_timesteps(description, dataset_folder):
         for dst in description["DATASETS_NO_GAPS"]:
             d_path = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Original", "{}_monthly.nc".format(dst))
             datasets[dst] = netCDF4.Dataset(d_path, "a")
-    ts = tuple([dset.variables["t"][:].data for dset in datasets.values()])
-    common_dates = reduce(np.intersect1d, ts)
+    # assume that the time variable always has the same name for a given climate model... otherwise would need to
+    # rewrite next lines
+    try:
+        ts = tuple([dset.variables["t"][:].data for dset in datasets.values()])
+        units = tuple([dset.variables["t"].units for dset in datasets.values()])
+        cals = tuple([dset.variables["t"].calendar for dset in datasets.values()])
+        if description["TIMESCALE"] == "YEARLY":
+            ys = [set(util.get_years_months(t, units[i], cals[i])[0]) for (i, t) in enumerate(ts)]
+            common_dates = set.intersection(*ys)
+        elif description["TIMESCALE"] == "MONTHLY":
+            years_l = [util.get_years_months(t, units[i], cals[i])[0] for (i, t) in enumerate(ts)]
+            months_l = [util.get_years_months(t, units[i], cals[i])[1] for (i, t) in enumerate(ts)]
+            c_dates = []
+            for i, years in range(len(years_l)):
+                dates = set()
+                for j in range(len(years_l[i])):
+                    dates.append(months_l[i][j], years_l[i][j])
+                c_dates.append(dates)
+            common_dates = set.intersection(*c_dates)
+    except:
+        ts = tuple([dset.variables["time"][:].data for dset in datasets.values()])
+        units = tuple([dset.variables["time"].units for dset in datasets.values()])
+        cals = tuple([dset.variables["time"].calendar for dset in datasets.values()])
+        if description["TIMESCALE"] == "YEARLY":
+            ys = [set(util.get_years_months(t, units[i], cals[i])[0]) for (i, t) in enumerate(ts)]
+            common_dates = set.intersection(*ys)
+        elif description["TIMESCALE"] == "MONTHLY":
+            years_l = [util.get_years_months(t, units[i], cals[i])[0] for (i, t) in enumerate(ts)]
+            months_l = [util.get_years_months(t, units[i], cals[i])[1] for (i, t) in enumerate(ts)]
+            c_dates = []
+            for i, years in range(len(years_l)):
+                dates = set()
+                for j in range(len(years_l[i])):
+                    dates.append(months_l[i][j], years_l[i][j])
+                c_dates.append(dates)
+            common_dates = set.intersection(*c_dates)
     return common_dates
 
 
@@ -148,13 +183,13 @@ def load_variables_and_timesteps(description, dataset_folder):
         cals = np.array([ds["6_nb"].variables["t"].calendar for ds in list(datasets.values()) if ds["6_nb"].variables["t"][:].data.shape[0] > 1])
     else:
         raise NotImplementedError("Invalid grid type")
-
+    """
     # extract reference date from calendar in dataset
     match = re.search(r'\d{4}-\d{2}-\d{2}', units[0])
     if match is None:
         raise ValueError("No date following the YYYY-MM-DD convention found")
     ref_date = datetime.strptime(match.group(), '%Y-%m-%d').date()
-
+    """
     description["CALENDAR"] = cals[0]
     description["T_UNITS"] = units[0]
     description["REFERENCE_DATE"] = ref_date
