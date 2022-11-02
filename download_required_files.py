@@ -3,6 +3,7 @@ import os
 
 from subprocess import call
 
+import argparse
 
 def download_file(url, filename):
     """
@@ -82,4 +83,16 @@ def main(output_directory="Datasets/", low=-100, high=100):
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Download and precprocess files required for reproducing results')
+    parser.add_argument('-d', dest='directory', action='store_const',
+                        default="Datasets/", required=False,
+                        help='Directory to store the files in (default: ./Datasets)')
+    parser.add_argument('-l', dest='l', action='store_const',
+                        default=-100, required=False,
+                        help='Minimum of desired d18O range (default: -100)')
+    parser.add_argument('-h', dest='h', action='store_const',
+                        default=100, required=False,
+                        help='Maximum of desired d18O range (default: 100)')
+
+    args = parser.parse_args()
+    main(output_directory=args.directory, low=args.l, high=args.h)
