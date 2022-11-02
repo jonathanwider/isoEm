@@ -84,13 +84,13 @@ def main(output_directory="Datasets/", low=-100, high=100):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Download and precprocess files required for reproducing results')
-    parser.add_argument('-d', dest='directory', action='store_const',
+    parser.add_argument('-d', dest='directory', action='store',
                         default="Datasets/", required=False,
                         help='Directory to store the files in (default: ./Datasets)')
-    parser.add_argument('-l', dest='l', action='store_const',
+    parser.add_argument('-dmin', dest='l', action='store',
                         default=-100, required=False,
                         help='Minimum of desired d18O range (default: -100)')
-    parser.add_argument('-h', dest='h', action='store_const',
+    parser.add_argument('-dmax', dest='h', action='store',
                         default=100, required=False,
                         help='Maximum of desired d18O range (default: 100)')
 
