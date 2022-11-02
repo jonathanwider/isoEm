@@ -106,6 +106,7 @@ def get_shared_timesteps(description, dataset_folder):
     load the datasets for which we require that variables are present at each timestep.
     Then extract the shared timesteps.
     Timesteps are considered shared if year and month match in between all necessary files.
+    Works with missing timesteps problems might occur if timesteps occur twice.
     """
     from functools import reduce
 
@@ -158,7 +159,7 @@ def get_shared_timesteps(description, dataset_folder):
                     dates.append(months_l[i][j], years_l[i][j])
                 c_dates.append(dates)
             common_dates = set.intersection(*c_dates)
-    return common_dates
+    return list(common_dates)
 
 
 def load_variables_and_timesteps(description, dataset_folder):
@@ -170,6 +171,7 @@ def load_variables_and_timesteps(description, dataset_folder):
     assert "LATITUDES_SLICE" in description.keys()
     assert "TIMESCALE" in description.keys()
     assert description["PRECIP_WEIGHTING"] is False
+    assert description["TIMESCALE"] == "YEARLY"
 
     variables = {}
     datasets = get_required_datasets(description, dataset_folder)
@@ -183,49 +185,49 @@ def load_variables_and_timesteps(description, dataset_folder):
         cals = np.array([ds["6_nb"].variables["t"].calendar for ds in list(datasets.values()) if ds["6_nb"].variables["t"][:].data.shape[0] > 1])
     else:
         raise NotImplementedError("Invalid grid type")
-    """
-    # extract reference date from calendar in dataset
-    match = re.search(r'\d{4}-\d{2}-\d{2}', units[0])
-    if match is None:
-        raise ValueError("No date following the YYYY-MM-DD convention found")
-    ref_date = datetime.strptime(match.group(), '%Y-%m-%d').date()
-    """
-    description["CALENDAR"] = cals[0]
-    description["T_UNITS"] = units[0]
-    description["REFERENCE_DATE"] = ref_date
 
-    assert (cals == "360_day").all()
-    assert (units == units[0]).all()
+    description["CALENDAR"] = cals
+    description["T_UNITS"] = units
 
-    c_dates = get_shared_timesteps(description, dataset_folder)
-    c_years, _, _ = get_year_mon_day_from_timesteps(c_dates, ref_date)
-    rel_years = c_years - ref_date.year
-    c_mask = np.logical_and(rel_years >= description["START_YEAR"],
-                            rel_years < description["END_YEAR"])
-    c_dates = c_dates[c_mask]
+    c_years = get_shared_timesteps(description, dataset_folder)
+
+    c_mask = np.logical_and(c_years >= description["START_YEAR"],
+                            c_years < description["END_YEAR"])
+    c_dates = c_years[c_mask]
 
     for dataset_name, dataset in datasets.items():  # loop over all used datasets
         variables[dataset_name] = {}  # create a dict to store files from 5-nb and 6-nb files
         # loop over all variables we want to use from this dataset
         if description["GRID_TYPE"] == "Flat":
-            years, _, _ = get_year_mon_day_from_timesteps(dataset.variables["t"][:].data, ref_date)
+            try:
+                years = util.get_years_months(dataset.variables["t"][:].data, dataset.variables["t"].units,
+                                              dataset.variables["t"].calendar)
+            except:
+                years = util.get_years_months(dataset.variables["time"][:].data, dataset.variables["time"].units,
+                                              dataset.variables["time"].calendar)
             # get the corresponding indices:
             indices = []
-            for i, t in enumerate(dataset.variables["t"][:].data):
+            for i, t in enumerate(years):
                 if t in c_dates:
                     indices.append(i)
             indices = np.array(indices, dtype=int)
         elif description["GRID_TYPE"] == "Ico":
-            years, _, _ = get_year_mon_day_from_timesteps(dataset["6_nb"].variables["t"][:].data, ref_date)
+            try:
+                years = util.get_years_months(dataset["6_nb"].variables["t"][:].data,
+                                              dataset["6_nb"].variables["t"].units,
+                                              dataset["6_nb"].variables["t"].calendar)
+            except:
+                years = util.get_years_months(dataset["6_nb"].variables["time"][:].data,
+                                              dataset["6_nb"].variables["time"].units,
+                                              dataset["6_nb"].variables["time"].calendar)
             # get the corresponding indices:
             indices = []
-            for i, t in enumerate(dataset["6_nb"].variables["t"][:].data):
+            for i, t in enumerate(years):
                 if t in c_dates:
                     indices.append(i)
             indices = np.array(indices, dtype=int)
         else:
             raise NotImplementedError("Invalid grid type")
-
 
         for variable_name in dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])[dataset_name]:
             if description["GRID_TYPE"] == "Flat":
