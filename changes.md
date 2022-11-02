@@ -87,6 +87,13 @@ TODOs:
 - [x] Test Ico Data loading
 - [ ] Precip weighting, monthly in compare notebooks
 - [ ] make crossprediction possible
+    - [ ] New combined timesteps function:
+        - so far this was necessary because the raw slp dataset had missing timesteps. 
+        - We can't use the old one because time units differ even within climate models
+        - Additionally: Some of the temperature timesteps contain missing values → Probably I used a filled version?
+        - Now: Assume that all timesteps are present. Dont filter by date.
+        - BUT: Exclude dates if everything is none.
+        - 
     - [x] Load data from zenodo
     - [ ] Investigate:
         - [ ] Calendar

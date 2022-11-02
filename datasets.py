@@ -177,20 +177,29 @@ def load_variables_and_timesteps(description, dataset_folder):
     datasets = get_required_datasets(description, dataset_folder)
 
     # make sure that all datasets that have a non-trivial time axis share the same calendar and units.
-    if description["GRID_TYPE"] == "Flat":
-        units = np.array([ds.variables["t"].units for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1])
-        cals = np.array([ds.variables["t"].calendar for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1])
-    elif description["GRID_TYPE"] == "Ico":
-        units = np.array([ds["6_nb"].variables["t"].units for ds in list(datasets.values()) if ds["6_nb"].variables["t"][:].data.shape[0] > 1])
-        cals = np.array([ds["6_nb"].variables["t"].calendar for ds in list(datasets.values()) if ds["6_nb"].variables["t"][:].data.shape[0] > 1])
-    else:
-        raise NotImplementedError("Invalid grid type")
+    try:
+        if description["GRID_TYPE"] == "Flat":
+            units = [ds.variables["t"].units for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1]
+            cals = [ds.variables["t"].calendar for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1]
+        elif description["GRID_TYPE"] == "Ico":
+            units = [ds["6_nb"].variables["t"].units for ds in list(datasets.values()) if ds["6_nb"].variables["t"][:].data.shape[0] > 1]
+            cals = [ds["6_nb"].variables["t"].calendar for ds in list(datasets.values()) if ds["6_nb"].variables["t"][:].data.shape[0] > 1]
+        else:
+            raise NotImplementedError("Invalid grid type")
+    except:
+        if description["GRID_TYPE"] == "Flat":
+            units = [ds.variables["time"].units for ds in list(datasets.values()) if ds.variables["time"][:].data.shape[0] > 1]
+            cals = [ds.variables["time"].calendar for ds in list(datasets.values()) if ds.variables["time"][:].data.shape[0] > 1]
+        elif description["GRID_TYPE"] == "Ico":
+            units = [ds["6_nb"].variables["time"].units for ds in list(datasets.values()) if ds["6_nb"].variables["time"][:].data.shape[0] > 1]
+            cals = [ds["6_nb"].variables["time"].calendar for ds in list(datasets.values()) if ds["6_nb"].variables["time"][:].data.shape[0] > 1]
+        else:
+            raise NotImplementedError("Invalid grid type")
 
     description["CALENDAR"] = cals
     description["T_UNITS"] = units
 
-    c_years = get_shared_timesteps(description, dataset_folder)
-
+    c_years = np.array(get_shared_timesteps(description, dataset_folder))
     c_mask = np.logical_and(c_years >= description["START_YEAR"],
                             c_years < description["END_YEAR"])
     c_dates = c_years[c_mask]
@@ -201,10 +210,10 @@ def load_variables_and_timesteps(description, dataset_folder):
         if description["GRID_TYPE"] == "Flat":
             try:
                 years = util.get_years_months(dataset.variables["t"][:].data, dataset.variables["t"].units,
-                                              dataset.variables["t"].calendar)
+                                              dataset.variables["t"].calendar)[0]
             except:
                 years = util.get_years_months(dataset.variables["time"][:].data, dataset.variables["time"].units,
-                                              dataset.variables["time"].calendar)
+                                              dataset.variables["time"].calendar)[0]
             # get the corresponding indices:
             indices = []
             for i, t in enumerate(years):
@@ -215,11 +224,11 @@ def load_variables_and_timesteps(description, dataset_folder):
             try:
                 years = util.get_years_months(dataset["6_nb"].variables["t"][:].data,
                                               dataset["6_nb"].variables["t"].units,
-                                              dataset["6_nb"].variables["t"].calendar)
+                                              dataset["6_nb"].variables["t"].calendar)[0]
             except:
                 years = util.get_years_months(dataset["6_nb"].variables["time"][:].data,
                                               dataset["6_nb"].variables["time"].units,
-                                              dataset["6_nb"].variables["time"].calendar)
+                                              dataset["6_nb"].variables["time"].calendar)[0]
             # get the corresponding indices:
             indices = []
             for i, t in enumerate(years):
@@ -231,11 +240,18 @@ def load_variables_and_timesteps(description, dataset_folder):
 
         for variable_name in dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])[dataset_name]:
             if description["GRID_TYPE"] == "Flat":
-                assert "latitude" in dataset.variables.keys()
-                assert "longitude" in dataset.variables.keys()
-                description["LATITUDES"] = tuple(dataset.variables["latitude"][description["LATITUDES_SLICE"][0]:
-                                                                               description["LATITUDES_SLICE"][1]].data)
-                description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
+                assert "latitude" in dataset.variables.keys() or "lat" in dataset.variables.keys()
+                assert "longitude" in dataset.variables.keys() or "lon" in dataset.variables.keys()
+                try:
+                    description["LATITUDES"] = tuple(dataset.variables["latitude"][description["LATITUDES_SLICE"][0]:
+                                                                                   description["LATITUDES_SLICE"][1]].data)
+                except:
+                    description["LATITUDES"] = tuple(dataset.variables["lat"][description["LATITUDES_SLICE"][0]:
+                                                                              description["LATITUDES_SLICE"][1]].data)
+                try:
+                    description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
+                except:
+                    description["LONGITUDES"] = tuple(dataset.variables["lon"][:].data)
                 if dataset.variables[variable_name][:].data.shape[0] > 1:  # only if time dimension is not trivial
                     variables[dataset_name][variable_name] = np.squeeze(dataset.variables[variable_name][:].data)[indices,
                                                              description["LATITUDES_SLICE"][0]:description["LATITUDES_SLICE"][1], :]
@@ -261,6 +277,9 @@ def load_variables_and_timesteps(description, dataset_folder):
         v = dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])
         for variable_name in v[dataset_name]:  # loop over all variables we want to use from this dataset
             res_variables[variable_name] = dataset[variable_name]
+            res_variables[variable_name] = res_variables[variable_name].reshape(res_variables[variable_name].shape[0],1,
+                                                                                res_variables[variable_name].shape[-2],
+                                                                                res_variables[variable_name].shape[-1])
     return res_variables, c_dates
 
 
@@ -357,7 +376,6 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
         'predictors': x_train,
         'targets': y_train
     }
-
     name = util.create_hash_from_description(description)
     folder_name = os.path.join(output_folder, "dset_{}".format(name))
 
@@ -432,11 +450,18 @@ def load_variables_and_timesteps_months(description, dataset_folder):
     assert (units == units[0]).all()
 
     for dataset_name, dataset in datasets.items():  # loop over all used datasets
-        assert "latitude" in dataset.variables.keys()
-        assert "longitude" in dataset.variables.keys()
-        description["LATITUDES"] = tuple(dataset.variables["latitude"][description["LATITUDES_SLICE"][0]:
-                                                                       description["LATITUDES_SLICE"][1]].data)
-        description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
+        assert "latitude" in dataset.variables.keys() or "lat" in dataset.variables.keys()
+        assert "longitude" in dataset.variables.keys() or "lon" in dataset.variables.keys()
+        try:
+            description["LATITUDES"] = tuple(dataset.variables["latitude"][description["LATITUDES_SLICE"][0]:
+                                                                           description["LATITUDES_SLICE"][1]].data)
+        except:
+            description["LATITUDES"] = tuple(dataset.variables["lat"][description["LATITUDES_SLICE"][0]:
+                                                                      description["LATITUDES_SLICE"][1]].data)
+        try:
+            description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
+        except:
+            description["LONGITUDES"] = tuple(dataset.variables["lon"][:].data)
 
         variables[dataset_name] = {}
         masks[dataset_name] = {}
@@ -562,11 +587,19 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
     p_data = np.squeeze(datasets_monthly["precip"].variables["precip"][:].data[..., description["LATITUDES_SLICE"][0]:
                                                                                     description["LATITUDES_SLICE"][1], :])
     for dataset_name, dataset in datasets_monthly.items():  # loop over all used datasets
-        assert "latitude" in dataset.variables.keys()
-        assert "longitude" in dataset.variables.keys()
-        description["LATITUDES"] = tuple(dataset.variables["latitude"][description["LATITUDES_SLICE"][0]:
-                                                                       description["LATITUDES_SLICE"][1]].data)
-        description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
+        assert "latitude" in dataset.variables.keys() or "lat" in dataset.variables.keys()
+        assert "longitude" in dataset.variables.keys() or "lon" in dataset.variables.keys()
+        try:
+            description["LATITUDES"] = tuple(dataset.variables["latitude"][description["LATITUDES_SLICE"][0]:
+                                                                           description["LATITUDES_SLICE"][1]].data)
+        except:
+            description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
+        try:
+            description["LATITUDES"] = tuple(dataset.variables["lat"][description["LATITUDES_SLICE"][0]:
+                                                                           description["LATITUDES_SLICE"][1]].data)
+        except:
+            description["LONGITUDES"] = tuple(dataset.variables["lon"][:].data)
+
         t = dataset.variables["t"][:].data
         t_years, _, _ = get_year_mon_day_from_timesteps(t, ref_date)
 
