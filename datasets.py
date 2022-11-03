@@ -535,7 +535,7 @@ def load_variables_and_timesteps_months(description, dataset_folder):
         v = dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])
         for variable_name in v[dataset_name]:  # loop over all variables we want to use from this dataset
             if variable_name in dataset_masks.keys():
-                res_masks[variable_name] = dataset_masks[variable_name]
+                res_masks[variable_name] = dataset_masks[variable_name][~masked_timesteps, ...]
     # Run some tests that make sure, that we in fact created masks for the target variables and no masks for
     # the predictor variables
     for key in res_masks.keys():
