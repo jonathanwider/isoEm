@@ -36,11 +36,14 @@ for file in $FILES; do
   if [[ "$file" == *"isotopes"* ]];then
     # if the file name contains isotopes then
     # current default behaviour: Overwrite existing file.
-    cdo setvrange,$DMIN,$DMAX "$file" "${filename}_vrg.nc"
-    cdo yearmean "${filename}_vrg.nc" "${filename}_yearly.nc"
+    cdo copy "$file" "${filename}_raw.nc" # rename unprocessed files
+    cdo setvrange,$DMIN,$DMAX "${filename}_raw.nc" "${filename}.nc"
+    cdo yearmean "${filename}.nc" "${filename}_yearly.nc"
   elif [[ "$file" == *"tsurf"* ]];then
     cdo yearmean "${file}" "${filename}_yearly.nc"
   elif [[ "$file" == *"prec"* ]];then
+    cdo copy "$file" "${filename}_raw.nc" # rename unprocessed files
+    cdo setvrange,0,10000 "${filename}_raw.nc" "${filename}.nc" # set valid precipitation value range to 0-10000 mm/month
     cdo yearmean "${file}" "${filename}_yearly.nc"
   else
     echo "Invalid filename! Filename must contain one element of [isotopes, tsurf, prec]." 1>&2

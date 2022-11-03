@@ -422,7 +422,6 @@ def load_variables_and_timesteps_months(description, dataset_folder):
 
     datasets = get_required_datasets(description, dataset_folder)
 
-
     # make sure that all datasets that have a non-trivial time axis share the same calendar and units.
     try:
         units = [ds.variables["t"].units for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1]
@@ -561,7 +560,7 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
     assert "TARGET_VARIABLES" in description.keys()
     assert "LATITUDES_SLICE" in description.keys()
     assert description["PRECIP_WEIGHTING"] is True
-    assert ["precip"] in description["PREDICTOR_VARIABLES"].values()
+    assert ["prec"] in description["PREDICTOR_VARIABLES"].values()
     assert description["TIMESCALE"] == "YEARLY"
     assert description["GRID_TYPE"] == "Flat"
     variables = {}
@@ -572,46 +571,52 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
     datasets_yearly = get_required_datasets(description, dataset_folder)
 
     # make sure that all datasets that have a non-trivial time axis share the same calendar and units.
-    units = np.array([ds.variables["t"].units for ds in list(datasets_monthly.values())+list(datasets_yearly.values())
-                      if ds.variables["t"][:].data.shape[0] > 1])
-    cals = np.array([ds.variables["t"].calendar for ds in list(datasets_monthly.values()) + list(datasets_yearly.values())
-                     if ds.variables["t"][:].data.shape[0] > 1])
-    assert (cals == "360_day").all()
-    assert (units == units[0]).all()
+    try:
+        units = [ds.variables["t"].units for ds in list(datasets_yearly.values())+list(datasets_monthly.values())
+                 if ds.variables["t"][:].data.shape[0] > 1]
+        cals = [ds.variables["t"].calendar for ds in list(datasets_yearly.values())+list(datasets_monthly.values())
+                if ds.variables["t"][:].data.shape[0] > 1]
+    except KeyError:
+        units = [ds.variables["time"].units for ds in list(datasets_yearly.values())+list(datasets_monthly.values())
+                 if ds.variables["time"][:].data.shape[0] > 1]
+        cals = [ds.variables["time"].calendar for ds in list(datasets_yearly.values())+list(datasets_monthly.values())
+                if ds.variables["time"][:].data.shape[0] > 1]
 
-    match = re.search(r'\d{4}-\d{2}-\d{2}', units[0])
-    ref_date = datetime.strptime(match.group(), '%Y-%m-%d').date()
 
-    description["CALENDAR"] = cals[0]
-    description["T_UNITS"] = units[0]
-    description["REFERENCE_DATE"] = ref_date
+    description["CALENDAR"] = cals
+    description["T_UNITS"] = units
 
-    # get shared years.
-    c_dates = get_shared_timesteps(description, dataset_folder)
-    c_years, _, _ = get_year_mon_day_from_timesteps(c_dates, ref_date)
-    rel_years = c_years - ref_date.year
-    mask = np.logical_and(rel_years >= description["START_YEAR"],
-                          rel_years < description["END_YEAR"])  # mask in simulation years
-    c_years = c_years[mask]
+    c_years = np.array(get_shared_timesteps(description, dataset_folder))
+    c_mask = np.logical_and(c_years >= description["START_YEAR"],
+                            c_years < description["END_YEAR"])
+    c_dates = c_years[c_mask]
 
-    p_data = np.squeeze(datasets_monthly["precip"].variables["precip"][:].data[..., description["LATITUDES_SLICE"][0]:
-                                                                                    description["LATITUDES_SLICE"][1], :])
+    description["CALENDAR"] = cals
+    description["T_UNITS"] = units
+
+    p_data = np.squeeze(datasets_monthly["prec"].variables["prec"][:].data[..., description["LATITUDES_SLICE"][0]:
+                                                                                description["LATITUDES_SLICE"][1], :])
+
     for dataset_name, dataset in datasets_monthly.items():  # loop over all used datasets
         assert "latitude" in dataset.variables.keys() or "lat" in dataset.variables.keys()
         assert "longitude" in dataset.variables.keys() or "lon" in dataset.variables.keys()
         try:
             description["LATITUDES"] = tuple(dataset.variables["latitude"][description["LATITUDES_SLICE"][0]:
                                                                            description["LATITUDES_SLICE"][1]].data)
-        except:
-            description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
-        try:
+        except KeyError:
             description["LATITUDES"] = tuple(dataset.variables["lat"][description["LATITUDES_SLICE"][0]:
-                                                                           description["LATITUDES_SLICE"][1]].data)
-        except:
+                                                                      description["LATITUDES_SLICE"][1]].data)
+        try:
+            description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
+        except KeyError:
             description["LONGITUDES"] = tuple(dataset.variables["lon"][:].data)
 
-        t = dataset.variables["t"][:].data
-        t_years, _, _ = get_year_mon_day_from_timesteps(t, ref_date)
+        try:
+            years = util.get_years_months(dataset.variables["t"][:].data, dataset.variables["t"].units,
+                                          dataset.variables["t"].calendar)[0]
+        except KeyError:
+            years = util.get_years_months(dataset.variables["time"][:].data, dataset.variables["time"].units,
+                                          dataset.variables["time"].calendar)[0]
 
         variables[dataset_name] = {}
 
@@ -626,23 +631,22 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
 
                 weights = p_data
                 masked_var = np.ma.MaskedArray(data, mask=np.isnan(data))
-                var_yearly_data = np.ma.zeros((len(c_years), *data.shape[1:]))
-                if variable_name == "precip":
-                    for i, yr in enumerate(c_years):
-                        i_mask = (yr == t_years)
+                var_yearly_data = np.ma.zeros((len(c_dates), *data.shape[1:]))
+                if variable_name == "prec":
+                    for i, yr in enumerate(c_dates):
+                        i_mask = (yr == years)
                         var_yearly_data[i, ...] = np.ma.average(masked_var[i_mask, ...], axis=0)
                 else:
-                    for i, yr in enumerate(c_years):
-                        i_mask = (yr == t_years)
+                    for i, yr in enumerate(c_dates):
+                        i_mask = (yr == years)
                         var_yearly_data[i, ...] = np.ma.average(masked_var[i_mask, ...], weights=weights[i_mask, ...],
                                                                 axis=0)
-                res = var_yearly_data.data
-                res[var_yearly_data.mask] = np.nan
+                res = var_yearly_data
             else:
                 res = np.squeeze(
-                    np.repeat(dataset.variables[variable_name][:].data[..., description["LATITUDES_SLICE"][0]:
-                                                                       description["LATITUDES_SLICE"][1], :],
-                              repeats=len(c_years), axis=0))
+                    np.repeat(dataset.variables[variable_name][:][..., description["LATITUDES_SLICE"][0]:
+                                                                  description["LATITUDES_SLICE"][1], :],
+                              repeats=len(c_dates), axis=0))
             variables[dataset_name][variable_name] = res
 
     res_variables = {}
@@ -650,7 +654,18 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
         v = dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])
         for variable_name in v[dataset_name]:  # loop over all variables we want to use from this dataset
             res_variables[variable_name] = dataset[variable_name]
-    return res_variables, c_dates[mask]
+
+    # exclude timesteps with missing values in predictor variables.
+    masked_timesteps = np.zeros(list(res_variables.values())[0].shape[0], dtype=bool)
+    for vs in description["PREDICTOR_VARIABLES"].values():
+        for v in vs:
+            if (res_variables[v].mask != False).any():
+                m = np.where(np.mean(res_variables[v].mask, axis=(-1, -2, -3)) > 0)[0]
+                masked_timesteps[m] = True
+    c_dates = c_dates[~masked_timesteps]
+    for key, v in res_variables.items():
+        res_variables[key] = v[~masked_timesteps, ...].data
+    return res_variables, c_dates
 
 
 def create_precip_weighted_dataset(description, dataset_folder, output_folder):
