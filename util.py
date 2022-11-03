@@ -67,6 +67,12 @@ def get_years_months(t, units, calendar):
     if units == "months since 801-1-15 00:00:00":
         years = 801 + t // 12
         months = 0 + t % 12
+    elif units == "days since 0801-01-30 00:00:00.000000":
+        if calendar == "360_day":
+            y_ref = 801
+            m_ref = 0
+            years = y_ref + (t // 360)  # in the dataset the year (2954) corresponds to year 850
+            months = (t+m_ref*30) % 360 // 30
     elif units == "month as %Y%m.%f":
         timesteps = [t_.split(".")[0] for t_ in t.astype(str)]
         years = [int(t_[:-2]) for t_ in timesteps]
@@ -91,6 +97,8 @@ def get_years_months(t, units, calendar):
             months = (t+m_ref*30) % 360 // 30
     elif units == "days since 0000-01-01 00:00:00":
         return None, None
+    else:
+        raise NotImplementedError("Invalid date format")
     return years, months
 
 

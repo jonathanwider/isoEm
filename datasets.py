@@ -133,6 +133,7 @@ def get_shared_timesteps(description, dataset_folder):
             ys = [set(util.get_years_months(t, units[i], cals[i])[0]) for (i, t) in enumerate(ts)]
             common_dates = set.intersection(*ys)
         elif description["TIMESCALE"] == "MONTHLY":
+            print(units[i])
             years_l = [util.get_years_months(t, units[i], cals[i])[0] for (i, t) in enumerate(ts)]
             months_l = [util.get_years_months(t, units[i], cals[i])[1] for (i, t) in enumerate(ts)]
             c_dates = []
@@ -142,7 +143,7 @@ def get_shared_timesteps(description, dataset_folder):
                     dates.append(months_l[i][j], years_l[i][j])
                 c_dates.append(dates)
             common_dates = set.intersection(*c_dates)
-    except:
+    except KeyError:
         ts = tuple([dset.variables["time"][:].data for dset in datasets.values()])
         units = tuple([dset.variables["time"].units for dset in datasets.values()])
         cals = tuple([dset.variables["time"].calendar for dset in datasets.values()])
@@ -205,7 +206,7 @@ def load_variables_and_timesteps(description, dataset_folder):
     c_dates = c_years[c_mask]
 
     for dataset_name, dataset in datasets.items():  # loop over all used datasets
-        variables[dataset_name] = {}  # create a dict to store files from 5-nb and 6-nb files
+        variables[dataset_name] = {}
         # loop over all variables we want to use from this dataset
         if description["GRID_TYPE"] == "Flat":
             try:
@@ -253,21 +254,21 @@ def load_variables_and_timesteps(description, dataset_folder):
                 except:
                     description["LONGITUDES"] = tuple(dataset.variables["lon"][:].data)
                 if dataset.variables[variable_name][:].data.shape[0] > 1:  # only if time dimension is not trivial
-                    variables[dataset_name][variable_name] = np.squeeze(dataset.variables[variable_name][:].data)[indices,
+                    variables[dataset_name][variable_name] = np.squeeze(dataset.variables[variable_name][:])[indices,
                                                              description["LATITUDES_SLICE"][0]:description["LATITUDES_SLICE"][1], :]
                 else:
                     variables[dataset_name][variable_name] = np.squeeze(
                         np.repeat(dataset.variables[variable_name][:].data[..., 1:-1, :], repeats=len(c_dates), axis=0))
 
             elif description["GRID_TYPE"] == "Ico":
-                variables[dataset_name][variable_name] = {}  # create a dict to store files from 5-nb and 6-nb files
+                variables[dataset_name][variable_name] = {}
                 for subdataset_name, subdataset in dataset.items():  # loop over subfiles: containing points with 5 and 6 nbs
                     if subdataset.variables[variable_name][:].data.shape[0] > 1:  # only if time dimenion is not trivial
                         variables[dataset_name][variable_name][subdataset_name] = np.squeeze(
                             subdataset.variables[variable_name][:].data)[indices, :]
                     else:
                         variables[dataset_name][variable_name][subdataset_name] = np.squeeze(
-                            np.repeat(subdataset.variables[variable_name][:].data, repeats=len(c_dates), axis=0))
+                            np.repeat(subdataset.variables[variable_name][:], repeats=len(c_dates), axis=0))
                 variables[dataset_name][variable_name] = combine_variables(description, variables[dataset_name][variable_name])
             else:
                 raise NotImplementedError("Only Ico and Flat grids implemented")
@@ -280,6 +281,16 @@ def load_variables_and_timesteps(description, dataset_folder):
             res_variables[variable_name] = res_variables[variable_name].reshape(res_variables[variable_name].shape[0],1,
                                                                                 res_variables[variable_name].shape[-2],
                                                                                 res_variables[variable_name].shape[-1])
+    # exclude timesteps with missing values in predictor variables.
+    masked_timesteps = np.zeros(list(res_variables.values())[0].shape[0], dtype=bool)
+    for vs in description["PREDICTOR_VARIABLES"].values():
+        for v in vs:
+            if (res_variables[v].mask != False).any():
+                m = np.where(np.mean(res_variables[v].mask, axis=(-1, -2, -3)) > 0)[0]
+                masked_timesteps[m] = True
+    c_dates = c_dates[~masked_timesteps]
+    for key, v in res_variables.items():
+        res_variables[key] = v[~masked_timesteps, ...].data
     return res_variables, c_dates
 
 
@@ -334,8 +345,9 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
     tvars = util.flatten(description["TARGET_VARIABLES"].values())
     predictors = np.concatenate(tuple([variables[p_var] for p_var in pvars]), axis=1)
     targets = np.concatenate(tuple([variables[t_var] for t_var in tvars]), axis=1)
-
+    print(predictors.shape)
     indices = np.arange(predictors.shape[0])
+    print(c_dates.shape)
     # if we want to reload a dataset with a specific configuration of indices for training and testing
     if "INDICES_TEST" in description.keys():
         x_train = predictors[description["INDICES_TRAIN"], ...]
