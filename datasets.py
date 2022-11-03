@@ -501,12 +501,13 @@ def load_variables_and_timesteps_months(description, dataset_folder):
             # load the marker for the missing value in the dataset
             missing_value = dataset.variables[variable_name].missing_value
             # if there are missing values in any of the extracted data for this var, store the masks too.
-            if (data == missing_value).any():
-                masks[dataset_name][variable_name] = (data == missing_value)
-                masks[dataset_name][variable_name] = masks[dataset_name][variable_name][sel_i, ...]
+            if dataset_name in description["TARGET_VARIABLES"].keys():
+                if (np.array(data[sel_i].mask is not False)).any():
+                    masks[dataset_name][variable_name] = data[sel_i].mask
             for d_m in description["MONTHS_USED_IN_PREDICTION"]:
                 variables[dataset_name][variable_name][d_m] = data[sel_i + d_m, ...]
                 variables[dataset_name][variable_name][d_m][(variables[dataset_name][variable_name][d_m] == missing_value)] = np.nan
+
 
     res_variables = {}
     res_masks = {}
@@ -527,7 +528,7 @@ def load_variables_and_timesteps_months(description, dataset_folder):
                     masked_timesteps[m] = True
     c_dates = c_dates[~masked_timesteps]
     for key, vs in res_variables.items():
-        for dm, v in vs:
+        for dm, v in vs.items():
             res_variables[key][dm] = v[~masked_timesteps, ...].data
 
     for dataset_name, dataset_masks in masks.items():  # loop over all used datasets
@@ -540,6 +541,7 @@ def load_variables_and_timesteps_months(description, dataset_folder):
     for key in res_masks.keys():
         assert(key not in util.flatten(description["PREDICTOR_VARIABLES"].values()))
     for pvar in util.flatten(description["TARGET_VARIABLES"].values()):
+        print(res_masks.keys())
         assert(pvar in res_masks.keys())
     for pvar in res_masks.keys():
         assert(pvar in util.flatten(description["TARGET_VARIABLES"].values()))
