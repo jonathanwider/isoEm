@@ -93,14 +93,15 @@ TODOs:
         - Additionally: Some of the temperature timesteps contain missing values → Probably I used a filled version?
         - Now: Assume that all timesteps are present. Dont filter by date.
         - BUT: Exclude dates if everything is none.
-        - 
     - [x] Load data from zenodo
     - [ ] Investigate:
-        - [ ] Calendar
-        - [ ] Timesteps
+        - [x] Calendar
+        - [x] Timesteps
         - [ ] Mean state
-        - [ ] Grid Shape
-        - [ ] Variable Names
+        - [x] Missing values
+        - [x] Grid Shape
+        - [x] Variable Names
+    - [ ] isoGSM and ECHAM5 would require using masked processing even on yearly scale… write function if time
     - [ ] Think about which timesteps we want to use in crossprediction. All? Only new test set? Does the new testset need to align with the old one?
 
 More todo's: 

@@ -102,6 +102,11 @@ def get_years_months(t, units, calendar):
     return years, months
 
 
+def add_dates(y1, m1, y2, m2):
+    m_res = (m1 + m2) % 11
+    y_res = y1 + y2 + (m1 + m2) // 11
+    return y_res, m_res
+
 def get_year_mon_day_from_timesteps(time_steps, ref_date):
     """
     Extract the month (0: January,..., 11: December) of given timesteps, assuming the time is given as days

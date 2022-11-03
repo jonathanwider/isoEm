@@ -117,11 +117,11 @@ def get_shared_timesteps(description, dataset_folder):
 
     if description["TIMESCALE"] == "YEARLY":
         for dst in description["DATASETS_NO_GAPS"]:
-            d_path = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Original", "{}.nc".format(dst))
+            d_path = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Original", "{}_yearly.nc".format(dst))
             datasets[dst] = netCDF4.Dataset(d_path, "a")
     elif description["TIMESCALE"] == "MONTHLY":
         for dst in description["DATASETS_NO_GAPS"]:
-            d_path = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Original", "{}_monthly.nc".format(dst))
+            d_path = os.path.join(dataset_folder, description["CLIMATE_MODEL"], "Original", "{}.nc".format(dst))
             datasets[dst] = netCDF4.Dataset(d_path, "a")
     # assume that the time variable always has the same name for a given climate model... otherwise would need to
     # rewrite next lines
@@ -129,37 +129,24 @@ def get_shared_timesteps(description, dataset_folder):
         ts = tuple([dset.variables["t"][:].data for dset in datasets.values()])
         units = tuple([dset.variables["t"].units for dset in datasets.values()])
         cals = tuple([dset.variables["t"].calendar for dset in datasets.values()])
-        if description["TIMESCALE"] == "YEARLY":
-            ys = [set(util.get_years_months(t, units[i], cals[i])[0]) for (i, t) in enumerate(ts)]
-            common_dates = set.intersection(*ys)
-        elif description["TIMESCALE"] == "MONTHLY":
-            print(units[i])
-            years_l = [util.get_years_months(t, units[i], cals[i])[0] for (i, t) in enumerate(ts)]
-            months_l = [util.get_years_months(t, units[i], cals[i])[1] for (i, t) in enumerate(ts)]
-            c_dates = []
-            for i, years in range(len(years_l)):
-                dates = set()
-                for j in range(len(years_l[i])):
-                    dates.append(months_l[i][j], years_l[i][j])
-                c_dates.append(dates)
-            common_dates = set.intersection(*c_dates)
     except KeyError:
         ts = tuple([dset.variables["time"][:].data for dset in datasets.values()])
         units = tuple([dset.variables["time"].units for dset in datasets.values()])
         cals = tuple([dset.variables["time"].calendar for dset in datasets.values()])
-        if description["TIMESCALE"] == "YEARLY":
-            ys = [set(util.get_years_months(t, units[i], cals[i])[0]) for (i, t) in enumerate(ts)]
-            common_dates = set.intersection(*ys)
-        elif description["TIMESCALE"] == "MONTHLY":
-            years_l = [util.get_years_months(t, units[i], cals[i])[0] for (i, t) in enumerate(ts)]
-            months_l = [util.get_years_months(t, units[i], cals[i])[1] for (i, t) in enumerate(ts)]
-            c_dates = []
-            for i, years in range(len(years_l)):
-                dates = set()
-                for j in range(len(years_l[i])):
-                    dates.append(months_l[i][j], years_l[i][j])
-                c_dates.append(dates)
-            common_dates = set.intersection(*c_dates)
+
+    if description["TIMESCALE"] == "YEARLY":
+        ys = [set(util.get_years_months(t, units[i], cals[i])[0]) for (i, t) in enumerate(ts)]
+        common_dates = set.intersection(*ys)
+    elif description["TIMESCALE"] == "MONTHLY":
+        years_l = [util.get_years_months(t, units[i], cals[i])[0] for (i, t) in enumerate(ts)]
+        months_l = [util.get_years_months(t, units[i], cals[i])[1] for (i, t) in enumerate(ts)]
+        c_dates = []
+        for i in range(len(years_l)):
+            dates = set()
+            for j in range(len(years_l[i])):
+                dates.add((years_l[i][j], months_l[i][j]))
+            c_dates.append(dates)
+        common_dates = set.intersection(*c_dates)
     return list(common_dates)
 
 
@@ -212,7 +199,7 @@ def load_variables_and_timesteps(description, dataset_folder):
             try:
                 years = util.get_years_months(dataset.variables["t"][:].data, dataset.variables["t"].units,
                                               dataset.variables["t"].calendar)[0]
-            except:
+            except KeyError:
                 years = util.get_years_months(dataset.variables["time"][:].data, dataset.variables["time"].units,
                                               dataset.variables["time"].calendar)[0]
             # get the corresponding indices:
@@ -226,7 +213,7 @@ def load_variables_and_timesteps(description, dataset_folder):
                 years = util.get_years_months(dataset["6_nb"].variables["t"][:].data,
                                               dataset["6_nb"].variables["t"].units,
                                               dataset["6_nb"].variables["t"].calendar)[0]
-            except:
+            except KeyError:
                 years = util.get_years_months(dataset["6_nb"].variables["time"][:].data,
                                               dataset["6_nb"].variables["time"].units,
                                               dataset["6_nb"].variables["time"].calendar)[0]
@@ -345,9 +332,7 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
     tvars = util.flatten(description["TARGET_VARIABLES"].values())
     predictors = np.concatenate(tuple([variables[p_var] for p_var in pvars]), axis=1)
     targets = np.concatenate(tuple([variables[t_var] for t_var in tvars]), axis=1)
-    print(predictors.shape)
     indices = np.arange(predictors.shape[0])
-    print(c_dates.shape)
     # if we want to reload a dataset with a specific configuration of indices for training and testing
     if "INDICES_TEST" in description.keys():
         x_train = predictors[description["INDICES_TRAIN"], ...]
@@ -437,29 +422,24 @@ def load_variables_and_timesteps_months(description, dataset_folder):
 
     datasets = get_required_datasets(description, dataset_folder)
 
+
     # make sure that all datasets that have a non-trivial time axis share the same calendar and units.
-    units = np.array([ds.variables["t"].units for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1])
-    cals = np.array([ds.variables["t"].calendar for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1])
+    try:
+        units = [ds.variables["t"].units for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1]
+        cals = [ds.variables["t"].calendar for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1]
+    except KeyError:
+        units = [ds.variables["time"].units for ds in list(datasets.values()) if ds.variables["time"][:].data.shape[0] > 1]
+        cals = [ds.variables["time"].calendar for ds in list(datasets.values()) if ds.variables["time"][:].data.shape[0] > 1]
 
-    # extract reference date from calendar in dataset
-    match = re.search(r'\d{4}-\d{2}-\d{2}', units[0])
-    if match is None:
-        raise ValueError("No date following the YYYY-MM-DD convention found")
-    ref_date = datetime.strptime(match.group(), '%Y-%m-%d').date()
+    description["CALENDAR"] = cals
+    description["T_UNITS"] = units
 
-    description["CALENDAR"] = cals[0]
-    description["T_UNITS"] = units[0]
-    description["REFERENCE_DATE"] = ref_date
-
-    c_dates = get_shared_timesteps(description, dataset_folder)
-    c_years, _, _ = get_year_mon_day_from_timesteps(c_dates, ref_date)
-    rel_years = c_years - ref_date.year
-    c_mask = np.logical_and(rel_years >= description["START_YEAR"],
-                            rel_years < description["END_YEAR"])
-    c_dates = c_dates[c_mask]
-
-    assert (cals == "360_day").all()
-    assert (units == units[0]).all()
+    c_years = np.array(get_shared_timesteps(description, dataset_folder))
+    c_mask = np.logical_and(c_years[:, 0] >= description["START_YEAR"],
+                            c_years[:, 0] < description["END_YEAR"])
+    c_dates = c_years[c_mask]
+    c_dates = c_dates[c_dates[:, 1].argsort(kind="stable")]
+    c_dates = c_dates[c_dates[:, 0].argsort(kind="stable")]
 
     for dataset_name, dataset in datasets.items():  # loop over all used datasets
         assert "latitude" in dataset.variables.keys() or "lat" in dataset.variables.keys()
@@ -484,36 +464,39 @@ def load_variables_and_timesteps_months(description, dataset_folder):
             variables[dataset_name][variable_name] = {}
 
             if dataset.variables[variable_name][:].data.shape[0] > 1:  # only if time dimension is not trivial
+
+                try:
+                    years, months = util.get_years_months(dataset.variables["t"][:].data, dataset.variables["t"].units,
+                                                          dataset.variables["t"].calendar)
+                except KeyError:
+                    years, months = util.get_years_months(dataset.variables["time"][:].data, dataset.variables["time"].units,
+                                                          dataset.variables["time"].calendar)
                 # get the corresponding indices:
                 indices = []
-                for i, t in enumerate(dataset.variables["t"][:].data):
-                    if t in c_dates:
+                for i, (y, m) in enumerate(zip(years, months)):
+                    if np.array([y, m]) in c_dates:
                         indices.append(i)
                 indices = np.array(indices, dtype=int)
 
-                t = dataset.variables["t"][indices].data
-                t_full = dataset.variables["t"][:].data
-
-                _, t_months, _ = get_year_mon_day_from_timesteps(t, ref_date)
                 months_indices = []
                 for i in range(12):
-                    months_indices.append(np.where(t_months == i))
+                    months_indices.append(np.where(months == i))
                 indices_selected_months = [np.squeeze(months_indices[i]) for i in description["MONTHS_USED"]]
                 # we need to sort because otherwise dataset is not ordered chronologically but one sorted by months.
                 indices_selected_months = np.sort(np.concatenate(tuple(indices_selected_months)))
 
                 sel_i = indices[indices_selected_months]
                 # we need to make sure that the other months used in the prediction are not missing from the dataset.
-                all_needed_months_contained = np.array([np.array(
-                    [t_full[i] + 30 * dm in t_full[sel_i] for dm in description["MONTHS_USED_IN_PREDICTION"]]).all() for
-                                                        i in sel_i])
+                all_needed_months_contained = np.array([np.array([util.add_dates(years[i], months[i], 0, dm) in c_dates
+                                                                  for dm in description["MONTHS_USED_IN_PREDICTION"]]).all()
+                                                        for i in sel_i])
                 # filter out all months that are not possible as predictable target.
                 sel_i = sel_i[all_needed_months_contained]
-                data = np.squeeze(dataset.variables[variable_name][:].data[..., description["LATITUDES_SLICE"][0]:
+                data = np.squeeze(dataset.variables[variable_name][:][..., description["LATITUDES_SLICE"][0]:
                                                                            description["LATITUDES_SLICE"][1], :])
             else:
-                data = np.squeeze(np.repeat(dataset.variables[variable_name][:].data[..., description["LATITUDES_SLICE"][0]:
-                                            description["LATITUDES_SLICE"][1], :], repeats=len(t_full), axis=0))
+                data = np.squeeze(np.repeat(dataset.variables[variable_name][:][..., description["LATITUDES_SLICE"][0]:
+                                            description["LATITUDES_SLICE"][1], :], repeats=len(c_dates), axis=0))
 
             # load the marker for the missing value in the dataset
             missing_value = dataset.variables[variable_name].missing_value
@@ -534,6 +517,19 @@ def load_variables_and_timesteps_months(description, dataset_folder):
             for dm in description["MONTHS_USED_IN_PREDICTION"]:
                 res_variables[variable_name][dm] = dataset[variable_name][dm]
 
+    # exclude timesteps with missing values in predictor variables.
+    masked_timesteps = np.zeros(list(res_variables.values())[0][0].shape[0], dtype=bool)
+    for vs in description["PREDICTOR_VARIABLES"].values():
+        for v in vs:
+            for dm in description["MONTHS_USED_IN_PREDICTION"]:
+                if (res_variables[v][dm].mask != False).any():
+                    m = np.where(np.mean(res_variables[v][dm].mask, axis=(-1, -2, -3)) > 0)[0]
+                    masked_timesteps[m] = True
+    c_dates = c_dates[~masked_timesteps]
+    for key, vs in res_variables.items():
+        for dm, v in vs:
+            res_variables[key][dm] = v[~masked_timesteps, ...].data
+
     for dataset_name, dataset_masks in masks.items():  # loop over all used datasets
         v = dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])
         for variable_name in v[dataset_name]:  # loop over all variables we want to use from this dataset
@@ -547,7 +543,7 @@ def load_variables_and_timesteps_months(description, dataset_folder):
         assert(pvar in res_masks.keys())
     for pvar in res_masks.keys():
         assert(pvar in util.flatten(description["TARGET_VARIABLES"].values()))
-    return res_variables, res_masks, t_full[sel_i]
+    return res_variables, res_masks, c_dates
 
 
 def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
