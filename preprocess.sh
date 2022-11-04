@@ -32,18 +32,17 @@ FILES_ARR=($FILES)
 
 # do the preprocessing
 for file in $FILES; do
-  filename="${file%.*}" # get rid of file ending
-  if [[ "$file" == *"isotopes"* ]];then
+  filename="${file%%_*}" # get rid of file ending
+  if [[ "$file" == *"isotopes_raw"* ]];then
     # if the file name contains isotopes then
-    # current default behaviour: Overwrite existing file.
-    cdo copy "$file" "${filename}_raw.nc" # rename unprocessed files
+    # current default behaviour: Overwrite existing files
     cdo setvrange,$DMIN,$DMAX "${filename}_raw.nc" "${filename}.nc"
     cdo yearmean "${filename}.nc" "${filename}_yearly.nc"
-  elif [[ "$file" == *"tsurf"* ]];then
-    cdo yearmean "${file}" "${filename}_yearly.nc"
-  elif [[ "$file" == *"prec"* ]];then
-    cdo copy "$file" "${filename}_raw.nc" # rename unprocessed files
-    cdo setvrange,0,10000 "${filename}_raw.nc" "${filename}.nc" # set valid precipitation value range to 0-10000 mm/month
+  elif [[ "$file" == *"tsurf_raw"* ]];then
+    cdo copy "${filename}_raw.nc" "${filename}.nc"
+    cdo yearmean "${filename}.nc" "${filename}_yearly.nc"
+  elif [[ "$file" == *"prec_raw"* ]];then
+    cdo setvrange,-1,10000 "${filename}_raw.nc" "${filename}.nc" # set valid precipitation value range to -1 to 10000 mm/month
     cdo yearmean "${file}" "${filename}_yearly.nc"
   else
     echo "Invalid filename! Filename must contain one element of [isotopes, tsurf, prec]." 1>&2

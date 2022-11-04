@@ -55,9 +55,9 @@ def download_required_files(output_directory="Datasets/"):
         else:
             print("Downloading required data for {} climate model.".format(climate_model))
             os.makedirs(tmp_folder)
-            download_file(filenames[climate_model][0], os.path.join(tmp_folder, "isotopes.nc"))
-            download_file(filenames[climate_model][1], os.path.join(tmp_folder, "prec.nc"))
-            download_file(filenames[climate_model][2], os.path.join(tmp_folder, "tsurf.nc"))
+            download_file(filenames[climate_model][0], os.path.join(tmp_folder, "isotopes_raw.nc"))
+            download_file(filenames[climate_model][1], os.path.join(tmp_folder, "prec_raw.nc"))
+            download_file(filenames[climate_model][2], os.path.join(tmp_folder, "tsurf_raw.nc"))
     print("Done")
 
 
@@ -71,7 +71,7 @@ def preprocess_required_files(output_directory="Datasets/", low=-100, high=100):
     """
     for m in ["ECHAM5", "GISS", "iCESM", "iHadCM3", "isoGSM"]:
         print("Preprocessing {} climate model data.".format(m))
-        for f in ["isotopes.nc","prec.nc", "tsurf.nc"]:
+        for f in ["isotopes_raw.nc","prec_raw.nc", "tsurf_raw.nc"]:
             file = os.path.join(output_directory, m, "Original", f)
             script = os.path.join("./preprocess.sh")
 
