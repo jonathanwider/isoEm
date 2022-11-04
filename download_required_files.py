@@ -76,12 +76,9 @@ def preprocess_required_files(output_directory="Datasets/", low=-100, high=100, 
             file = os.path.join(output_directory, m, "Original", f)
             script = os.path.join("./preprocess.sh")
             if grid is None:
-                print("grid is none")
-                print(os.path.join(output_directory,"iHadCM3/Original/isotopes_raw.nc"))
-                all([script, "-f", file, "-u", str(high), "-l", str(low), "-g", os.path.join(output_directory,"iHadCM3/Original/isotopes_raw.nc")])
+                call([script, "-f", file, "-u", str(high), "-l", str(low), "-g", os.path.join(output_directory,"iHadCM3/Original/isotopes_raw.nc")])
             else:
-                print("grid is not none")
-                all([script, "-f", file, "-u", str(high), "-l", str(low), "-g", grid])
+                call([script, "-f", file, "-u", str(high), "-l", str(low), "-g", grid])
 
 
 def main(output_directory="Datasets/", low=-100, high=100, grid=None):
