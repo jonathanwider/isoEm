@@ -61,32 +61,37 @@ def download_required_files(output_directory="Datasets/"):
     print("Done")
 
 
-def preprocess_required_files(output_directory="Datasets/", low=-100, high=100):
+def preprocess_required_files(output_directory="Datasets/", low=-100, high=100, grid=None):
     """
     Apply preprocessing to the downloaded datasets.
 
     @param output_directory: Dataset we downloaded the files to.
     @param low: Lower limit for the d18O range.
     @param high: Upper limit for the d18O range.
+    @param grid: Target grid we want to regrid to.
     """
     for m in ["ECHAM5", "GISS", "iCESM", "iHadCM3", "isoGSM"]:
         print("Preprocessing {} climate model data.".format(m))
         for f in ["isotopes_raw.nc","prec_raw.nc", "tsurf_raw.nc"]:
             file = os.path.join(output_directory, m, "Original", f)
             script = os.path.join("./preprocess.sh")
+            if grid is None:
+                all([script, "-f", file, "-u", str(high), "-l", str(low), "-g", os.path.join(output_directory,"iHadCM3/Original/isotopes_raw.nc")])
+            else:
+                all([script, "-f", file, "-u", str(high), "-l", str(low), "-g", grid])
 
-            call([script, "-f", file, "-u", str(high), "-l", str(low)])
 
-
-def main(output_directory="Datasets/", low=-100, high=100):
+def main(output_directory="Datasets/", low=-100, high=100, grid=None):
     download_required_files(output_directory=output_directory)
-    preprocess_required_files(output_directory=output_directory, low=low, high=high)
+    preprocess_required_files(output_directory=output_directory, low=low, high=high, grid=grid)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Download and precprocess files required for reproducing results')
     parser.add_argument('-d', dest='directory', action='store',
                         default="Datasets/", required=False,
+                        help='Directory to store the files in (default: ./Datasets)')
+    parser.add_argument('-g', dest='grid', action='store', required=False,
                         help='Directory to store the files in (default: ./Datasets)')
     parser.add_argument('-dmin', dest='l', action='store',
                         default=-100, required=False,
@@ -96,4 +101,4 @@ if __name__ == "__main__":
                         help='Maximum of desired d18O range (default: 100)')
 
     args = parser.parse_args()
-    main(output_directory=args.directory, low=args.l, high=args.h)
+    main(output_directory=args.directory, low=args.l, high=args.h, grid=args.grid)
