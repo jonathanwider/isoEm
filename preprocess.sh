@@ -42,21 +42,15 @@ for file in $FILES; do
     # if the file name contains isotopes then
     # current default behaviour: Overwrite existing files
     cdo setvrange,$DMIN,$DMAX "${filename}_raw.nc" "${filename}_tmp.nc"
-    if [[ "$file" != "*iHadCM3*" ]]; then
-      cdo -f nc remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
-    fi
+    cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
     cdo yearmean "${filename}.nc" "${filename}_yearly.nc"
   elif [[ "$file" == *"tsurf_raw"* ]];then
     cdo copy "${filename}_raw.nc" "${filename}_tmp.nc"
-    if [[ "$file" != "*iHadCM3*" ]]; then
-      cdo -f nc remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
-    fi
+    cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
     cdo yearmean "${filename}.nc" "${filename}_yearly.nc"
   elif [[ "$file" == *"prec_raw"* ]];then
     cdo setvrange,-1,10000 "${filename}_raw.nc" "${filename}_tmp.nc" # set valid precipitation value range to -1 to 10000 mm/month
-    if [[ "$file" != "*iHadCM3*" ]]; then
-      cdo -f nc remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
-    fi
+    cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
     cdo yearmean "${filename}.nc" "${filename}_yearly.nc"
   else
     echo "Invalid filename! Filename must contain one element of [isotopes, tsurf, prec]." 1>&2
