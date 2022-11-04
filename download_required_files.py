@@ -61,7 +61,7 @@ def download_required_files(output_directory="Datasets/"):
     print("Done")
 
 
-def preprocess_required_files(output_directory="Datasets/", low=-100, high=100, grid=None):
+def preprocess_required_files(output_directory="Datasets/", low=-1000, high=1000, grid=None):
     """
     Apply preprocessing to the downloaded datasets.
 
@@ -76,12 +76,12 @@ def preprocess_required_files(output_directory="Datasets/", low=-100, high=100, 
             file = os.path.join(output_directory, m, "Original", f)
             script = os.path.join("./preprocess.sh")
             if grid is None:
-                call([script, "-f", file, "-u", str(high), "-l", str(low), "-g", os.path.join(output_directory,"iHadCM3/Original/isotopes_raw.nc")])
+                call([script, "-f", file, "-u", str(high), "-l", str(low), "-g", os.path.join(output_directory,"iHadCM3/Original/tsurf_raw.nc")])
             else:
                 call([script, "-f", file, "-u", str(high), "-l", str(low), "-g", grid])
 
 
-def main(output_directory="Datasets/", low=-100, high=100, grid=None):
+def main(output_directory="Datasets/", low=-1000, high=1000, grid=None):
     download_required_files(output_directory=output_directory)
     preprocess_required_files(output_directory=output_directory, low=low, high=high, grid=grid)
 
@@ -95,10 +95,10 @@ if __name__ == "__main__":
                         help='Directory to store the files in (default: ./Datasets)')
     parser.add_argument('-dmin', dest='l', action='store',
                         default=-100, required=False,
-                        help='Minimum of desired d18O range (default: -100)')
+                        help='Minimum of desired d18O range (default: -1000)')
     parser.add_argument('-dmax', dest='h', action='store',
                         default=100, required=False,
-                        help='Maximum of desired d18O range (default: 100)')
+                        help='Maximum of desired d18O range (default: 1000)')
 
     args = parser.parse_args()
     main(output_directory=args.directory, low=args.l, high=args.h, grid=args.grid)
