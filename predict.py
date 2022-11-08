@@ -270,9 +270,9 @@ def predict_save_unet(dataset_description, model_training_description, base_fold
     predictions = predict_unet(testset, testloader, model_training_description, model)
     if model_training_description["MODEL_TYPE"] == "UNet_Flat":
         predictions = T.Resize(size=dataset_description["GRID_SHAPE"])(predictions).numpy()
+
     descriptions = {"DATASET_DESCRIPTION": dataset_description,
                     "MODEL_TRAINING_DESCRIPTION": model_training_description}
-
     s1 = util.create_hash_from_description(dataset_description)
     s2 = util.create_hash_from_description(model_training_description)
     folder_name = os.path.join(output_folder, s1 + s2)
