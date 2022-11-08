@@ -12,7 +12,6 @@ import re
 from datetime import datetime
 
 import numpy as np
-from sklearn.model_selection import train_test_split
 
 import icosahedron
 import util
@@ -162,30 +161,16 @@ def load_variables_and_timesteps(description, dataset_folder):
     assert description["TIMESCALE"] == "YEARLY"
 
     variables = {}
+    masks = {}
     datasets = get_required_datasets(description, dataset_folder)
-
     # make sure that all datasets that have a non-trivial time axis share the same calendar and units.
-    try:
-        if description["GRID_TYPE"] == "Flat":
-            units = [ds.variables["t"].units for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1]
-            cals = [ds.variables["t"].calendar for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1]
-        elif description["GRID_TYPE"] == "Ico":
-            units = [ds["6_nb"].variables["t"].units for ds in list(datasets.values()) if ds["6_nb"].variables["t"][:].data.shape[0] > 1]
-            cals = [ds["6_nb"].variables["t"].calendar for ds in list(datasets.values()) if ds["6_nb"].variables["t"][:].data.shape[0] > 1]
-        else:
-            raise NotImplementedError("Invalid grid type")
-    except:
-        if description["GRID_TYPE"] == "Flat":
-            units = [ds.variables["time"].units for ds in list(datasets.values()) if ds.variables["time"][:].data.shape[0] > 1]
-            cals = [ds.variables["time"].calendar for ds in list(datasets.values()) if ds.variables["time"][:].data.shape[0] > 1]
-        elif description["GRID_TYPE"] == "Ico":
-            units = [ds["6_nb"].variables["time"].units for ds in list(datasets.values()) if ds["6_nb"].variables["time"][:].data.shape[0] > 1]
-            cals = [ds["6_nb"].variables["time"].calendar for ds in list(datasets.values()) if ds["6_nb"].variables["time"][:].data.shape[0] > 1]
-        else:
-            raise NotImplementedError("Invalid grid type")
-
-    description["CALENDAR"] = cals
-    description["T_UNITS"] = units
+    if description["GRID_TYPE"] == "Flat":
+        description["T_UNITS"], description["CALENDAR"] = util.load_units_cals(description, list(datasets.values()))
+    elif description["GRID_TYPE"] == "Ico":
+        ds_6nb = [ds["6_nb"] for ds in list(datasets.values())]
+        description["T_UNITS"], description["CALENDAR"] = util.load_units_cals(description, list(ds_6nb))
+    else:
+        raise NotImplementedError("Invalid grid type")
 
     c_years = np.array(get_shared_timesteps(description, dataset_folder))
     c_mask = np.logical_and(c_years >= description["START_YEAR"],
@@ -194,6 +179,7 @@ def load_variables_and_timesteps(description, dataset_folder):
 
     for dataset_name, dataset in datasets.items():  # loop over all used datasets
         variables[dataset_name] = {}
+        masks[dataset_name] = {}
         # loop over all variables we want to use from this dataset
         if description["GRID_TYPE"] == "Flat":
             try:
@@ -228,24 +214,24 @@ def load_variables_and_timesteps(description, dataset_folder):
 
         for variable_name in dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])[dataset_name]:
             if description["GRID_TYPE"] == "Flat":
-                assert "latitude" in dataset.variables.keys() or "lat" in dataset.variables.keys()
-                assert "longitude" in dataset.variables.keys() or "lon" in dataset.variables.keys()
-                try:
-                    description["LATITUDES"] = tuple(dataset.variables["latitude"][description["LATITUDES_SLICE"][0]:
-                                                                                   description["LATITUDES_SLICE"][1]].data)
-                except:
-                    description["LATITUDES"] = tuple(dataset.variables["lat"][description["LATITUDES_SLICE"][0]:
-                                                                              description["LATITUDES_SLICE"][1]].data)
-                try:
-                    description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
-                except:
-                    description["LONGITUDES"] = tuple(dataset.variables["lon"][:].data)
+                description["LATITUDES"], description["LONGITUDES"] = util.load_longitudes_latitudes(description, dataset)
+
                 if dataset.variables[variable_name][:].data.shape[0] > 1:  # only if time dimension is not trivial
                     variables[dataset_name][variable_name] = np.squeeze(dataset.variables[variable_name][:])[indices,
                                                              description["LATITUDES_SLICE"][0]:description["LATITUDES_SLICE"][1], :]
                 else:
                     variables[dataset_name][variable_name] = np.squeeze(
-                        np.repeat(dataset.variables[variable_name][:].data[..., 1:-1, :], repeats=len(c_dates), axis=0))
+                        np.repeat(dataset.variables[variable_name][:][..., 1:-1, :], repeats=len(c_dates), axis=0))
+
+                # load the marker for the missing value in the dataset
+                try:
+                    missing_value = dataset.variables[variable_name].missing_value
+                    variables[dataset_name][variable_name].data[variables[dataset_name][variable_name].data == missing_value] = np.nan
+                except AttributeError:
+                    pass
+                # if there are missing values in any of the extracted data for this var, store the masks too.
+                if dataset_name in description["TARGET_VARIABLES"].keys():
+                    masks[dataset_name][variable_name] = np.ma.getmaskarray(variables[dataset_name][variable_name])
 
             elif description["GRID_TYPE"] == "Ico":
                 variables[dataset_name][variable_name] = {}
@@ -260,25 +246,34 @@ def load_variables_and_timesteps(description, dataset_folder):
             else:
                 raise NotImplementedError("Only Ico and Flat grids implemented")
 
+    res_masks = {}
     res_variables = {}
+
     for dataset_name, dataset in variables.items():  # loop over all used datasets
         v = dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])
         for variable_name in v[dataset_name]:  # loop over all variables we want to use from this dataset
             res_variables[variable_name] = dataset[variable_name]
-            res_variables[variable_name] = res_variables[variable_name].reshape(res_variables[variable_name].shape[0],1,
+            res_variables[variable_name] = res_variables[variable_name].reshape(res_variables[variable_name].shape[0], 1,
                                                                                 res_variables[variable_name].shape[-2],
                                                                                 res_variables[variable_name].shape[-1])
     # exclude timesteps with missing values in predictor variables.
     masked_timesteps = np.zeros(list(res_variables.values())[0].shape[0], dtype=bool)
     for vs in description["PREDICTOR_VARIABLES"].values():
         for v in vs:
-            if (res_variables[v].mask != False).any():
-                m = np.where(np.mean(res_variables[v].mask, axis=(-1, -2, -3)) > 0)[0]
+            if (np.ma.getmaskarray(res_variables[v]) != False).any():
+                m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-1, -2, -3)) > 0)[0]
                 masked_timesteps[m] = True
     c_dates = c_dates[~masked_timesteps]
+
+    for dataset_name, dataset_masks in masks.items():  # loop over all used datasets
+        v = dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])
+        for variable_name in v[dataset_name]:  # loop over all variables we want to use from this dataset
+            if variable_name in dataset_masks.keys():
+                res_masks[variable_name] = dataset_masks[variable_name][~masked_timesteps, ...]
+
     for key, v in res_variables.items():
         res_variables[key] = v[~masked_timesteps, ...].data
-    return res_variables, c_dates
+    return res_variables, res_masks, c_dates
 
 
 def combine_variables(description, dataset_dict):
@@ -325,35 +320,40 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
 
     print("loading variables")
     # load the selected climate variables.
-    variables, c_dates = load_variables_and_timesteps(description, dataset_folder)
+    variables, masks, c_dates = load_variables_and_timesteps(description, dataset_folder)
 
     # split the variables into predictors and targets.
     pvars = util.flatten(description["PREDICTOR_VARIABLES"].values())
     tvars = util.flatten(description["TARGET_VARIABLES"].values())
     predictors = np.concatenate(tuple([variables[p_var] for p_var in pvars]), axis=1)
     targets = np.concatenate(tuple([variables[t_var] for t_var in tvars]), axis=1)
+    masks = np.concatenate(tuple([masks[t_var] for t_var in tvars], ))
+
     indices = np.arange(predictors.shape[0])
     # if we want to reload a dataset with a specific configuration of indices for training and testing
     if "INDICES_TEST" in description.keys():
-        x_train = predictors[description["INDICES_TRAIN"], ...]
-        x_test = predictors[description["INDICES_TEST"], ...]
-        y_train = targets[description["INDICES_TRAIN"], ...]
-        y_test = targets[description["INDICES_TEST"], ...]
-        indices_train = description["INDICES_TRAIN"]
-        indices_test = description["INDICES_TEST"]
-        timesteps_train = c_dates[description["INDICES_TRAIN"]]
-        timesteps_test = c_dates[description["INDICES_TEST"]]
+        x_train, x_test = util.train_test_split_by_indices(description, predictors)
+        y_train, y_test = util.train_test_split_by_indices(description, targets)
+        indices_train, indices_test = util.train_test_split_by_indices(description, indices)
+        timesteps_train, timesteps_test = util.train_test_split_by_indices(description, c_dates)
+        if description["GRID_TYPE"] == "Flat":
+            masks_train, masks_test = util.train_test_split_by_indices(description, masks)
     else:
-        x_train, x_test, y_train, y_test, indices_train, indices_test, timesteps_train, timesteps_test = train_test_split(
-            predictors, targets, indices, c_dates,
-            test_size=description["TEST_FRACTION"],
-            shuffle=description["DO_SHUFFLE"])
+        seed = np.random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max)
+        x_train, x_test = util.train_test_split_by_proportion(description, predictors, seed)
+        y_train, y_test = util.train_test_split_by_proportion(description, targets, seed)
+        indices_train, indices_test = util.train_test_split_by_proportion(description, indices, seed)
+        timesteps_train, timesteps_test = util.train_test_split_by_proportion(description, c_dates, seed)
+        if description["GRID_TYPE"] == "Flat":
+            masks_train, masks_test = util.train_test_split_by_proportion(description, masks, seed)
 
     if description["GRID_TYPE"] == "Flat":
         x_train = x_train.reshape(x_train.shape[0], len(pvars), -1, x_train.shape[-1])
         x_test = x_test.reshape(x_test.shape[0], len(pvars), -1, x_test.shape[-1])
         y_train = y_train.reshape(y_train.shape[0], len(tvars), -1, y_train.shape[-1])
         y_test = y_test.reshape(y_test.shape[0], len(tvars), -1, y_test.shape[-1])
+        masks_train = masks_train.reshape(masks_train.shape[0], len(tvars), -1, masks_train.shape[-1])
+        masks_test = masks_test.reshape(masks_test.shape[0], len(tvars), -1, masks_test.shape[-1])
     elif description["GRID_TYPE"] == "Ico":
         ico = icosahedron.Icosahedron(r=description["RESOLUTION"])
         charts = ico.get_charts_cut()
@@ -365,14 +365,28 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
         raise NotImplementedError("Only Flat and Ico grid implemented")
 
     dataset = {}
-    dataset['test'] = {
-        'predictors': x_test,
-        'targets': y_test
-    }
-    dataset['train'] = {
-        'predictors': x_train,
-        'targets': y_train
-    }
+    if description["GRID_TYPE"] == "Ico":
+        dataset['test'] = {
+            'predictors': x_test,
+            'targets': y_test
+        }
+        dataset['train'] = {
+            'predictors': x_train,
+            'targets': y_train
+        }
+    elif description["GRID_TYPE"] == "Flat":
+        dataset['test'] = {
+            'predictors': x_test,
+            'targets': y_test,
+            'masks': masks_test
+        }
+        dataset['train'] = {
+            'predictors': x_train,
+            'targets': y_train,
+            'masks': masks_train
+        }
+    else:
+        raise NotImplementedError("Invalid grid type")
     name = util.create_hash_from_description(description)
     folder_name = os.path.join(output_folder, "dset_{}".format(name))
 
@@ -423,15 +437,7 @@ def load_variables_and_timesteps_months(description, dataset_folder):
     datasets = get_required_datasets(description, dataset_folder)
 
     # make sure that all datasets that have a non-trivial time axis share the same calendar and units.
-    try:
-        units = [ds.variables["t"].units for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1]
-        cals = [ds.variables["t"].calendar for ds in list(datasets.values()) if ds.variables["t"][:].data.shape[0] > 1]
-    except KeyError:
-        units = [ds.variables["time"].units for ds in list(datasets.values()) if ds.variables["time"][:].data.shape[0] > 1]
-        cals = [ds.variables["time"].calendar for ds in list(datasets.values()) if ds.variables["time"][:].data.shape[0] > 1]
-
-    description["CALENDAR"] = cals
-    description["T_UNITS"] = units
+    description["CALENDAR"], description["T_UNITS"] = util.load_units_cals(description, list(datasets.values()))
 
     c_years = np.array(get_shared_timesteps(description, dataset_folder))
     c_mask = np.logical_and(c_years[:, 0] >= description["START_YEAR"],
@@ -441,18 +447,7 @@ def load_variables_and_timesteps_months(description, dataset_folder):
     c_dates = c_dates[c_dates[:, 0].argsort(kind="stable")]
 
     for dataset_name, dataset in datasets.items():  # loop over all used datasets
-        assert "latitude" in dataset.variables.keys() or "lat" in dataset.variables.keys()
-        assert "longitude" in dataset.variables.keys() or "lon" in dataset.variables.keys()
-        try:
-            description["LATITUDES"] = tuple(dataset.variables["latitude"][description["LATITUDES_SLICE"][0]:
-                                                                           description["LATITUDES_SLICE"][1]].data)
-        except:
-            description["LATITUDES"] = tuple(dataset.variables["lat"][description["LATITUDES_SLICE"][0]:
-                                                                      description["LATITUDES_SLICE"][1]].data)
-        try:
-            description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
-        except:
-            description["LONGITUDES"] = tuple(dataset.variables["lon"][:].data)
+        description["LATITUDES"], description["LONGITUDES"] = util.load_longitudes_latitudes(description, dataset)
 
         variables[dataset_name] = {}
         masks[dataset_name] = {}
@@ -497,15 +492,20 @@ def load_variables_and_timesteps_months(description, dataset_folder):
                 data = np.squeeze(np.repeat(dataset.variables[variable_name][:][..., description["LATITUDES_SLICE"][0]:
                                             description["LATITUDES_SLICE"][1], :], repeats=len(c_dates), axis=0))
 
-            # load the marker for the missing value in the dataset
-            missing_value = dataset.variables[variable_name].missing_value
+
             # if there are missing values in any of the extracted data for this var, store the masks too.
             if dataset_name in description["TARGET_VARIABLES"].keys():
-                if (np.array(data[sel_i].mask is not False)).any():
-                    masks[dataset_name][variable_name] = data[sel_i].mask
-            for d_m in description["MONTHS_USED_IN_PREDICTION"]:
-                variables[dataset_name][variable_name][d_m] = data[sel_i + d_m, ...]
-                variables[dataset_name][variable_name][d_m][(variables[dataset_name][variable_name][d_m] == missing_value)] = np.nan
+                masks[dataset_name][variable_name] = np.ma.getmaskarray(data[sel_i])
+            # load the marker for the missing value in the dataset
+
+            try:
+                missing_value = dataset.variables[variable_name].missing_value
+                for d_m in description["MONTHS_USED_IN_PREDICTION"]:
+                    variables[dataset_name][variable_name][d_m] = data[sel_i + d_m, ...]
+                    variables[dataset_name][variable_name][d_m].data[(variables[dataset_name][variable_name][d_m].data == missing_value)] = np.nan
+            except AttributeError:
+                for d_m in description["MONTHS_USED_IN_PREDICTION"]:
+                    variables[dataset_name][variable_name][d_m] = data[sel_i + d_m, ...]
 
 
     res_variables = {}
@@ -522,8 +522,8 @@ def load_variables_and_timesteps_months(description, dataset_folder):
     for vs in description["PREDICTOR_VARIABLES"].values():
         for v in vs:
             for dm in description["MONTHS_USED_IN_PREDICTION"]:
-                if (res_variables[v][dm].mask != False).any():
-                    m = np.where(np.mean(res_variables[v][dm].mask, axis=(-1, -2, -3)) > 0)[0]
+                if (np.ma.getmaskarray(res_variables[v][dm]) != False).any():
+                    m = np.where(np.mean(np.ma.getmaskarray(res_variables[v][dm]), axis=(-1, -2, -3)) > 0)[0]
                     masked_timesteps[m] = True
     c_dates = c_dates[~masked_timesteps]
     for key, vs in res_variables.items():
@@ -564,6 +564,7 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
     assert description["TIMESCALE"] == "YEARLY"
     assert description["GRID_TYPE"] == "Flat"
     variables = {}
+    masks = {}
 
     description["TIMESCALE"] = "MONTHLY"
     datasets_monthly = get_required_datasets(description, dataset_folder)
@@ -571,46 +572,19 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
     datasets_yearly = get_required_datasets(description, dataset_folder)
 
     # make sure that all datasets that have a non-trivial time axis share the same calendar and units.
-    try:
-        units = [ds.variables["t"].units for ds in list(datasets_yearly.values())+list(datasets_monthly.values())
-                 if ds.variables["t"][:].data.shape[0] > 1]
-        cals = [ds.variables["t"].calendar for ds in list(datasets_yearly.values())+list(datasets_monthly.values())
-                if ds.variables["t"][:].data.shape[0] > 1]
-    except KeyError:
-        units = [ds.variables["time"].units for ds in list(datasets_yearly.values())+list(datasets_monthly.values())
-                 if ds.variables["time"][:].data.shape[0] > 1]
-        cals = [ds.variables["time"].calendar for ds in list(datasets_yearly.values())+list(datasets_monthly.values())
-                if ds.variables["time"][:].data.shape[0] > 1]
 
-
-    description["CALENDAR"] = cals
-    description["T_UNITS"] = units
+    description["CALENDAR"], description["T_UNITS"] = util.load_units_cals(description, list(datasets_yearly.values())+list(datasets_monthly.values()))
 
     c_years = np.array(get_shared_timesteps(description, dataset_folder))
     c_mask = np.logical_and(c_years >= description["START_YEAR"],
                             c_years < description["END_YEAR"])
     c_dates = c_years[c_mask]
 
-    description["CALENDAR"] = cals
-    description["T_UNITS"] = units
-
     p_data = np.squeeze(datasets_monthly["prec"].variables["prec"][:].data[..., description["LATITUDES_SLICE"][0]:
                                                                                 description["LATITUDES_SLICE"][1], :])
 
     for dataset_name, dataset in datasets_monthly.items():  # loop over all used datasets
-        assert "latitude" in dataset.variables.keys() or "lat" in dataset.variables.keys()
-        assert "longitude" in dataset.variables.keys() or "lon" in dataset.variables.keys()
-        try:
-            description["LATITUDES"] = tuple(dataset.variables["latitude"][description["LATITUDES_SLICE"][0]:
-                                                                           description["LATITUDES_SLICE"][1]].data)
-        except KeyError:
-            description["LATITUDES"] = tuple(dataset.variables["lat"][description["LATITUDES_SLICE"][0]:
-                                                                      description["LATITUDES_SLICE"][1]].data)
-        try:
-            description["LONGITUDES"] = tuple(dataset.variables["longitude"][:].data)
-        except KeyError:
-            description["LONGITUDES"] = tuple(dataset.variables["lon"][:].data)
-
+        description["LATITUDES"], description["LONGITUDES"] = util.load_longitudes_latitudes(description, dataset)
         try:
             years = util.get_years_months(dataset.variables["t"][:].data, dataset.variables["t"].units,
                                           dataset.variables["t"].calendar)[0]
@@ -619,6 +593,7 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
                                           dataset.variables["time"].calendar)[0]
 
         variables[dataset_name] = {}
+        masks[dataset_name] = {}
 
         for variable_name in dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])[dataset_name]:
             variables[dataset_name][variable_name] = {}
@@ -626,8 +601,11 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
                 data = np.squeeze(dataset.variables[variable_name][:].data[..., description["LATITUDES_SLICE"][0]:
                                                                            description["LATITUDES_SLICE"][1], :])
                 # load the marker for the missing value in the dataset
-                missing_value = dataset.variables[variable_name].missing_value
-                data[data == missing_value] = np.nan
+                try:
+                    missing_value = dataset.variables[variable_name].missing_value
+                    data[data == missing_value] = np.nan
+                except AttributeError:
+                    pass
 
                 weights = p_data
                 masked_var = np.ma.MaskedArray(data, mask=np.isnan(data))
@@ -649,7 +627,12 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
                               repeats=len(c_dates), axis=0))
             variables[dataset_name][variable_name] = res
 
+            if dataset_name in description["TARGET_VARIABLES"].keys():
+                masks[dataset_name][variable_name] = np.ma.getmaskarray(variables[dataset_name][variable_name])
+
     res_variables = {}
+    res_masks = {}
+
     for dataset_name, dataset in variables.items():  # loop over all used datasets
         v = dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])
         for variable_name in v[dataset_name]:  # loop over all variables we want to use from this dataset
@@ -659,13 +642,20 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
     masked_timesteps = np.zeros(list(res_variables.values())[0].shape[0], dtype=bool)
     for vs in description["PREDICTOR_VARIABLES"].values():
         for v in vs:
-            if (res_variables[v].mask != False).any():
-                m = np.where(np.mean(res_variables[v].mask, axis=(-1, -2, -3)) > 0)[0]
+            if (np.ma.getmaskarray(res_variables[v]) != False).any():
+                m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-1, -2, -3)) > 0)[0]
                 masked_timesteps[m] = True
     c_dates = c_dates[~masked_timesteps]
+
+    for dataset_name, dataset_masks in masks.items():  # loop over all used datasets
+        v = dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])
+        for variable_name in v[dataset_name]:  # loop over all variables we want to use from this dataset
+            if variable_name in dataset_masks.keys():
+                res_masks[variable_name] = dataset_masks[variable_name][~masked_timesteps, ...]
+
     for key, v in res_variables.items():
         res_variables[key] = v[~masked_timesteps, ...].data
-    return res_variables, c_dates
+    return res_variables, res_masks, c_dates
 
 
 def create_precip_weighted_dataset(description, dataset_folder, output_folder):
@@ -681,34 +671,37 @@ def create_precip_weighted_dataset(description, dataset_folder, output_folder):
 
     print("loading variables")
     # load the selected climate variables.
-    variables, c_dates = load_variables_and_timesteps_precip_weighted(description, dataset_folder)
+    variables, masks, c_dates = load_variables_and_timesteps_precip_weighted(description, dataset_folder)
 
     # split the variables into predictors and targets.
     pvars = util.flatten(description["PREDICTOR_VARIABLES"].values())
     tvars = util.flatten(description["TARGET_VARIABLES"].values())
     predictors = np.concatenate(tuple([variables[p_var] for p_var in pvars]), axis=1)
     targets = np.concatenate(tuple([variables[t_var] for t_var in tvars]), axis=1)
+    masks = np.concatenate(tuple([masks[t_var] for t_var in tvars], ))
 
     indices = np.arange(predictors.shape[0])
     # if we want to reload a dataset with a specific configuration of indices for training and testing
     if "INDICES_TEST" in description.keys():
-        x_train = predictors[description["INDICES_TRAIN"], ...]
-        x_test = predictors[description["INDICES_TEST"], ...]
-        y_train = targets[description["INDICES_TRAIN"], ...]
-        y_test = targets[description["INDICES_TEST"], ...]
-        indices_train = description["INDICES_TRAIN"]
-        indices_test = description["INDICES_TEST"]
-        timesteps_train = c_dates[description["INDICES_TRAIN"]]
-        timesteps_test = c_dates[description["INDICES_TEST"]]
+        x_train, x_test = util.train_test_split_by_indices(description, predictors)
+        y_train, y_test = util.train_test_split_by_indices(description, targets)
+        indices_train, indices_test = util.train_test_split_by_indices(description, indices)
+        timesteps_train, timesteps_test = util.train_test_split_by_indices(description, c_dates)
+        masks_train, masks_test = util.train_test_split_by_indices(description, masks)
     else:
-        x_train, x_test, y_train, y_test, indices_train, indices_test, timesteps_train, timesteps_test = train_test_split(
-            predictors, targets, indices, c_dates,
-            test_size=description["TEST_FRACTION"],
-            shuffle=description["DO_SHUFFLE"])
+        seed = np.random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max)
+        x_train, x_test = util.train_test_split_by_proportion(description, predictors, seed)
+        y_train, y_test = util.train_test_split_by_proportion(description, targets, seed)
+        indices_train, indices_test = util.train_test_split_by_proportion(description, indices, seed)
+        timesteps_train, timesteps_test = util.train_test_split_by_proportion(description, c_dates, seed)
+        masks_train, masks_test = util.train_test_split_by_proportion(description, masks, seed)
+
     x_train = x_train.reshape(x_train.shape[0], len(pvars), -1, x_train.shape[-1])
     x_test = x_test.reshape(x_test.shape[0], len(pvars), -1, x_test.shape[-1])
     y_train = y_train.reshape(y_train.shape[0], len(tvars), -1, y_train.shape[-1])
     y_test = y_test.reshape(y_test.shape[0], len(tvars), -1, y_test.shape[-1])
+    masks_train = masks_train.reshape(masks_train.shape[0], len(tvars), -1, masks_train.shape[-1])
+    masks_test = masks_test.reshape(masks_test.shape[0], len(tvars), -1, masks_test.shape[-1])
 
     name = util.create_hash_from_description(description)
     folder_name = os.path.join(output_folder, "dset_{}".format(name))
@@ -723,11 +716,13 @@ def create_precip_weighted_dataset(description, dataset_folder, output_folder):
     dataset = {}
     dataset['test'] = {
         'predictors': x_test,
-        'targets': y_test
+        'targets': y_test,
+        'masks': masks_test
     }
     dataset['train'] = {
         'predictors': x_train,
-        'targets': y_train
+        'targets': y_train,
+        'masks': masks_train
     }
 
     print("writing pickle")
@@ -778,20 +773,18 @@ def create_monthly_dataset(description, dataset_folder, output_folder):
 
     # if we want to reload a dataset with a specific configuration of indices for training and testing
     if "INDICES_TEST" in description.keys():
-        x_train = predictors[description["INDICES_TRAIN"], ...]
-        x_test = predictors[description["INDICES_TEST"], ...]
-        masks_train = masks[description["INDICES_TRAIN"], ...]
-        masks_test = masks[description["INDICES_TEST"], ...]
-        y_train = targets[description["INDICES_TRAIN"], ...]
-        y_test = targets[description["INDICES_TEST"], ...]
-        indices_train = description["INDICES_TRAIN"]
-        indices_test = description["INDICES_TEST"]
-        timesteps_train = c_dates[description["INDICES_TRAIN"]]
-        timesteps_test = c_dates[description["INDICES_TEST"]]
+        x_train, x_test = util.train_test_split_by_indices(description, predictors)
+        y_train, y_test = util.train_test_split_by_indices(description, targets)
+        indices_train, indices_test = util.train_test_split_by_indices(description, indices)
+        timesteps_train, timesteps_test = util.train_test_split_by_indices(description, c_dates)
+        masks_train, masks_test = util.train_test_split_by_indices(description, masks)
     else:
-        x_train, x_test, y_train, y_test, masks_train, masks_test, indices_train, indices_test, timesteps_train, timesteps_test = train_test_split(
-            predictors, targets, masks, indices, c_dates, test_size=description["TEST_FRACTION"],
-            shuffle=description["DO_SHUFFLE"])
+        seed = np.random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max)
+        x_train, x_test = util.train_test_split_by_proportion(description, predictors, seed)
+        y_train, y_test = util.train_test_split_by_proportion(description, targets, seed)
+        indices_train, indices_test = util.train_test_split_by_proportion(description, indices, seed)
+        timesteps_train, timesteps_test = util.train_test_split_by_proportion(description, c_dates, seed)
+        masks_train, masks_test = util.train_test_split_by_proportion(description, masks, seed)
 
     x_train = x_train.reshape(x_train.shape[0], len(description["MONTHS_USED_IN_PREDICTION"])*len(pvars), -1, x_train.shape[-1])
     x_test = x_test.reshape(x_test.shape[0], len(description["MONTHS_USED_IN_PREDICTION"])*len(pvars), -1, x_test.shape[-1])

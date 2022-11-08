@@ -1,5 +1,6 @@
 import os.path
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 
 def flatten(l):
@@ -107,6 +108,7 @@ def add_dates(y1, m1, y2, m2):
     y_res = y1 + y2 + (m1 + m2) // 11
     return y_res, m_res
 
+
 def get_year_mon_day_from_timesteps(time_steps, ref_date):
     """
     Extract the month (0: January,..., 11: December) of given timesteps, assuming the time is given as days
@@ -129,3 +131,45 @@ def get_year_mon_day_from_timesteps(time_steps, ref_date):
     day = (total_days - year * 360 - month * 30) // 1
     return year, month, day
 
+
+def train_test_split_by_indices(description, variable):
+    assert "INDICES_TRAIN" in description.keys()
+    assert "INDICES_TEST" in description.keys()
+    return variable[description["INDICES_TRAIN"], ...], variable[description["INDICES_TEST"], ...]
+
+
+def train_test_split_by_proportion(description, variable, seed):
+    assert "TEST_FRACTION" in description.keys()
+    assert "DO_SHUFFLE" in description.keys()
+    return train_test_split(variable, test_size=description["TEST_FRACTION"], random_state=seed, shuffle=description["DO_SHUFFLE"])
+
+
+def load_longitudes_latitudes(description, dset):
+    assert "latitude" in dset.variables.keys() or "lat" in dset.variables.keys()
+    assert "longitude" in dset.variables.keys() or "lon" in dset.variables.keys()
+    try:
+        lat = tuple(dset.variables["latitude"][description["LATITUDES_SLICE"][0]:description["LATITUDES_SLICE"][1]].data)
+    except KeyError:
+        lat = tuple(dset.variables["lat"][description["LATITUDES_SLICE"][0]:description["LATITUDES_SLICE"][1]].data)
+    try:
+        lon = tuple(dset.variables["longitude"][:].data)
+    except KeyError:
+        lon = tuple(dset.variables["lon"][:].data)
+    return lat, lon
+
+
+def load_units_cals(description, dsets):
+    """
+    Extract time units and calendars of a list of datasets.
+    @param descriptions: Dataset description
+    @param dsets: List of datasets
+    @return: Lists of units and calendars
+    """
+    try:
+        units = [ds.variables["t"].units for ds in dsets if ds.variables["t"][:].data.shape[0] > 1]
+        cals = [ds.variables["t"].calendar for ds in dsets if ds.variables["t"][:].data.shape[0] > 1]
+    except KeyError:
+        units = [ds.variables["time"].units for ds in dsets if ds.variables["time"][:].data.shape[0] > 1]
+        cals = [ds.variables["time"].calendar for ds in dsets if ds.variables["time"][:].data.shape[0] > 1]
+
+    return units, cals
