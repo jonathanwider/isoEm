@@ -177,9 +177,15 @@ def get_rescaled_predictions_and_gt(descriptions, predictions):
 
     train_targets = dataset["train"]["targets"]
     test_targets = dataset["test"]["targets"]
+    if dataset_description["GRID_TYPE"] == "Flat":
+        test_masks = dataset["test"]["masks"]
+
     rescaled_predictions = undo_scaling(model_training_description, predictions, train_targets)
 
-    return rescaled_predictions, test_targets
+    if dataset_description["GRID_TYPE"] == "Flat":
+        return rescaled_predictions, test_targets, test_masks
+    else:
+        return rescaled_predictions, test_targets
 
 
 def get_rescaled_predictions_and_gt_split_into_months(descriptions, predictions):
@@ -235,8 +241,12 @@ def load_data_for_comparison(base_folder, conditions):
             rp, gt, masks = get_rescaled_predictions_and_gt_split_into_months(descriptions_list[i], predictions_list[i])
             masks_list.append(masks)
         elif descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY":
-            rp, gt = get_rescaled_predictions_and_gt(descriptions_list[i], predictions_list[i])
-            masks_list.append(None)
+            if descriptions_list[i]["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":
+                rp, gt = get_rescaled_predictions_and_gt(descriptions_list[i], predictions_list[i])
+                masks_list.append(None)
+            else:
+                rp, gt, masks = get_rescaled_predictions_and_gt(descriptions_list[i], predictions_list[i])
+                masks_list.append(masks)
         else:
             raise NotImplementedError("Invalid timescale.")
         rescaled_predictions_list.append(rp)

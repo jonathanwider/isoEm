@@ -322,17 +322,15 @@ def train_pca(dataset_description, model_training_description, base_folder):
     x_tr = train_ds[:][0].numpy()
     y_tr = train_ds[:][1].numpy()
     masks_tr = train_ds[:][2].numpy()
-    assert (masks_tr is False).all(), "No missing values allowed in target variables when training PCA methods."
+    assert (masks_tr == True).all(), "No missing values allowed in target variables when training PCA methods."
 
     x_train = x_tr.reshape(x_tr.shape[0], -1)
     y_train = y_tr.reshape(y_tr.shape[0], -1)
     # PCA
     pca = PCA(n_components=model_training_description["N_PC_PREDICTORS"])
     principal_components = pca.fit_transform(x_train)
-
     pca_targets = PCA(n_components=model_training_description["N_PC_TARGETS"])
     principal_components_targets = pca_targets.fit_transform(y_train)
-
     # Get the model
     if model_training_description["REGTYPE"] == 'lasso':
         model = train_lasso(principal_components, principal_components_targets)
@@ -364,7 +362,7 @@ def masked_weighted_mse_loss(output, target, masks, weights):
 def get_masked_area_weighted_mse_loss(dataset_description, model_training_description):
     assert "GRID_SHAPE" in dataset_description.keys()
     assert "DEVICE" in model_training_description.keys()
-    assert dataset_description["TIMESCALE"] == "MONTHLY"
+    assert dataset_description["GRID_TYPE"] == "Flat"
 
     divisor = 2 ** model_training_description["DEPTH"]
     width = dataset_description["GRID_SHAPE"][1]
@@ -382,7 +380,7 @@ def get_masked_area_weighted_mse_loss(dataset_description, model_training_descri
 def get_masked_mse_loss(dataset_description, model_training_description):
     assert "GRID_SHAPE" in dataset_description.keys()
     assert "DEVICE" in model_training_description.keys()
-    assert dataset_description["TIMESCALE"] == "MONTHLY"
+    assert dataset_description["GRID_TYPE"] == "Flat"
 
     divisor = 2 ** model_training_description["DEPTH"]
     width = dataset_description["GRID_SHAPE"][1]
@@ -390,6 +388,7 @@ def get_masked_mse_loss(dataset_description, model_training_description):
     adjusted_height = (height + divisor) - (height % divisor)
     adjusted_width = (width + divisor) - (width % divisor)
     const_weights = torch.ones((1, adjusted_height, adjusted_width))
+    const_weights = const_weights.to(model_training_description["DEVICE"])
     return partial(masked_weighted_mse_loss, weights=const_weights)
 
 
@@ -473,7 +472,7 @@ def train_unet(dataset_description, model_training_description, base_folder, use
     if dataset_description["GRID_TYPE"] == "Flat":
         loss_dict["Masked_AreaWeightedMSELoss"] = get_masked_area_weighted_mse_loss(dataset_description,
                                                                                     model_training_description)
-        loss_dict["Masked_MSELoss"] = get_area_weighted_mse_loss(dataset_description, model_training_description)
+        loss_dict["Masked_MSELoss"] = get_masked_mse_loss(dataset_description, model_training_description)
     elif dataset_description["GRID_TYPE"] == "Ico":
         loss_dict["MSELoss"] = nn.MSELoss()
         raise NotImplementedError("Invalid grid type")
@@ -712,7 +711,7 @@ def train_linreg_pixelwise(dataset_description, model_training_description, base
     x_tr = train_ds[:][0].numpy()
     y_tr = train_ds[:][1].numpy()
     masks_tr = train_ds[:][2].numpy()
-    assert (masks_tr is False).all(), "No missing values allowed in target variables when training Linreg baseline."
+    assert (masks_tr == True).all(), "No missing values allowed in target variables when training Linreg baseline."
 
     for i in range(x_tr.shape[-2]):
         models.append([])
@@ -744,7 +743,7 @@ def train_random_forest_pixelwise(dataset_description, model_training_descriptio
     x_tr = train_ds[:][0].numpy()
     y_tr = train_ds[:][1].numpy()
     masks_tr = train_ds[:][2].numpy()
-    assert (masks_tr is False).all(), "No missing values allowed in target variables when training Random forest baseline."
+    assert (masks_tr == True).all(), "No missing values allowed in target variables when training Random forest baseline."
 
     x_tr = append_coords(x_tr)  # append coordinates to predictor variables, lon as cos(lon), sin(lon)
 

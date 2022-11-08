@@ -190,10 +190,11 @@ def load_variables_and_timesteps(description, dataset_folder):
                                               dataset.variables["time"].calendar)[0]
             # get the corresponding indices:
             indices = []
-            for i, t in enumerate(years):
-                if t in c_dates:
-                    indices.append(i)
-            indices = np.array(indices, dtype=int)
+            if years is not None:
+                for i, t in enumerate(years):
+                    if t in c_dates:
+                        indices.append(i)
+                indices = np.array(indices, dtype=int)
         elif description["GRID_TYPE"] == "Ico":
             try:
                 years = util.get_years_months(dataset["6_nb"].variables["t"][:].data,
@@ -205,10 +206,11 @@ def load_variables_and_timesteps(description, dataset_folder):
                                               dataset["6_nb"].variables["time"].calendar)[0]
             # get the corresponding indices:
             indices = []
-            for i, t in enumerate(years):
-                if t in c_dates:
-                    indices.append(i)
-            indices = np.array(indices, dtype=int)
+            if years is not None:
+                for i, t in enumerate(years):
+                    if t in c_dates:
+                        indices.append(i)
+                indices = np.array(indices, dtype=int)
         else:
             raise NotImplementedError("Invalid grid type")
 
