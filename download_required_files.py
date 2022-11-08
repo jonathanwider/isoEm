@@ -94,10 +94,10 @@ if __name__ == "__main__":
     parser.add_argument('-g', dest='grid', action='store', required=False,
                         help='Directory to store the files in (default: ./Datasets)')
     parser.add_argument('-dmin', dest='l', action='store',
-                        default=-100, required=False,
+                        default=-1000, required=False,
                         help='Minimum of desired d18O range (default: -1000)')
     parser.add_argument('-dmax', dest='h', action='store',
-                        default=100, required=False,
+                        default=1000, required=False,
                         help='Maximum of desired d18O range (default: 1000)')
 
     args = parser.parse_args()
