@@ -104,8 +104,7 @@ def load_data(dataset_description, model_training_description, base_folder, use_
     test_targets = torch.from_numpy(
         dataset["test"]["targets"].astype(np.float32))
 
-    if dataset_description_full["TIMESCALE"] == "MONTHLY":
-        assert model_training_description["MODEL_TYPE"] == "UNet_Flat"
+    if not dataset_description_full["GRID_TYPE"] == "Ico":
         train_masks = torch.from_numpy(dataset["train"]["masks"].astype(bool))
         test_masks = torch.from_numpy(dataset["test"]["masks"].astype(bool))
         # there are problems with the interpolations if we use nans
@@ -125,34 +124,31 @@ def load_data(dataset_description, model_training_description, base_folder, use_
         train_targets = resize(train_targets)
         test_predictors = resize(test_predictors)
         test_targets = resize(test_targets)
-        if dataset_description_full["TIMESCALE"] == "MONTHLY":
-            train_masks = resize(train_masks.float())
-            test_masks = resize(test_masks.float())
-            # for the masks we want to even mask pixels where only part of the image was occluded...
-            test_masks = (test_masks != 0)
-            train_masks = (train_masks != 0)
+        train_masks = resize(train_masks.float())
+        test_masks = resize(test_masks.float())
+        # for the masks we want to even mask pixels where only part of the image was occluded...
+        test_masks = (test_masks != 0)
+        train_masks = (train_masks != 0)
 
-    if dataset_description_full["TIMESCALE"] == "MONTHLY":
+    if not dataset_description_full["GRID_TYPE"] == "Ico":
         test_masks = ~test_masks
         train_masks = ~train_masks
-
-    if dataset_description["TIMESCALE"] == "MONTHLY":
-        test_targets[test_targets > 1e5] = np.nan
-        train_targets[train_targets > 1e5] = np.nan
+        test_targets[~test_masks] = np.nan
+        train_targets[~train_masks] = np.nan
 
     train_predictors, train_targets, test_predictors, test_targets = standardize(train_predictors, train_targets,
                                                                                  test_predictors, test_targets,
                                                                                  dataset_description_full,
                                                                                  model_training_description)
 
-    if dataset_description_full["TIMESCALE"] == "MONTHLY":
+    if not dataset_description_full["GRID_TYPE"] == "Ico":
         test_dataset = data_utils.TensorDataset(test_predictors, test_targets, test_masks)
     else:
         test_dataset = data_utils.TensorDataset(test_predictors, test_targets)
 
     if model_training_description["CREATE_VALIDATIONSET"]:
         assert "SHUFFLE_VALIDATIONSET" in model_training_description.keys()
-        if dataset_description_full["TIMESCALE"] == "MONTHLY":
+        if not dataset_description_full["GRID_TYPE"] == "Ico":
             tmp_train_dataset = data_utils.TensorDataset(train_predictors, train_targets, train_masks)
         else:
             tmp_train_dataset = data_utils.TensorDataset(train_predictors, train_targets)
@@ -181,7 +177,7 @@ def load_data(dataset_description, model_training_description, base_folder, use_
             raise NotImplementedError("Specified model type not implemented")
 
     else:
-        if dataset_description_full["TIMESCALE"] == "MONTHLY":
+        if not dataset_description_full["GRID_TYPE"] == "Ico":
             train_dataset = data_utils.TensorDataset(train_predictors, train_targets, train_masks)
         else:
             train_dataset = data_utils.TensorDataset(train_predictors, train_targets)
@@ -279,7 +275,7 @@ def standardize(train_predictors, train_targets, test_predictors, test_targets, 
         train_predictors = torch.unsqueeze(train_predictors, dim=2)
         test_predictors = torch.unsqueeze(test_predictors, dim=2)
 
-    if dataset_description["TIMESCALE"] == "MONTHLY":
+    if not dataset_description["GRID_TYPE"] == "Ico":
         test_targets = torch.nan_to_num(test_targets, nan=1e20)
         train_targets = torch.nan_to_num(train_targets, nan=1e20)
 
@@ -325,6 +321,8 @@ def train_pca(dataset_description, model_training_description, base_folder):
         train_ds, _, _ = load_data(dataset_description, model_training_description, base_folder)
     x_tr = train_ds[:][0].numpy()
     y_tr = train_ds[:][1].numpy()
+    masks_tr = train_ds[:][2].numpy()
+    assert (masks_tr is False).all(), "No missing values allowed in target variables when training PCA methods."
 
     x_train = x_tr.reshape(x_tr.shape[0], -1)
     y_train = y_tr.reshape(y_tr.shape[0], -1)
@@ -425,7 +423,8 @@ def train_unet(dataset_description, model_training_description, base_folder, use
     assert "LOSS" in model_training_description.keys()
     assert "DEVICE" in model_training_description.keys()
     assert "OPTIMIZER" in model_training_description.keys()
-    if dataset_description["TIMESCALE"] == "MONTHLY":
+
+    if not dataset_description["GRID_TYPE"] == "Ico":
         assert model_training_description["LOSS"] in ["Masked_MSELoss", "Masked_AreaWeightedMSELoss"]
     if model_training_description["MODEL_TYPE"] == "UNet_Flat":
         assert "USE_CYLINDRICAL_PADDING" in model_training_description.keys()
@@ -471,16 +470,13 @@ def train_unet(dataset_description, model_training_description, base_folder, use
     # translate the options that are stored in the model_training_description
     optimizer_dict = {"Adam": torch.optim.Adam(unet.parameters())}
     loss_dict = {}
-    if dataset_description["TIMESCALE"] == "YEARLY":
-        loss_dict["MSELoss"] = nn.MSELoss()
-        if dataset_description["GRID_TYPE"] == "Flat":
-            loss_dict["AreaWeightedMSELoss"] = get_area_weighted_mse_loss(dataset_description, model_training_description)
-    elif dataset_description["TIMESCALE"] == "MONTHLY":
+    if dataset_description["GRID_TYPE"] == "Flat":
+        loss_dict["Masked_AreaWeightedMSELoss"] = get_masked_area_weighted_mse_loss(dataset_description,
+                                                                                    model_training_description)
         loss_dict["Masked_MSELoss"] = get_area_weighted_mse_loss(dataset_description, model_training_description)
-        if dataset_description["GRID_TYPE"] == "Flat":
-            loss_dict["Masked_AreaWeightedMSELoss"] = get_masked_area_weighted_mse_loss(dataset_description, model_training_description)
-    else:
-        raise NotImplementedError("Invalid timescale")
+    elif dataset_description["GRID_TYPE"] == "Ico":
+        loss_dict["MSELoss"] = nn.MSELoss()
+        raise NotImplementedError("Invalid grid type")
     criterion = loss_dict[model_training_description["LOSS"]]
     optimizer = optimizer_dict[model_training_description["OPTIMIZER"]]
     unet.to(model_training_description["DEVICE"])
@@ -501,26 +497,26 @@ def train_unet(dataset_description, model_training_description, base_folder, use
             for i, data in enumerate(train_loader):
                 # print(predictors.shape)
                 unet.train()
-                if dataset_description["TIMESCALE"] == "YEARLY":
+                if dataset_description["GRID_TYPE"] == "Ico":
                     predictors, targets = data
                     predictors = predictors.to(model_training_description["DEVICE"])
                     targets = targets.to(model_training_description["DEVICE"])
-                elif dataset_description["TIMESCALE"] == "MONTHLY":
+                elif dataset_description["GRID_TYPE"] == "Flat":
                     predictors, targets, masks = data
                     predictors = predictors.to(model_training_description["DEVICE"])
                     targets = targets.to(model_training_description["DEVICE"])
                     masks = masks.to(model_training_description["DEVICE"])
                 else:
-                    raise NotImplementedError("Timescale not implemented")
+                    raise NotImplementedError("Invalid grid type")
                 optimizer.zero_grad()
                 outputs = unet(predictors)
 
-                if dataset_description["TIMESCALE"] == "YEARLY":
+                if dataset_description["GRID_TYPE"] == "Ico":
                     loss = criterion(outputs, targets)
-                elif dataset_description["TIMESCALE"] == "MONTHLY":
+                elif dataset_description["GRID_TYPE"] == "Flat":
                     loss = criterion(outputs, targets, masks)
                 else:
-                    raise NotImplementedError("Timescale not implemented")
+                    raise NotImplementedError("Invalid grid type")
 
                 loss.backward()
                 running_loss += loss.item()
@@ -540,7 +536,7 @@ def train_unet(dataset_description, model_training_description, base_folder, use
             n_batches = 0
             for data in test_loader:
                 unet.eval()
-                if dataset_description["TIMESCALE"] == "YEARLY":
+                if dataset_description["GRID_TYPE"] == "Ico":
                     predictors, targets = data
                     with torch.no_grad():
                         predictors = predictors.to(model_training_description["DEVICE"])
@@ -548,8 +544,7 @@ def train_unet(dataset_description, model_training_description, base_folder, use
                         outputs = unet(predictors)
                         total_MSE += criterion(outputs, targets)
                         n_batches += 1
-
-                elif dataset_description["TIMESCALE"] == "MONTHLY":
+                elif dataset_description["GRID_TYPE"] == "Flat":
                     predictors, targets, masks = data
                     with torch.no_grad():
                         predictors = predictors.to(model_training_description["DEVICE"])
@@ -559,7 +554,7 @@ def train_unet(dataset_description, model_training_description, base_folder, use
                         total_MSE += criterion(outputs, targets, masks)
                         n_batches += 1
                 else:
-                    raise NotImplementedError("Timescale not implemented")
+                    raise NotImplementedError("Invalid grid type")
             print('Test MSE: {0}'.format(total_MSE / n_batches))
             if use_tensorboard:
                 writer.add_scalar('test loss', total_MSE, epoch)
@@ -584,26 +579,26 @@ def train_unet(dataset_description, model_training_description, base_folder, use
             n_batches = 0
             for i, data in enumerate(train_loader):
                 unet.train()
-                if dataset_description["TIMESCALE"] == "YEARLY":
+                if dataset_description["GRID_TYPE"] == "Ico":
                     predictors, targets = data
                     predictors = predictors.to(model_training_description["DEVICE"])
                     targets = targets.to(model_training_description["DEVICE"])
-                elif dataset_description["TIMESCALE"] == "MONTHLY":
+                elif dataset_description["GRID_TYPE"] == "Flat":
                     predictors, targets, masks = data
                     predictors = predictors.to(model_training_description["DEVICE"])
                     targets = targets.to(model_training_description["DEVICE"])
                     masks = masks.to(model_training_description["DEVICE"])
                 else:
-                    raise NotImplementedError("Timescale not implemented")
+                    raise NotImplementedError("Invalid grid type")
                 optimizer.zero_grad()
                 outputs = unet(predictors)
 
-                if dataset_description["TIMESCALE"] == "YEARLY":
+                if dataset_description["GRID_TYPE"] == "Ico":
                     loss = criterion(outputs, targets)
-                elif dataset_description["TIMESCALE"] == "MONTHLY":
+                elif dataset_description["GRID_TYPE"] == "Flat":
                     loss = criterion(outputs, targets, masks)
                 else:
-                    raise NotImplementedError("Timescale not implemented")
+                    raise NotImplementedError("Invalid grid type")
 
                 loss.backward()
 
@@ -624,7 +619,7 @@ def train_unet(dataset_description, model_training_description, base_folder, use
             n_batches = 0
             for data in validation_loader:
                 unet.eval()
-                if dataset_description["TIMESCALE"] == "YEARLY":
+                if dataset_description["GRID_TYPE"] == "Ico":
                     predictors, targets = data
                     with torch.no_grad():
                         predictors = predictors.to(model_training_description["DEVICE"])
@@ -633,7 +628,7 @@ def train_unet(dataset_description, model_training_description, base_folder, use
                         total_MSE += criterion(outputs, targets)
                         n_batches += 1
 
-                elif dataset_description["TIMESCALE"] == "MONTHLY":
+                elif dataset_description["GRID_TYPE"] == "Flat":
                     predictors, targets, masks = data
                     with torch.no_grad():
                         predictors = predictors.to(model_training_description["DEVICE"])
@@ -665,7 +660,7 @@ def train_unet(dataset_description, model_training_description, base_folder, use
         for data in test_loader:
             unet.eval()
 
-            if dataset_description["TIMESCALE"] == "YEARLY":
+            if dataset_description["GRID_TYPE"] == "Ico":
                 predictors, targets = data
                 with torch.no_grad():
                     predictors = predictors.to(model_training_description["DEVICE"])
@@ -674,7 +669,7 @@ def train_unet(dataset_description, model_training_description, base_folder, use
                     total_MSE += criterion(outputs, targets)
                     n_batches += 1
 
-            elif dataset_description["TIMESCALE"] == "MONTHLY":
+            elif dataset_description["GRID_TYPE"] == "Flat":
                 predictors, targets, masks = data
                 with torch.no_grad():
                     predictors = predictors.to(model_training_description["DEVICE"])
@@ -716,6 +711,8 @@ def train_linreg_pixelwise(dataset_description, model_training_description, base
 
     x_tr = train_ds[:][0].numpy()
     y_tr = train_ds[:][1].numpy()
+    masks_tr = train_ds[:][2].numpy()
+    assert (masks_tr is False).all(), "No missing values allowed in target variables when training Linreg baseline."
 
     for i in range(x_tr.shape[-2]):
         models.append([])
@@ -746,6 +743,8 @@ def train_random_forest_pixelwise(dataset_description, model_training_descriptio
 
     x_tr = train_ds[:][0].numpy()
     y_tr = train_ds[:][1].numpy()
+    masks_tr = train_ds[:][2].numpy()
+    assert (masks_tr is False).all(), "No missing values allowed in target variables when training Random forest baseline."
 
     x_tr = append_coords(x_tr)  # append coordinates to predictor variables, lon as cos(lon), sin(lon)
 

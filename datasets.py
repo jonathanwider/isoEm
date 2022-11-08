@@ -540,7 +540,6 @@ def load_variables_and_timesteps_months(description, dataset_folder):
     for key in res_masks.keys():
         assert(key not in util.flatten(description["PREDICTOR_VARIABLES"].values()))
     for pvar in util.flatten(description["TARGET_VARIABLES"].values()):
-        print(res_masks.keys())
         assert(pvar in res_masks.keys())
     for pvar in res_masks.keys():
         assert(pvar in util.flatten(description["TARGET_VARIABLES"].values()))
