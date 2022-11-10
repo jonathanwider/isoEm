@@ -561,7 +561,7 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
     assert "TARGET_VARIABLES" in description.keys()
     assert "LATITUDES_SLICE" in description.keys()
     assert description["PRECIP_WEIGHTING"] is True
-    assert ["prec"] in description["PREDICTOR_VARIABLES"].values()
+    assert ["prec"] in description["PREDICTOR_VARIABLES"].values() or ["precip"] in description["PREDICTOR_VARIABLES"].values()
     assert description["TIMESCALE"] == "YEARLY"
     assert description["GRID_TYPE"] == "Flat"
     variables = {}
@@ -580,10 +580,12 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
     c_mask = np.logical_and(c_years >= description["START_YEAR"],
                             c_years < description["END_YEAR"])
     c_dates = c_years[c_mask]
-
-    p_data = np.squeeze(datasets_monthly["prec"].variables["prec"][:].data[..., description["LATITUDES_SLICE"][0]:
+    try:
+        p_data = np.squeeze(datasets_monthly["prec"].variables["prec"][:].data[..., description["LATITUDES_SLICE"][0]:
                                                                                 description["LATITUDES_SLICE"][1], :])
-
+    except KeyError:
+        p_data = np.squeeze(datasets_monthly["precip"].variables["precip"][:].data[..., description["LATITUDES_SLICE"][0]:
+                                                                                description["LATITUDES_SLICE"][1], :])
     for dataset_name, dataset in datasets_monthly.items():  # loop over all used datasets
         description["LATITUDES"], description["LONGITUDES"] = util.load_longitudes_latitudes(description, dataset)
         try:
@@ -611,7 +613,7 @@ def load_variables_and_timesteps_precip_weighted(description, dataset_folder):
                 weights = p_data
                 masked_var = np.ma.MaskedArray(data, mask=np.isnan(data))
                 var_yearly_data = np.ma.zeros((len(c_dates), *data.shape[1:]))
-                if variable_name == "prec":
+                if variable_name == "prec" or variable_name == "precip":
                     for i, yr in enumerate(c_dates):
                         i_mask = (yr == years)
                         var_yearly_data[i, ...] = np.ma.average(masked_var[i_mask, ...], axis=0)

@@ -23,13 +23,15 @@ def get_rmse(predictions, targets, masks=None):
     gt = targets.reshape(targets.shape[0], -1)
 
     res = np.zeros((ps.shape[1]))
+    res[...] = np.nan
     if masks is None:
         for i in range(ps.shape[1]):
             res[i] = mean_squared_error(ps[:, i], gt[:, i], squared=False)
     else:
         masks = masks.reshape(masks.shape[0], -1)
         for i in range(ps.shape[1]):
-            res[i] = mean_squared_error(ps[~masks[:, i], i], gt[~masks[:, i], i], squared=False)
+            if np.sum(~masks[:, i]) > 0:
+                res[i] = mean_squared_error(ps[~masks[:, i], i], gt[~masks[:, i], i], squared=False)
     return res.reshape(*predictions.shape[1:])
 
 
@@ -46,7 +48,8 @@ def get_r2(predictions, targets, masks=None):
     rmse = get_rmse(predictions, targets, masks)  # calculate the RMSE
     std = np.nanstd(targets, axis=0)  # calculate the standard deviation of the ground truth
     if (std == 0).any():
-        raise ValueError("Standard deviation of the test set is zero along at least one dimension.")
+        if np.logical_and(std == 0, np.sum(~masks, axis=(0, 1)) <= 1).any():
+            std[std == 0] = np.nan
     return 1 - rmse/std
 
 
@@ -66,7 +69,8 @@ def get_weighted_average(data, dataset_description):
     longitudes = np.array(dataset_description["LONGITUDES"])
 
     weights = np.tile(np.cos(np.deg2rad(latitudes))[:, None], len(longitudes))[np.newaxis, ...]
-    data_avg = np.average(data, weights=weights, axis=(1, 2))
+    masked_data = np.ma.masked_array(data, np.isnan(data))
+    data_avg = np.ma.average(masked_data, weights=weights, axis=(1, 2))
     return data_avg
 
 
