@@ -317,7 +317,7 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
     decisions in the creation process (description).
     """
     assert "DO_SHUFFLE" in description.keys()
-    assert "TEST_FRACTION" in description.keys()
+    assert np.logical_xor("TEST_FRACTION" in description.keys(), "SPLIT_YEAR" in description.keys())
     assert description["TIMESCALE"] == "YEARLY"
 
     print("loading variables")
@@ -340,7 +340,7 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
         timesteps_train, timesteps_test = util.train_test_split_by_indices(description, c_dates)
         if description["GRID_TYPE"] == "Flat":
             masks_train, masks_test = util.train_test_split_by_indices(description, masks)
-    else:
+    elif "TEST_FRACTION" in description.keys():
         seed = np.random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max)
         x_train, x_test = util.train_test_split_by_proportion(description, predictors, seed)
         y_train, y_test = util.train_test_split_by_proportion(description, targets, seed)
@@ -348,7 +348,19 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
         timesteps_train, timesteps_test = util.train_test_split_by_proportion(description, c_dates, seed)
         if description["GRID_TYPE"] == "Flat":
             masks_train, masks_test = util.train_test_split_by_proportion(description, masks, seed)
-
+    else:
+        test_mask = c_dates > description["SPLIT_YEAR"]
+        x_train = predictors[~test_mask, ...]
+        x_test = predictors[test_mask, ...]
+        y_train = targets[~test_mask, ...]
+        y_test = targets[test_mask, ...]
+        indices_train = indices[~test_mask, ...]
+        indices_test = indices[test_mask, ...]
+        timesteps_train = c_dates[~test_mask, ...]
+        timesteps_test = c_dates[test_mask, ...]
+        if description["GRID_TYPE"] == "Flat":
+            masks_train = masks[~test_mask, ...]
+            masks_test = masks[test_mask, ...]
     if description["GRID_TYPE"] == "Flat":
         x_train = x_train.reshape(x_train.shape[0], len(pvars), -1, x_train.shape[-1])
         x_test = x_test.reshape(x_test.shape[0], len(pvars), -1, x_test.shape[-1])
@@ -667,7 +679,7 @@ def create_precip_weighted_dataset(description, dataset_folder, output_folder):
     decisions in the creation process (description). Weight variables by precipitation amount.
     """
     assert "DO_SHUFFLE" in description.keys()
-    assert "TEST_FRACTION" in description.keys()
+    assert np.logical_xor("TEST_FRACTION" in description.keys(), "SPLIT_YEAR" in description.keys())
     assert description["PRECIP_WEIGHTING"] is True
     assert description["TIMESCALE"] == "YEARLY"
     assert description["GRID_TYPE"] == "Flat"
@@ -691,13 +703,25 @@ def create_precip_weighted_dataset(description, dataset_folder, output_folder):
         indices_train, indices_test = util.train_test_split_by_indices(description, indices)
         timesteps_train, timesteps_test = util.train_test_split_by_indices(description, c_dates)
         masks_train, masks_test = util.train_test_split_by_indices(description, masks)
-    else:
+    elif "TEST_FRACTION" in description.keys():
         seed = np.random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max)
         x_train, x_test = util.train_test_split_by_proportion(description, predictors, seed)
         y_train, y_test = util.train_test_split_by_proportion(description, targets, seed)
         indices_train, indices_test = util.train_test_split_by_proportion(description, indices, seed)
         timesteps_train, timesteps_test = util.train_test_split_by_proportion(description, c_dates, seed)
         masks_train, masks_test = util.train_test_split_by_proportion(description, masks, seed)
+    else:
+        test_mask = c_dates > description["SPLIT_YEAR"]
+        x_train = predictors[~test_mask, ...]
+        x_test = predictors[test_mask, ...]
+        y_train = targets[~test_mask, ...]
+        y_test = targets[test_mask, ...]
+        indices_train = indices[~test_mask, ...]
+        indices_test = indices[test_mask, ...]
+        timesteps_train = c_dates[~test_mask, ...]
+        timesteps_test = c_dates[test_mask, ...]
+        masks_train = masks[~test_mask, ...]
+        masks_test = masks[test_mask, ...]
 
     x_train = x_train.reshape(x_train.shape[0], len(pvars), -1, x_train.shape[-1])
     x_test = x_test.reshape(x_test.shape[0], len(pvars), -1, x_test.shape[-1])
@@ -752,13 +776,12 @@ def create_monthly_dataset(description, dataset_folder, output_folder):
     decisions in the creation process (description).
     """
     assert "DO_SHUFFLE" in description.keys()
-    assert "TEST_FRACTION" in description.keys()
+    assert np.logical_xor("TEST_FRACTION" in description.keys(), "SPLIT_YEAR" in description.keys())
     assert description["TIMESCALE"] == "MONTHLY"
 
     print("loading variables")
     # load the selected climate variables.
     variables, masks, c_dates = load_variables_and_timesteps_months(description, dataset_folder)
-
     # split the variables into predictors and targets.
     pvars = util.flatten(description["PREDICTOR_VARIABLES"].values())
     tvars = util.flatten(description["TARGET_VARIABLES"].values())
@@ -781,13 +804,25 @@ def create_monthly_dataset(description, dataset_folder, output_folder):
         indices_train, indices_test = util.train_test_split_by_indices(description, indices)
         timesteps_train, timesteps_test = util.train_test_split_by_indices(description, c_dates)
         masks_train, masks_test = util.train_test_split_by_indices(description, masks)
-    else:
+    elif "TEST_FRACTION" in description.keys():
         seed = np.random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max)
         x_train, x_test = util.train_test_split_by_proportion(description, predictors, seed)
         y_train, y_test = util.train_test_split_by_proportion(description, targets, seed)
         indices_train, indices_test = util.train_test_split_by_proportion(description, indices, seed)
         timesteps_train, timesteps_test = util.train_test_split_by_proportion(description, c_dates, seed)
         masks_train, masks_test = util.train_test_split_by_proportion(description, masks, seed)
+    else:
+        test_mask = c_dates[:, 0] > description["SPLIT_YEAR"]
+        x_train = predictors[~test_mask, ...]
+        x_test = predictors[test_mask, ...]
+        y_train = targets[~test_mask, ...]
+        y_test = targets[test_mask, ...]
+        indices_train = indices[~test_mask, ...]
+        indices_test = indices[test_mask, ...]
+        timesteps_train = c_dates[~test_mask, ...]
+        timesteps_test = c_dates[test_mask, ...]
+        masks_train = masks[~test_mask, ...]
+        masks_test = masks[test_mask, ...]
 
     x_train = x_train.reshape(x_train.shape[0], len(description["MONTHS_USED_IN_PREDICTION"])*len(pvars), -1, x_train.shape[-1])
     x_test = x_test.reshape(x_test.shape[0], len(description["MONTHS_USED_IN_PREDICTION"])*len(pvars), -1, x_test.shape[-1])

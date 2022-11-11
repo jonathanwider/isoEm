@@ -18,6 +18,7 @@
 |                            |                                                                                                                     |
 | DO_SHUFFLE                 | Whether timesteps are shuffled or not                                                                               |
 | TEST_FRACTION              | Fraction of dataset used for testing                                                                                |
+|                            |                                                                                                                     |
 | CLIMATE_MODEL              | Specify which climate model is used                                                                                 |
 | LATITUDES_SLICE            | If using a flat grid,  exclude this number of pixels at bottom and top of latitude.                                 |
 | LATITUDES                  | Array of latitudes in the dataset                                                                                   |
