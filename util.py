@@ -2,6 +2,7 @@ import os.path
 import numpy as np
 import pickle
 import json
+import torch
 import hashlib
 from sklearn.model_selection import train_test_split
 
@@ -42,10 +43,13 @@ def test_if_folder_exists(dir_name):
     else:
         return False
 
-class NpEncoder(json.JSONEncoder):
+
+class jsonEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
             return int(obj)
+        if isinstance(obj, type) or isinstance(obj, torch.device):
+            return str(type)
         if isinstance(obj, np.floating):
             return float(obj)
         if isinstance(obj, np.ndarray):
@@ -58,17 +62,7 @@ def create_hash_from_description(description):
     Create a hash value that can than be used to identify duplicates of folders.
     """
     # to be able to hash, we need tuples instead of lists and frozensets instead of dicts.
-
-    res_dict = {}
-    for key, value in description.items():
-        if type(value) == dict:
-            res_dict[key] = value
-        elif type(value) == list:
-            res_dict[key] = tuple(value)
-        else:
-            res_dict[key] = value
-            # res_dict.items()
-    p = json.dumps(description, ensure_ascii=False, sort_keys=True, indent=None, separators=(',', ':'), cls=NpEncoder)
+    p = json.dumps(description, ensure_ascii=False, sort_keys=True, indent=None, separators=(',', ':'), cls=jsonEncoder)
     return hashlib.sha256(p.encode('utf-8')).hexdigest()[:30]
 
 

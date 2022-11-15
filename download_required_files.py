@@ -61,7 +61,7 @@ def download_required_files(output_directory="Datasets/"):
     print("Done")
 
 
-def preprocess_required_files(output_directory="Datasets/", low=-1000, high=1000, grid=None):
+def preprocess_required_files(output_directory="Datasets/", low=-100, high=100, grid=None):
     """
     Apply preprocessing to the downloaded datasets.
 
@@ -81,7 +81,7 @@ def preprocess_required_files(output_directory="Datasets/", low=-1000, high=1000
                 call([script, "-f", file, "-u", str(high), "-l", str(low), "-g", grid])
 
 
-def main(output_directory="Datasets/", low=-1000, high=1000, grid=None):
+def main(output_directory="Datasets/", low=-100, high=100, grid=None):
     download_required_files(output_directory=output_directory)
     preprocess_required_files(output_directory=output_directory, low=low, high=high, grid=grid)
 
@@ -94,11 +94,11 @@ if __name__ == "__main__":
     parser.add_argument('-g', dest='grid', action='store', required=False,
                         help='Directory to store the files in (default: ./Datasets)')
     parser.add_argument('-dmin', dest='l', action='store',
-                        default=-1000, required=False,
-                        help='Minimum of desired d18O range (default: -1000)')
+                        default=-100, required=False,
+                        help='Minimum of desired d18O range (default: -100)')
     parser.add_argument('-dmax', dest='h', action='store',
-                        default=1000, required=False,
-                        help='Maximum of desired d18O range (default: 1000)')
+                        default=100, required=False,
+                        help='Maximum of desired d18O range (default: 100)')
 
     args = parser.parse_args()
     main(output_directory=args.directory, low=args.l, high=args.h, grid=args.grid)

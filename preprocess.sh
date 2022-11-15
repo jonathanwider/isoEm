@@ -12,8 +12,8 @@ function help {
 }
 
 # Defaults
-DMIN=-1000
-DMAX=1000
+DMIN=-100
+DMAX=100
 
 # read options
 while getopts ":f:l:u:g:h" OPTION; do
