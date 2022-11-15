@@ -49,7 +49,7 @@ for file in $FILES; do
     fi
     cdo yearmean "${filename}.nc" "${filename}_yearly.nc"
   elif [[ "$file" == *"tsurf_raw"* ]];then
-    cdo setvrange,-173,343 "${filename}_raw.nc" "${filename}_tmp.nc" # set valid precipitation value range to -100 to 70 °C
+    cdo setvrange,173,343 "${filename}_raw.nc" "${filename}_tmp.nc" # set valid precipitation value range to -100 to 70 °C
     if [[ "$file" != *"iHadCM3"* ]];then
       cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
     else
