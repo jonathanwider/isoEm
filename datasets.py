@@ -16,6 +16,8 @@ import numpy as np
 import icosahedron
 import util
 
+PYTHONHASHSEED = 0
+
 
 def get_required_datasets(description, dataset_folder):
     """
