@@ -95,6 +95,7 @@ def plot_map(ax, data, description, style, title=""):
 def plot_masked_data(ax, data, description, style, title=""):
     """
     Plot data on a 2d grid in a given style.
+    @param ax: Axes to plot on
     @param data: Dict of masked fields to be plotted into the same plot.
     @param description: A description of the used dataset. Used to extract latitudes and longitudes.
     @param style: A plotting style (sizes, fonts, etc.)
@@ -120,6 +121,62 @@ def plot_masked_data(ax, data, description, style, title=""):
     for i, key in enumerate(list(data.keys())):
 
         ax.pcolormesh(lo, la, fields[i], transform=ccrs.PlateCarree(), cmap=style["CMAPS"][key], norm=style["NORM"])
+
+    ax.coastlines()
+
+    ax.set_title(title, fontsize=style["TITLE_FONTSIZE"])
+
+
+def plot_ico_map(ax, data, description, style, title=""):
+    """
+    Plot icosahedral data in a given style.
+    @param ax: Axes to plot on
+    @param data: Data to be plotted. Shape must be (n_polygons,)
+    @param description: A description of the used dataset. Used to extract latitudes and longitudes.
+    @param style: A plotting style (sizes, fonts, etc.)
+    @param title: Title of the plot
+    @return:
+    """
+    from icosahedron import Icosahedron
+    from util import cartesian_to_spherical
+
+    import matplotlib.patches as mpatches
+    from matplotlib.collections import PatchCollection
+
+    ico = Icosahedron(r=description["RESOLUTION"])
+    regions, vertices = ico.get_voronoi_regions_vertices()
+
+    spherical_vertices = cartesian_to_spherical(vertices)
+    spherical_vertices_plot = np.zeros_like(spherical_vertices)
+    spherical_vertices_plot[:, 0] = spherical_vertices[:, 1]  # longitude
+    spherical_vertices_plot[:, 0][spherical_vertices_plot[:, 0] == 360] = 0  # longitude
+    spherical_vertices_plot[:, 1] = spherical_vertices[:, 0]  # latitude
+
+    ax.set_global()
+
+    patches = []
+
+    for i in range(len(regions)):
+        tmp = spherical_vertices_plot[regions[i]]
+        # Polygons that lie close to the 0°-360° continuity get connected wrongly by cartopy. We fix this for now
+        # Solution is not perfect.
+        if np.amax(tmp[:, 0]) - np.amin(tmp[:, 0]) > 180:
+            tmp[tmp > 180] = tmp[tmp > 180] - 360
+        polygon = mpatches.Polygon(tmp,
+                                   transform=ccrs.PlateCarree())
+        polygon.set_color(style["CMAP"](style["NORM"](data[i])))
+        ax.add_patch(polygon)
+
+    cbar = plt.colorbar(
+            matplotlib.cm.ScalarMappable(cmap=style["CMAP"], norm=style["NORM"]),
+            spacing='proportional',
+            orientation='horizontal',
+            extend=style["CBAR_EXTEND"],
+            ax=ax)
+
+    cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
+
+    cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
 
     ax.coastlines()
 

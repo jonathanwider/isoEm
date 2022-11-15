@@ -257,9 +257,16 @@ def load_variables_and_timesteps(description, dataset_folder):
         v = dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])
         for variable_name in v[dataset_name]:  # loop over all variables we want to use from this dataset
             res_variables[variable_name] = dataset[variable_name]
-            res_variables[variable_name] = res_variables[variable_name].reshape(res_variables[variable_name].shape[0], 1,
-                                                                                res_variables[variable_name].shape[-2],
-                                                                                res_variables[variable_name].shape[-1])
+            if description["GRID_TYPE"] == "Flat":
+                res_variables[variable_name] = res_variables[variable_name].reshape(res_variables[variable_name].shape[0], 1,
+                                                                                    res_variables[variable_name].shape[-2],
+                                                                                    res_variables[variable_name].shape[-1])
+            elif description["GRID_TYPE"] == "Ico":
+                res_variables[variable_name] = res_variables[variable_name].reshape(res_variables[variable_name].shape[0], 1,
+                                                                                    res_variables[variable_name].shape[-1])
+            else:
+                raise NotImplementedError("Only Ico and Flat grids implemented")
+
     # exclude timesteps with missing values in predictor variables.
     masked_timesteps = np.zeros(list(res_variables.values())[0].shape[0], dtype=bool)
     for vs in description["PREDICTOR_VARIABLES"].values():
@@ -331,7 +338,9 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
     tvars = util.flatten(description["TARGET_VARIABLES"].values())
     predictors = np.concatenate(tuple([variables[p_var] for p_var in pvars]), axis=1)
     targets = np.concatenate(tuple([variables[t_var] for t_var in tvars]), axis=1)
-    masks = np.concatenate(tuple([masks[t_var] for t_var in tvars], ))
+
+    if description["GRID_TYPE"] == "Flat":
+        masks = np.concatenate(tuple([masks[t_var] for t_var in tvars], ))
 
     indices = np.arange(predictors.shape[0])
     # if we want to reload a dataset with a specific configuration of indices for training and testing

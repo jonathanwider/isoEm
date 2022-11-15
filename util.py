@@ -183,3 +183,20 @@ def load_units_cals(description, dsets):
         cals = [ds.variables["time"].calendar for ds in dsets if ds.variables["time"][:].data.shape[0] > 1]
 
     return units, cals
+
+
+def cartesian_to_spherical(data):
+    """
+    convert cartesian coordinates to spherical coordinates
+    Use answer to:
+    https://stackoverflow.com/questions/4116658/faster-numpy-cartesian-to-spherical-coordinate-conversion
+    """
+    # takes list xyz (single coord)
+    x = data[..., 0]
+    y = data[..., 1]
+    z = data[..., 2]
+    r = np.sqrt(x * x + y * y + z * z)
+    # format in HadCM3: lat:(-90,90), lon(0,360)
+    theta = 90 - np.arccos(z / r) * 180 / np.pi  # to degrees
+    phi = 180 + np.arctan2(y, x) * 180 / np.pi
+    return np.array([theta, phi]).transpose((1, 0))  # careful, this will only work if the shape is correct
