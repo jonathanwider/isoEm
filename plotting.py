@@ -56,6 +56,13 @@ corr_style["CBAR_LABELS"] = {"tsurf": "Temperature",
 corr_style["CBAR_EXTEND"] = "neither"
 corr_style["FIGSIZE"] = (15, 9)
 
+# for plotting maps of correlations
+tsurf_style = dict(map_style)
+tsurf_style["CMAP"] = plt.get_cmap("RdBu_r")
+tsurf_style["NORM"] = matplotlib.colors.TwoSlopeNorm(vmin=-40, vmax=40, vcenter=0)
+tsurf_style["CBAR_LABEL"] = "Temperature [K]"
+tsurf_style["CBAR_EXTEND"] = "both"
+
 
 def plot_map(ax, data, description, style, title=""):
     """
@@ -181,3 +188,76 @@ def plot_ico_map(ax, data, description, style, title=""):
     ax.coastlines()
 
     ax.set_title(title, fontsize=style["TITLE_FONTSIZE"])
+
+
+def get_coastline_xyz(r=1):
+    coords = []
+    for g in cartopy.feature.COASTLINE.geometries():
+        lon = np.array(g.coords)[:, 0]
+        lat = np.array(g.coords)[:, 1]
+
+        theta = - (lat - 90) * (np.pi / 180)
+        phi = (lon - 180) * (np.pi / 180)
+
+        # theta = (lat + 90) * np.pi / 180
+        # phi = (lon + 180) * 2*np.pi / 360
+
+        x = r * np.sin(theta) * np.cos(phi)
+        y = r * np.sin(theta) * np.sin(phi)
+        z = r * np.cos(theta)
+        coords.append(np.array([x, y, z]))
+
+    return coords
+
+
+def plot_map_3d(ax, data, description, style, title="", elev=18, azim=0, show_coastlines=True):
+    """
+    Plot data of an icosahedral grid in 3d.
+    @param ax: Axes to plot on. projection='3d' needs to be set
+    @param data: Data to be plotted. Assumed to be of shape (n_pixels_on_icosahedron,)
+    @param description: Description of the dataset used
+    @param style: Plotting style
+    @param title: Title of the plot
+    @param elev: Elevation of view position
+    @param azim:Azimuth of view position
+    @param show_coastlines: Whether or not to display coastlines
+    """
+
+    from icosahedron import Icosahedron
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+    ico = Icosahedron(r=description["RESOLUTION"])
+    regions, vertices = ico.get_voronoi_regions_vertices()
+
+
+    for i in range(len(regions)):
+        polygon = Poly3DCollection([vertices[regions[i]]], alpha=1)
+        polygon.set_color(style["CMAP"](style["NORM"](data[i])))
+        ax.add_collection3d(polygon)
+
+    if show_coastlines:
+        cls = get_coastline_xyz(r=1.016)  # value of r > 1 so that coastlines don't overlap with
+        for cl in cls:
+            points = np.transpose(cl)
+            for i in range(len(points) - 1):
+                polygon = Poly3DCollection([points[i:i + 2, :]], alpha=1)
+                polygon.set_color("black")
+                ax.add_collection3d(polygon)
+
+    ax.axes.set_xlim3d(left=-1, right=1)
+    ax.axes.set_ylim3d(bottom=-1, top=1)
+    ax.axes.set_zlim3d(bottom=-1, top=1)
+    ax.view_init(elev, 180 + azim)
+
+    cbar = plt.colorbar(
+            matplotlib.cm.ScalarMappable(cmap=style["CMAP"], norm=style["NORM"]),
+            spacing='proportional',
+            orientation='vertical',
+            extend=style["CBAR_EXTEND"],
+            ax=ax)
+
+    cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
+
+    cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
+
+
+
