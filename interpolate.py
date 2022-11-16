@@ -341,7 +341,7 @@ def run_script(descriptions, script_folder, interpolation_type="cons1", resoluti
 def interpolate_climate_model_data_to_ico_grid(model_name, variable_name, script_folder="Scripts/",
                                                dataset_folder="Datasets/", resolution=5, interpolation="cons1"):
     """
-    Interpolate raw data from one grid to another.
+    Interpolate raw data from one grid to another. This is only implemented for yearly files.
     @param dataset_folder: File in which the climate model datasets are stored
     @param script_folder: File in which the scripts are stored
     @param model_name: Name of the climate model whose data we want to interpolate
@@ -350,7 +350,7 @@ def interpolate_climate_model_data_to_ico_grid(model_name, variable_name, script
     @param interpolation: Type of interpolation used by CDO, inplemented are cons1 and NN
     @return:
     """
-    path = os.path.join(dataset_folder, model_name, "Original", "{}.nc".format(variable_name))
+    path = os.path.join(dataset_folder, model_name, "Original", "{}_yearly.nc".format(variable_name))
 
     tmp_path_5_nbs = os.path.join(dataset_folder, model_name, "Original",
                                   "{}_yearly_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation))
