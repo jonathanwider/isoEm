@@ -110,7 +110,7 @@ def get_years_months(t, units, calendar):
         return None, None
     else:
         raise NotImplementedError("Invalid date format")
-    return years, months
+    return np.array(years), np.array(months)
 
 
 def add_dates(y1, m1, y2, m2):
@@ -171,7 +171,7 @@ def load_longitudes_latitudes(description, dset):
 def load_units_cals(description, dsets):
     """
     Extract time units and calendars of a list of datasets.
-    @param descriptions: Dataset description
+    @param description: Dataset description
     @param dsets: List of datasets
     @return: Lists of units and calendars
     """

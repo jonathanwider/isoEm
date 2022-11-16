@@ -490,20 +490,22 @@ def load_variables_and_timesteps_months(description, dataset_folder):
                 except KeyError:
                     years, months = util.get_years_months(dataset.variables["time"][:].data, dataset.variables["time"].units,
                                                           dataset.variables["time"].calendar)
+                # print(years, months)
                 # get the corresponding indices:
                 indices = []
                 for i, (y, m) in enumerate(zip(years, months)):
+                    # print(y,m)
                     if np.array([y, m]) in c_dates:
                         indices.append(i)
                 indices = np.array(indices, dtype=int)
 
                 months_indices = []
                 for i in range(12):
-                    months_indices.append(np.where(months == i))
+                    # print(np.where(np.array(months) == i), i, months)
+                    months_indices.append(np.where(np.array(months) == i))
                 indices_selected_months = [np.squeeze(months_indices[i]) for i in description["MONTHS_USED"]]
                 # we need to sort because otherwise dataset is not ordered chronologically but one sorted by months.
                 indices_selected_months = np.sort(np.concatenate(tuple(indices_selected_months)))
-
                 sel_i = indices[indices_selected_months]
                 # we need to make sure that the other months used in the prediction are not missing from the dataset.
                 all_needed_months_contained = np.array([np.array([util.add_dates(years[i], months[i], 0, dm) in c_dates
