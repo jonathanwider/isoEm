@@ -428,10 +428,10 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
     print("done")
 
     dataset_dict = dict(description, **{
-        "INDICES_TRAIN": tuple(indices_train),
-        "INDICES_TEST": tuple(indices_test),
-        "TIMESTEPS_TEST": tuple(timesteps_test),
-        "GRID_SHAPE": tuple(x_test.shape[-2:])
+        "INDICES_TRAIN": indices_train,
+        "INDICES_TEST": indices_test,
+        "TIMESTEPS_TEST": timesteps_test,
+        "GRID_SHAPE": x_test.shape[-2:]
     })
 
     print("writing dataset description")
@@ -549,13 +549,12 @@ def load_variables_and_timesteps_months(description, dataset_folder):
         for v in vs:
             for dm in description["MONTHS_USED_IN_PREDICTION"]:
                 if (np.ma.getmaskarray(res_variables[v][dm]) != False).any():
-                    m = np.where(np.mean(np.ma.getmaskarray(res_variables[v][dm]), axis=(-1, -2, -3)) > 0)[0]
+                    m = np.where(np.mean(np.ma.getmaskarray(res_variables[v][dm]), axis=(-1, -2)) > 0)[0]
                     masked_timesteps[m] = True
     c_dates = c_dates[~masked_timesteps]
     for key, vs in res_variables.items():
         for dm, v in vs.items():
             res_variables[key][dm] = v[~masked_timesteps, ...].data
-
     for dataset_name, dataset_masks in masks.items():  # loop over all used datasets
         v = dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])
         for variable_name in v[dataset_name]:  # loop over all variables we want to use from this dataset
@@ -770,10 +769,10 @@ def create_precip_weighted_dataset(description, dataset_folder, output_folder):
     print("done")
 
     dataset_dict = dict(description, **{
-        "INDICES_TRAIN": tuple(indices_train),
-        "INDICES_TEST": tuple(indices_test),
-        "TIMESTEPS_TEST": tuple(timesteps_test),
-        "GRID_SHAPE": tuple(x_test.shape[-2:])
+        "INDICES_TRAIN": indices_train,
+        "INDICES_TEST": indices_test,
+        "TIMESTEPS_TEST": timesteps_test,
+        "GRID_SHAPE": x_test.shape[-2:]
     })
 
     print("writing dataset description")
@@ -800,7 +799,6 @@ def create_monthly_dataset(description, dataset_folder, output_folder):
 
     predictors = [[variables[p_var][d_m] for d_m in description["MONTHS_USED_IN_PREDICTION"]] for p_var in pvars]
     predictors = np.array(predictors)
-
     predictors = predictors.reshape(predictors.shape[0]*predictors.shape[1], *predictors.shape[2:])
     predictors = predictors.transpose(1, 0, 2, 3)
 
@@ -867,10 +865,10 @@ def create_monthly_dataset(description, dataset_folder, output_folder):
     print("done")
 
     dataset_dict = dict(description, **{
-        "INDICES_TRAIN": tuple(indices_train),
-        "INDICES_TEST": tuple(indices_test),
-        "TIMESTEPS_TEST": tuple(timesteps_test),
-        "GRID_SHAPE": tuple(x_test.shape[-2:])
+        "INDICES_TRAIN": indices_train,
+        "INDICES_TEST": indices_test,
+        "TIMESTEPS_TEST": timesteps_test,
+        "GRID_SHAPE": x_test.shape[-2:]
     })
 
     print("writing dataset description")

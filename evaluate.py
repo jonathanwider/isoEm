@@ -192,12 +192,13 @@ def get_rescaled_predictions_and_gt(descriptions, predictions):
         return rescaled_predictions, test_targets
 
 
-def get_rescaled_predictions_and_gt_split_into_months(descriptions, predictions):
+def get_rescaled_predictions_and_gt_months(descriptions, predictions, do_split=False):
     """
     For a given dataset and model description, load the ground truth test set and rescale the predictions.
-    Then split the data into subarray for each month given in descriptions["DATASET_DESCRIPTION"]["MONTHS_USED"]
+    Then (if desired) split the data into subarrayS for each month given in descriptions["DATASET_DESCRIPTION"]["MONTHS_USED"]
     @param descriptions: Descriptions for dataset and (model and training)
     @param predictions: Predictions of the ML model. Potentially to be rescaled.
+    @param do_split: Whether or not to return the data split into months.
     @return: List of rescaled predictions and targets for the months of the year (Jan: 0, Dec: 11).
     """
     assert "DATASET_DESCRIPTION" in descriptions.keys()
@@ -210,39 +211,44 @@ def get_rescaled_predictions_and_gt_split_into_months(descriptions, predictions)
     assert "DATASET_FOLDER" in model_training_description.keys()
 
     dataset = find_and_load_dataset(model_training_description["DATASET_FOLDER"], dataset_description, use_prints=False)
-    _, t_months, _ = util.get_year_mon_day_from_timesteps(np.array(dataset_description["TIMESTEPS_TEST"]),
-                                                          dataset_description["REFERENCE_DATE"])
+
+    t_months = dataset_description["TIMESTEPS_TEST"][:, 1]
 
     train_targets = dataset["train"]["targets"]
     test_targets = dataset["test"]["targets"]
     test_masks = dataset["test"]["masks"]
     rescaled_predictions = undo_scaling(model_training_description, predictions, train_targets)
-    rescaled_predictions_months = []
-    test_masks_months = []
-    test_targets_months = []
-    for i in range(12):
-        rescaled_predictions_months.append(rescaled_predictions[t_months == i])
-        test_targets_months.append(test_targets[t_months == i])
-        test_masks_months.append(test_masks[t_months == i])
+    if do_split:
+        rescaled_predictions_months = []
+        test_masks_months = []
+        test_targets_months = []
+        for i in range(12):
+            rescaled_predictions_months.append(rescaled_predictions[t_months == i])
+            test_targets_months.append(test_targets[t_months == i])
+            test_masks_months.append(test_masks[t_months == i])
+        return rescaled_predictions_months, test_targets_months, test_masks_months
+    else:
+        return rescaled_predictions, test_targets, test_masks
 
-    return rescaled_predictions_months, test_targets_months, test_masks_months
 
-
-def load_data_for_comparison(base_folder, conditions):
+def load_data_for_comparison(base_folder, conditions, do_split=False):
     """
     For all runs, that match the corresponding definition, load the descriptions of dataset and (model and training)
     and return ground truth and rescaled predictions.
     @param base_folder: Folder in which we want to search for runs.
     @param conditions: dict of conditions on data set and (model and training)
+    @param do_split: Whether or not to split the data into individual months (on monthly timescale)
     @return: Lists of descriptions, rescaled predictions and ground truth
     """
     predictions_list, descriptions_list = load_compatible_available_runs(base_folder, conditions)
+    if do_split:
+        assert np.array([description["DATASET_DESCRIPTION"]["TIMESCALE"] == "MONTHLY" for description in descriptions_list]).all()
     rescaled_predictions_list = []
     ground_truth_list = []
     masks_list = []
     for i in range(len(predictions_list)):
         if descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "MONTHLY":
-            rp, gt, masks = get_rescaled_predictions_and_gt_split_into_months(descriptions_list[i], predictions_list[i])
+            rp, gt, masks = get_rescaled_predictions_and_gt_months(descriptions_list[i], predictions_list[i], do_split=do_split)
             masks_list.append(masks)
         elif descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY":
             if descriptions_list[i]["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":

@@ -220,7 +220,6 @@ def standardize(train_predictors, train_targets, test_predictors, test_targets, 
     assert all(
         [mode in ["None", "Pixelwise", "Global_mean_pixelwise_std", "Pixelwise_mean_global_std", "Global"] for mode in
          model_training_description["S_MODE_TARGETS"]])
-
     # predictors:
     for i, mode in enumerate(model_training_description["S_MODE_PREDICTORS"]):
         if mode == "Global":  # Global normalization: Use same standard deviation for each pixel
@@ -238,14 +237,13 @@ def standardize(train_predictors, train_targets, test_predictors, test_targets, 
             std = torch.mean(torch.std(train_predictors[:, i, ...], dim=0, keepdim=True), dim=(1, 2), keepdim=True)
             std[std == 0] = 1  # avoid dividing by zero
 
-        elif mode == "Pixelwise":  # Subtract pixelwise mean and ivide each pixel by its own standard deviation
+        elif mode == "Pixelwise":  # Subtract pixelwise mean and divide each pixel by its own standard deviation
             mean = torch.mean(train_predictors[:, i, ...], dim=0, keepdim=True)
             std = torch.std(train_predictors[:, i, ...], dim=0, keepdim=True)
             std[std == 0] = 1  # avoid dividing by zero
 
         train_predictors[:, i, ...] = (train_predictors[:, i, ...] - mean) / std
         test_predictors[:, i, ...] = (test_predictors[:, i, ...] - mean) / std
-
     # targets:
     for i, mode in enumerate(model_training_description["S_MODE_TARGETS"]):
         if mode == "Global":  # Global normalization: Use same standard deviation for each pixel
@@ -494,7 +492,6 @@ def train_unet(dataset_description, model_training_description, base_folder, use
             running_loss = 0
             n_batches = 0
             for i, data in enumerate(train_loader):
-                # print(predictors.shape)
                 unet.train()
                 if dataset_description["GRID_TYPE"] == "Ico":
                     predictors, targets = data

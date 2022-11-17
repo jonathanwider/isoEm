@@ -22,7 +22,7 @@ def check_dict_conditions(dic, conditions, use_prints=False):
     """
     for key, value in conditions.items():
         if key in dic.keys():
-            if not dic[key] == value:
+            if not np.array(dic[key] == value).all():
                 if use_prints:
                     print("Difference:", key, "Original:", dic[key], "Condition:", value)
                 return False

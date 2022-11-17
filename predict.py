@@ -281,8 +281,6 @@ def predict_save_unet(dataset_description, model_training_description, base_fold
     descriptions_file = os.path.join(folder_name, "descriptions.gz")
 
     if util.test_if_folder_exists(folder_name):
-        print(model_training_description)
-        print(util.create_hash_from_description(model_training_description))
         raise FileExistsError("Specified configuration of dataset, model and training configuration already exists.")
     else:
         os.makedirs(folder_name)
