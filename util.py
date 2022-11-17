@@ -97,7 +97,8 @@ def get_years_months(t, units, calendar):
         months = 0 + t % 12
     elif units == "days since 0850-01-01 00:00:00":
         if calendar == "365_day":
-            years = 850 + t // 365
+            years = 850 + (t-1) // 365  # data gets saved at the end of each month.
+                                        # Thus subtract one, so that data gets saved in same year
             ds = [31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 0]
             months = [np.argmin(np.abs(ds - t_ % 365)) for t_ in t]
     elif units == "days since 2350-12-01 00:00:00":

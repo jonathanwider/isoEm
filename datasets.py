@@ -478,6 +478,7 @@ def load_variables_and_timesteps_months(description, dataset_folder):
         masks[dataset_name] = {}
         variables[dataset_name] = {}
 
+
         # loop over all variables we want to use from this dataset
         for variable_name in dict(description["PREDICTOR_VARIABLES"], **description["TARGET_VARIABLES"])[dataset_name]:
             variables[dataset_name][variable_name] = {}
@@ -524,7 +525,6 @@ def load_variables_and_timesteps_months(description, dataset_folder):
             if dataset_name in description["TARGET_VARIABLES"].keys():
                 masks[dataset_name][variable_name] = np.ma.getmaskarray(data[sel_i])
             # load the marker for the missing value in the dataset
-
             try:
                 missing_value = dataset.variables[variable_name].missing_value
                 for d_m in description["MONTHS_USED_IN_PREDICTION"]:
@@ -533,7 +533,6 @@ def load_variables_and_timesteps_months(description, dataset_folder):
             except AttributeError:
                 for d_m in description["MONTHS_USED_IN_PREDICTION"]:
                     variables[dataset_name][variable_name][d_m] = data[sel_i + d_m, ...]
-
 
     res_variables = {}
     res_masks = {}
@@ -545,7 +544,7 @@ def load_variables_and_timesteps_months(description, dataset_folder):
                 res_variables[variable_name][dm] = dataset[variable_name][dm]
 
     # exclude timesteps with missing values in predictor variables.
-    masked_timesteps = np.zeros(list(res_variables.values())[0][0].shape[0], dtype=bool)
+    masked_timesteps = np.zeros(c_dates.shape[0], dtype=bool)
     for vs in description["PREDICTOR_VARIABLES"].values():
         for v in vs:
             for dm in description["MONTHS_USED_IN_PREDICTION"]:
