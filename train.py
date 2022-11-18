@@ -116,8 +116,8 @@ def load_data(dataset_description, model_training_description, base_folder, use_
     # to do so we augment to the next biggest int that fulfils the divisibility constraint.
     if model_training_description["MODEL_TYPE"] == "UNet_Flat":
         divisor = 2 ** model_training_description["DEPTH"]
-        h_augment = (train_predictors.shape[-2] + divisor) - (train_predictors.shape[-2] % divisor)
-        w_augment = (train_predictors.shape[-1] + divisor) - (train_predictors.shape[-1] % divisor)
+        h_augment = np.ceil(train_predictors.shape[-2]/divisor)*divisor
+        w_augment = np.ceil(train_predictors.shape[-1]/divisor)*divisor
         # print(divisor, h_augment, w_augment, train_predictors.shape[-2], train_predictors.shape[-1])
         resize = T.Resize(size=(h_augment, w_augment))
         train_predictors = resize(train_predictors)
