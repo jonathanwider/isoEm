@@ -474,7 +474,9 @@ def train_unet(dataset_description, model_training_description, base_folder, use
         loss_dict["Masked_MSELoss"] = get_masked_mse_loss(dataset_description, model_training_description)
     elif dataset_description["GRID_TYPE"] == "Ico":
         loss_dict["MSELoss"] = nn.MSELoss()
+    else:
         raise NotImplementedError("Invalid grid type")
+
     criterion = loss_dict[model_training_description["LOSS"]]
     optimizer = optimizer_dict[model_training_description["OPTIMIZER"]]
     unet.to(model_training_description["DEVICE"])
