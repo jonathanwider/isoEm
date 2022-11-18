@@ -319,8 +319,9 @@ def train_pca(dataset_description, model_training_description, base_folder):
         train_ds, _, _ = load_data(dataset_description, model_training_description, base_folder)
     x_tr = train_ds[:][0].numpy()
     y_tr = train_ds[:][1].numpy()
-    masks_tr = train_ds[:][2].numpy()
-    assert (masks_tr == True).all(), "No missing values allowed in target variables when training PCA methods."
+    if dataset_description["GRID_TYPE"] == "Flat":
+        masks_tr = train_ds[:][2].numpy()
+        assert (masks_tr == True).all(), "No missing values allowed in target variables when training PCA methods."
 
     x_train = x_tr.reshape(x_tr.shape[0], -1)
     y_train = y_tr.reshape(y_tr.shape[0], -1)
