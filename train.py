@@ -368,8 +368,8 @@ def get_masked_area_weighted_mse_loss(dataset_description, model_training_descri
     height = dataset_description["GRID_SHAPE"][0]
     lat_max = dataset_description["LATITUDES"][0]
     divisor = 2 ** model_training_description["DEPTH"]
-    adjusted_height = int(np.ceil(height.shape[-2] / divisor) * divisor)
-    adjusted_width = int(np.ceil(width.shape[-1] / divisor) * divisor)
+    adjusted_height = int(np.ceil(height / divisor) * divisor)
+    adjusted_width = int(np.ceil(width / divisor) * divisor)
 
     area_weights = torch.cos(torch.linspace(-lat_max, lat_max, adjusted_height) * (2 * np.pi) / 360)
     area_weights = area_weights.view(1, -1, 1).repeat(1, 1, adjusted_width)
@@ -386,8 +386,8 @@ def get_masked_mse_loss(dataset_description, model_training_description):
     divisor = 2 ** model_training_description["DEPTH"]
     width = dataset_description["GRID_SHAPE"][1]
     height = dataset_description["GRID_SHAPE"][0]
-    adjusted_height = int(np.ceil(height.shape[-2] / divisor) * divisor)
-    adjusted_width = int(np.ceil(width.shape[-1] / divisor) * divisor)
+    adjusted_height = int(np.ceil(height / divisor) * divisor)
+    adjusted_width = int(np.ceil(width / divisor) * divisor)
     const_weights = torch.ones((1, adjusted_height, adjusted_width))
     const_weights = const_weights.to(model_training_description["DEVICE"])
     return partial(masked_weighted_mse_loss, weights=const_weights)
@@ -401,8 +401,8 @@ def get_area_weighted_mse_loss(dataset_description, model_training_description):
     width = dataset_description["GRID_SHAPE"][1]
     height = dataset_description["GRID_SHAPE"][0]
     lat_max = dataset_description["LATITUDES"][0]
-    adjusted_height = (height + divisor) - (height % divisor)
-    adjusted_width = (width + divisor) - (width % divisor)
+    adjusted_height = int(np.ceil(height / divisor) * divisor)
+    adjusted_width = int(np.ceil(width / divisor) * divisor)
     area_weights = torch.cos(torch.linspace(-lat_max, lat_max, adjusted_height) * (2 * np.pi) / 360)
     area_weights = area_weights.view(1, -1, 1).repeat(1, 1, adjusted_width)
     area_weights = (adjusted_width * adjusted_height / torch.sum(area_weights)) * area_weights
