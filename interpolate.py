@@ -30,8 +30,9 @@ def interpolate_predictions(descriptions, predictions, output_folder, script_fol
     @return:
     """
     assert len(descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].keys()) == 1
+    assert descriptions["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY"
     # load the predictions, undo the scaling
-    rescaled_predictions, _ = get_rescaled_predictions_and_gt(descriptions, predictions)
+    rescaled_predictions, _, _ = get_rescaled_predictions_and_gt(descriptions, predictions)
 
     netcdf_from_rescaled_predictions(descriptions, rescaled_predictions,
                                      descriptions["DATASET_DESCRIPTION"]["TIMESTEPS_TEST"], script_folder)
@@ -159,19 +160,17 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
             necessary_dimensions)
         dst.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(
             target_var_attribute_dict)
-        dst.createVariable("t", "float64", "t")
-        dst["t"].setncatts(src["t"].__dict__)
-        dst.createVariable("t_bnds", "float64", ("t", "bnds"))
-        dst.variables["t"][:] = list(t_test)
+        try:
+            dst["t"]  # to trigger exception early.
+            dst.createVariable("t", "float64", "t")
+            dst["t"].setncatts(src["t"].__dict__)
+            dst.variables["t"][:] = list(t_test)
+        except ValueError:
+            dst["time"]  # to trigger exception early.
+            dst.createVariable("time", "float64", "time")
+            dst["time"].setncatts(src["time"].__dict__)
+            dst.variables["time"][:] = list(t_test)
 
-        # extract t_bnds from source file
-        src_t = src.variables["t"][:].data
-        t_bnds = []
-        for t_c in t_test:
-            t_bnds.append([])
-            i = np.where(src_t == t_c)[0][0]
-            t_bnds[-1] = src.variables["t_bnds"][i].data
-        dst.variables["t_bnds"][:] = np.array(t_bnds)
         # pad the numpy by the amount the we trimmed of when loading the data
         tmp = np.pad(np.squeeze(rescaled_predictions), (
             (0, 0), (dataset_description["LATITUDES_SLICE"][0], -dataset_description["LATITUDES_SLICE"][1]), (0, 0)),
