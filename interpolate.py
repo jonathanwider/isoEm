@@ -66,6 +66,7 @@ def interpolate_predictions(descriptions, predictions, output_folder, script_fol
         dataset_description = dict({"RESULTS_INTERPOLATED": True},
                                    **descriptions["DATASET_DESCRIPTION"])
         dataset_description["GRID_TYPE"] = "Ico"
+        dataset_description["RESOLUTION"] = 5
         model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
 
         new_descriptions = {"MODEL_TRAINING_DESCRIPTION": model_training_description,
