@@ -160,7 +160,8 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
 
         dst = nc.Dataset(output_file, "w")
         dst.setncatts(src.__dict__)
-
+        print(original_dimensions)
+        print(necessary_dimensions)
         # copy dimensions
         for name, dimension in src.dimensions.items():
             if name in dimscopy:
