@@ -140,23 +140,23 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
 
         src = nc.Dataset(filename)
         if "t" in src.dimensions:
-            dimscopy.append(['t'])
+            dimscopy.append('t')
         elif "time" in src.dimensions:
-            dimscopy.append(['time'])
+            dimscopy.append('time')
         else:
             raise KeyError("Time dimension not found")
         if "latitude" in src.dimensions:
-            dimscopy.append(['latitude'])
-            tocopy.append(['latitude'])
+            dimscopy.append('latitude')
+            tocopy.append('latitude')
         elif "lat" in src.dimensions:
-            dimscopy.append(['lat'])
-            tocopy.append(['lat'])
+            dimscopy.append('lat')
+            tocopy.append('lat')
         if "longitude" in src.dimensions:
-            dimscopy.append(['longitude'])
-            tocopy.append(['longitude'])
+            dimscopy.append('longitude')
+            tocopy.append('longitude')
         elif "lon" in src.dimensions:
-            dimscopy.append(['lon'])
-            tocopy.append(['lon'])
+            dimscopy.append('lon')
+            tocopy.append('lon')
 
         dst = nc.Dataset(output_file, "w")
         dst.setncatts(src.__dict__)
