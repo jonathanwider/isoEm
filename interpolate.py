@@ -120,7 +120,7 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
                    "TARGET_VARIABLES"].keys()) == 1, "Interpolation only implemented for single target variable"
 
     if dataset_description["GRID_TYPE"] == "Flat":
-        tocopy = ['longitude', 'latitude', ]
+        tocopy = []
         dimscopy = []
         output_file = os.path.join(output_folder, "tmp.nc")
 
@@ -147,12 +147,16 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
             raise KeyError("Time dimension not found")
         if "latitude" in src.dimensions:
             dimscopy.append(['latitude'])
+            tocopy.append(['latitude'])
         elif "lat" in src.dimensions:
             dimscopy.append(['lat'])
+            tocopy.append(['lat'])
         if "longitude" in src.dimensions:
             dimscopy.append(['longitude'])
+            tocopy.append(['longitude'])
         elif "lon" in src.dimensions:
             dimscopy.append(['lon'])
+            tocopy.append(['lon'])
 
         dst = nc.Dataset(output_file, "w")
         dst.setncatts(src.__dict__)
