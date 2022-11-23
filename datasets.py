@@ -6,17 +6,10 @@ import netCDF4
 import gzip
 import pickle
 
-from util import get_year_mon_day_from_timesteps
-
-import re
-from datetime import datetime
-
 import numpy as np
 
 import icosahedron
 import util
-
-PYTHONHASHSEED = 0
 
 
 def get_required_datasets(description, dataset_folder):
@@ -543,8 +536,8 @@ def load_variables_and_timesteps_months(description, dataset_folder):
             for dm in description["MONTHS_USED_IN_PREDICTION"]:
                 res_variables[variable_name][dm] = dataset[variable_name][dm]
 
-    # exclude timesteps with missing values in predictor variables.
-    masked_timesteps = np.zeros(c_dates.shape[0], dtype=bool)
+    # exclude timesteps with missing values in predictor variables. Assume that the shape of all the elements in the res_variables dict is identical.
+    masked_timesteps = np.zeros(res_variables[variable_name][dm].shape[0], dtype=bool)
     for vs in description["PREDICTOR_VARIABLES"].values():
         for v in vs:
             for dm in description["MONTHS_USED_IN_PREDICTION"]:
