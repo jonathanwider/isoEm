@@ -164,7 +164,9 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         print(necessary_dimensions)
         # copy dimensions
         for name, dimension in src.dimensions.items():
+            print(name)
             if name in dimscopy:
+                print("is in dimscopy")
                 dst.createDimension(name, (len(dimension) if not dimension.isunlimited() else None))
         print(dst.dimensions)
         print(dimscopy)
