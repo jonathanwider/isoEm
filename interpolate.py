@@ -201,7 +201,11 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
             (0, 0), (dataset_description["LATITUDES_SLICE"][0], -dataset_description["LATITUDES_SLICE"][1]), (0, 0)),
                      'constant',
                      constant_values=target_var_attribute_dict["missing_value"])
-        dst.variables["dO18"][:] = tmp
+        try:  # old files had variable name dO18 instead of d18O
+            dst.variables["dO18"][:] = tmp
+        except KeyError:
+            dst.variables["d18O"][:] = tmp
+
         dst.close()
         src.close()
 
