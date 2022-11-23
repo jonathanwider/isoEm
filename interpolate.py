@@ -141,8 +141,10 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         src = nc.Dataset(filename)
         if "t" in src.dimensions:
             dimscopy.append('t')
+            tocopy.append('t')
         elif "time" in src.dimensions:
             dimscopy.append('time')
+            tocopy.append('time')
         else:
             raise KeyError("Time dimension not found")
         if "latitude" in src.dimensions:
