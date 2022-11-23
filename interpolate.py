@@ -121,7 +121,7 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
 
     if dataset_description["GRID_TYPE"] == "Flat":
         tocopy = ['longitude', 'latitude', ]
-        dimscopy = ['t', 'bnds', 'longitude', 'latitude']
+        dimscopy = []
         output_file = os.path.join(output_folder, "tmp.nc")
 
         if dataset_description["TIMESCALE"] == "YEARLY":
@@ -139,6 +139,21 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].datatype
 
         src = nc.Dataset(filename)
+        if "t" in src.dimensions:
+            dimscopy.append(['t'])
+        elif "time" in src.dimensions:
+            dimscopy.append(['time'])
+        else:
+            raise KeyError("Time dimension not found")
+        if "latitude" in src.dimensions:
+            dimscopy.append(['latitude'])
+        elif "lat" in src.dimensions:
+            dimscopy.append(['lat'])
+        if "longitude" in src.dimensions:
+            dimscopy.append(['longitude'])
+        elif "lon" in src.dimensions:
+            dimscopy.append(['lon'])
+
         dst = nc.Dataset(output_file, "w")
         dst.setncatts(src.__dict__)
 
@@ -165,7 +180,7 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
             dst.createVariable("t", "float64", "t")
             dst["t"].setncatts(src["t"].__dict__)
             dst.variables["t"][:] = list(t_test)
-        except ValueError:
+        except IndexError:
             dst["time"]  # to trigger exception early.
             dst.createVariable("time", "float64", "time")
             dst["time"].setncatts(src["time"].__dict__)
@@ -183,7 +198,7 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
     elif dataset_description["GRID_TYPE"] == "Ico":
         assert dataset_description["TIMESCALE"] == "YEARLY"
         tocopy = ['lon', 'lon_bnds', 'lat', 'lat_bnds']
-        dimscopy = ['t', 'bnds', 'ncells', 'vertices']
+        dimscopy = ['bnds', 'ncells', 'vertices']
         output_file_5_nbs = os.path.join(output_folder, "tmp_5_nbs.nc")
         output_file_6_nbs = os.path.join(output_folder, "tmp_6_nbs.nc")
 
@@ -206,9 +221,9 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].dimensions
         necessary_dimensions_5_nbs = (original_dimensions_5_nbs[0], original_dimensions_5_nbs[2])
         necessary_dimensions_6_nbs = (original_dimensions_6_nbs[0], original_dimensions_6_nbs[2])
-        original_dataype_5_nbs = nc.Dataset(filename_5_nbs).variables[
+        original_datatype_5_nbs = nc.Dataset(filename_5_nbs).variables[
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].datatype
-        original_dataype_6_nbs = nc.Dataset(filename_6_nbs).variables[
+        original_datatype_6_nbs = nc.Dataset(filename_6_nbs).variables[
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].datatype
 
         src_5_nbs = nc.Dataset(filename_5_nbs)
@@ -217,6 +232,13 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         dst_6_nbs = nc.Dataset(output_file_6_nbs, "w")
         dst_5_nbs.setncatts(src_5_nbs.__dict__)
         dst_6_nbs.setncatts(src_6_nbs.__dict__)
+
+        if "t" in src_6_nbs.dimensions:
+            dimscopy.append("t")
+        elif "time" in src_6_nbs.dimensions:
+            dimscopy.append("time")
+        else:
+            raise KeyError("Time dimension not found")
 
         for name, dimension in src_5_nbs.dimensions.items():
             if name in dimscopy:
@@ -241,7 +263,7 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         target_var_attribute_dict_6_nbs = nc.Dataset(filename_6_nbs).variables[
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].__dict__
         dst_6_nbs.createVariable(
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_dataype_6_nbs,
+            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_datatype_6_nbs,
             necessary_dimensions_6_nbs)
         dst_6_nbs.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(
             target_var_attribute_dict_6_nbs)
@@ -252,7 +274,7 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         target_var_attribute_dict_5_nbs = nc.Dataset(filename_5_nbs).variables[
             "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].__dict__
         dst_5_nbs.createVariable(
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_dataype_5_nbs,
+            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]), original_datatype_5_nbs,
             necessary_dimensions_5_nbs)
         dst_5_nbs.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(
             target_var_attribute_dict_5_nbs)

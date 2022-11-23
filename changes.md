@@ -43,6 +43,8 @@
 | INDICES_TRAIN              | Indices of the trainingset in the dataset (automatically generated)                                                 |
 |                            |                                                                                                                     |
 |                            |                                                                                                                     |
+|                            |                                                                                                                     |
+|                            |                                                                                                                     |
 | Model-training-description |                                                                                                                     |
 | MODELTYPE                  | Type of model we want to use                                                                                        |
 | CREATE_VALIDATIONSET       | Whether or not we want to create a validationset                                                                    |
