@@ -39,8 +39,8 @@ def interpolate_predictions(descriptions, predictions, output_folder, script_fol
 
     if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Flat":
         run_script(descriptions, script_folder, resolution=resolution, interpolation_type=interpolation)
-        ds_5_nbs = nc.Dataset(os.path.join(script_folder,"tmp_r_{}_nbs_5_{}.nc".format(resolution, interpolation)))
-        ds_6_nbs = nc.Dataset(os.path.join(script_folder,"tmp_r_{}_nbs_6_{}.nc".format(resolution, interpolation)))
+        ds_5_nbs = nc.Dataset(os.path.join(script_folder, "tmp_r_{}_nbs_5_{}.nc".format(resolution, interpolation)))
+        ds_6_nbs = nc.Dataset(os.path.join(script_folder, "tmp_r_{}_nbs_6_{}.nc".format(resolution, interpolation)))
 
         ico = Icosahedron(r=resolution)
         regions, vertices = ico.get_voronoi_regions_vertices()
@@ -105,7 +105,7 @@ def interpolate_predictions(descriptions, predictions, output_folder, script_fol
 
     print("writing predictions")
     with gzip.open(predictions_file, 'wb') as f:
-        pickle.dump(predictions, f)
+        pickle.dump(res, f)
 
     print("writing descriptions")
     with gzip.open(descriptions_file, 'wb') as f:
