@@ -28,7 +28,7 @@ def check_dict_conditions(dic, conditions, use_prints=False):
                 return False
         else:
             print(key)
-            if key is not "RESULTS_INTERPOLATED":
+            if key != "RESULTS_INTERPOLATED":
                 if use_prints:
                     print("Key not contained in dataset:", key)
             return False
