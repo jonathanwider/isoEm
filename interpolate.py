@@ -141,10 +141,8 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         src = nc.Dataset(filename)
         if "t" in src.dimensions:
             dimscopy.append('t')
-            tocopy.append('t')
         elif "time" in src.dimensions:
             dimscopy.append('time')
-            tocopy.append('time')
         else:
             raise KeyError("Time dimension not found")
         if "latitude" in src.dimensions:
@@ -188,12 +186,12 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         dst.variables["{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])].setncatts(
             target_var_attribute_dict)
         try:
-            dst["t"]  # to trigger exception early.
+            src["t"]
             dst.createVariable("t", "float64", "t")
             dst["t"].setncatts(src["t"].__dict__)
             dst.variables["t"][:] = list(t_test)
         except IndexError:
-            dst["time"]  # to trigger exception early.
+            src["time"]
             dst.createVariable("time", "float64", "time")
             dst["time"].setncatts(src["time"].__dict__)
             dst.variables["time"][:] = list(t_test)
