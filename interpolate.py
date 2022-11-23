@@ -166,7 +166,7 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
         for name, dimension in src.dimensions.items():
             if name in dimscopy:
                 dst.createDimension(name, (len(dimension) if not dimension.isunlimited() else None))
-        print(dset.dimensions)
+        print(dst.dimensions)
         print(dimscopy)
         print(tocopy)
         # copy all file data except for the excluded
