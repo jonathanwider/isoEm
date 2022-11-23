@@ -511,7 +511,7 @@ def load_variables_and_timesteps_months(description, dataset_folder):
                                                                            description["LATITUDES_SLICE"][1], :])
             else:
                 data = np.squeeze(np.repeat(dataset.variables[variable_name][:][..., description["LATITUDES_SLICE"][0]:
-                                            description["LATITUDES_SLICE"][1], :], repeats=len(c_dates), axis=0))
+                                            description["LATITUDES_SLICE"][1], :], repeats=len(sel_i), axis=0))
 
 
             # if there are missing values in any of the extracted data for this var, store the masks too.
@@ -537,14 +537,14 @@ def load_variables_and_timesteps_months(description, dataset_folder):
                 res_variables[variable_name][dm] = dataset[variable_name][dm]
 
     # exclude timesteps with missing values in predictor variables. Assume that the shape of all the elements in the res_variables dict is identical.
-    masked_timesteps = np.zeros(res_variables[variable_name][dm].shape[0], dtype=bool)
+    masked_timesteps = np.zeros(len(sel_i), dtype=bool)
     for vs in description["PREDICTOR_VARIABLES"].values():
         for v in vs:
             for dm in description["MONTHS_USED_IN_PREDICTION"]:
                 if (np.ma.getmaskarray(res_variables[v][dm]) != False).any():
                     m = np.where(np.mean(np.ma.getmaskarray(res_variables[v][dm]), axis=(-1, -2)) > 0)[0]
                     masked_timesteps[m] = True
-    c_dates = c_dates[~masked_timesteps]
+    c_dates = c_dates[sel_i][~masked_timesteps]
     for key, vs in res_variables.items():
         for dm, v in vs.items():
             res_variables[key][dm] = v[~masked_timesteps, ...].data
