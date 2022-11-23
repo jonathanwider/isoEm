@@ -27,11 +27,10 @@ def check_dict_conditions(dic, conditions, use_prints=False):
                     print("Difference:", key, "Original:", dic[key], "Condition:", value)
                 return False
         else:
-            print(key)
             if key != "RESULTS_INTERPOLATED":
                 if use_prints:
                     print("Key not contained in dataset:", key)
-            return False
+                return False
     return True
 
 
