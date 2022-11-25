@@ -13,7 +13,7 @@ from subprocess import call
 
 
 def interpolate_predictions(descriptions, predictions, output_folder, script_folder="Scripts/", resolution=5,
-                            interpolation="cons1"):
+                            interpolation="cons1", do_scaling=True):
     """
     Provide functions to interpolate between grids.
     Ideally the function would proceed in the following steps:
@@ -27,12 +27,16 @@ def interpolate_predictions(descriptions, predictions, output_folder, script_fol
     @param script_folder: Folder in which the interpolation shell scripts must be stored in (+grid description files)
     @param resolution: Resolution of the icosahedron used in the interpolation
     @param interpolation: Type of interpolation used (cons1 or NN)
+    @param do_scaling: Whether or not we want to rescale the data before saving
     @return:
     """
     assert len(descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].keys()) == 1
     assert descriptions["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY"
     # load the predictions, undo the scaling
-    rescaled_predictions, _, _ = get_rescaled_predictions_and_gt(descriptions, predictions)
+    if do_scaling:
+        rescaled_predictions, _, _ = get_rescaled_predictions_and_gt(descriptions, predictions)
+    else:
+        rescaled_predictions = predictions
 
     netcdf_from_rescaled_predictions(descriptions, rescaled_predictions,
                                      descriptions["DATASET_DESCRIPTION"]["TIMESTEPS_TEST"], script_folder)
