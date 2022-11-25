@@ -233,9 +233,9 @@ def load_variables_and_timesteps(description, dataset_folder):
             elif description["GRID_TYPE"] == "Ico":
                 variables[dataset_name][variable_name] = {}
                 for subdataset_name, subdataset in dataset.items():  # loop over subfiles: containing points with 5 and 6 nbs
-                    if subdataset.variables[variable_name][:].data.shape[0] > 1:  # only if time dimenion is not trivial
+                    if subdataset.variables[variable_name][:].shape[0] > 1:  # only if time dimenion is not trivial
                         variables[dataset_name][variable_name][subdataset_name] = np.squeeze(
-                            subdataset.variables[variable_name][:].data)[indices, :]
+                            subdataset.variables[variable_name][:])[indices, :]
                     else:
                         variables[dataset_name][variable_name][subdataset_name] = np.squeeze(
                             np.repeat(subdataset.variables[variable_name][:], repeats=len(c_dates), axis=0))
