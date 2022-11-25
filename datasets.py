@@ -243,10 +243,7 @@ def load_variables_and_timesteps(description, dataset_folder):
                         missing_value = dataset.variables[variable_name][subdataset_name].missing_value
                         variables[dataset_name][variable_name][subdataset_name].data[variables[dataset_name][variable_name][subdataset_name].data == missing_value] = np.nan
                     except AttributeError:
-                        pass
-                    print(variable_name)
-                    print("contains nans", (variables[dataset_name][variable_name][subdataset_name] == np.nan).any())
-                    print("mask non-zero:", (variables[dataset_name][variable_name][subdataset_name].mask == True).any())                    
+                        pass              
                 variables[dataset_name][variable_name] = combine_variables(description, variables[dataset_name][variable_name])
             else:
                 raise NotImplementedError("Only Ico and Flat grids implemented")
@@ -280,8 +277,6 @@ def load_variables_and_timesteps(description, dataset_folder):
                     masked_timesteps[m] = True
             else:
                 raise NotImplementedError("Only Ico and Flat grids implemented")
-            
-    print("exclude {} timestep".format(np.where(masked_timesteps==True)[0]))
     c_dates = c_dates[~masked_timesteps]
 
     for dataset_name, dataset_masks in masks.items():  # loop over all used datasets
