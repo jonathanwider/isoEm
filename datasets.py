@@ -265,7 +265,6 @@ def load_variables_and_timesteps(description, dataset_folder):
     for vs in description["PREDICTOR_VARIABLES"].values():
         for v in vs:
             if (np.ma.getmaskarray(res_variables[v]) != False).any():
-                return (v, res_variables[v])
                 m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-1, -2, -3)) > 0)[0]
                 masked_timesteps[m] = True
     print("exclude {} timestep".format(np.where(masked_timesteps==True)[0]))
@@ -326,7 +325,6 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
 
     print("loading variables")
     # load the selected climate variables.
-    return load_variables_and_timesteps(description, dataset_folder)
     variables, masks, c_dates = load_variables_and_timesteps(description, dataset_folder)
 
     # split the variables into predictors and targets.
