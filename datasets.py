@@ -312,7 +312,7 @@ def combine_variables(description, dataset_dict):
     indices_five_nb = np.array(indices_five_nb)
 
     # there are 12 corner pixels, North and south pole are not included in charts and thus don't need to be added
-    combined_data = np.zeros(dataset_dict["6_nb"].shape[:-1] + (dataset_dict["6_nb"].shape[-1] + 10,))
+    combined_data = np.ma.zeros(dataset_dict["6_nb"].shape[:-1] + (dataset_dict["6_nb"].shape[-1] + 10,))
     if "5_nb" in dataset_dict.keys():
         combined_data[:, indices_six_nb] = dataset_dict["6_nb"]
         combined_data[:, indices_five_nb] = dataset_dict["5_nb"]
