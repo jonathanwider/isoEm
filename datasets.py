@@ -250,7 +250,6 @@ def load_variables_and_timesteps(description, dataset_folder):
                 variables[dataset_name][variable_name] = combine_variables(description, variables[dataset_name][variable_name])
             else:
                 raise NotImplementedError("Only Ico and Flat grids implemented")
-    return variables
     res_masks = {}
     res_variables = {}
 
@@ -272,9 +271,16 @@ def load_variables_and_timesteps(description, dataset_folder):
     masked_timesteps = np.zeros(list(res_variables.values())[0].shape[0], dtype=bool)
     for vs in description["PREDICTOR_VARIABLES"].values():
         for v in vs:
-            if (np.ma.getmaskarray(res_variables[v]) != False).any():
-                m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-1, -2, -3)) > 0)[0]
-                masked_timesteps[m] = True
+            if description["GRID_TYPE"] == "Flat":
+                if (np.ma.getmaskarray(res_variables[v]) != False).any():
+                    m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-1, -2, -3)) > 0)[0]
+                    masked_timesteps[m] = True
+            elif description["GRID_TYPE"] == "Ico":
+                    m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-2, -3)) > 0)[0]
+                    masked_timesteps[m] = True
+            else:
+                raise NotImplementedError("Only Ico and Flat grids implemented")
+            
     print("exclude {} timestep".format(np.where(masked_timesteps==True)[0]))
     c_dates = c_dates[~masked_timesteps]
 
@@ -333,7 +339,6 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
 
     print("loading variables")
     # load the selected climate variables.
-    return load_variables_and_timesteps(description, dataset_folder)
     variables, masks, c_dates = load_variables_and_timesteps(description, dataset_folder)
 
     # split the variables into predictors and targets.
