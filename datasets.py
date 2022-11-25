@@ -265,6 +265,7 @@ def load_variables_and_timesteps(description, dataset_folder):
     for vs in description["PREDICTOR_VARIABLES"].values():
         for v in vs:
             if (np.ma.getmaskarray(res_variables[v]) != False).any():
+                print(v, res_variables[v])
                 m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-1, -2, -3)) > 0)[0]
                 masked_timesteps[m] = True
     print("exclude {} timestep".format(np.where(masked_timesteps==True)[0]))
