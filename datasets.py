@@ -244,6 +244,8 @@ def load_variables_and_timesteps(description, dataset_folder):
                         variables[dataset_name][variable_name][subdataset_name].data[variables[dataset_name][variable_name][subdataset_name].data == missing_value] = np.nan
                     except AttributeError:
                         pass
+                    print("contains nans", (variables[dataset_name][variable_name][subdataset_name] == np.nan).any())
+                    print("mask non-zero:", (variables[dataset_name][variable_name][subdataset_name].mask == True).any())                    
                 variables[dataset_name][variable_name] = combine_variables(description, variables[dataset_name][variable_name])
             else:
                 raise NotImplementedError("Only Ico and Flat grids implemented")
