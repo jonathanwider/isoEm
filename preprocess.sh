@@ -33,6 +33,7 @@ shift $((OPTIND-1))
 
 FILES_ARR=($FILES)
 
+
 # do the preprocessing
 for file in $FILES; do
   filename="${file%%_*}" # get rid of file ending
@@ -42,26 +43,32 @@ for file in $FILES; do
     # if the file name contains isotopes then
     # current default behaviour: Overwrite existing files
     cdo setvrange,$DMIN,$DMAX "${filename}_raw.nc" "${filename}_tmp.nc"
-    if [[ "$file" != *"iHadCM3"* ]];then
-      cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
-    else
+    if [[ "$file" == *"iHadCM3"* ]];then
       cdo copy "${filename}_tmp.nc" "${filename}.nc"
+    else
+      cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
     fi
     cdo yearmean "${filename}.nc" "${filename}_yearly.nc"
   elif [[ "$file" == *"tsurf_raw"* ]];then
     cdo setvrange,173,343 "${filename}_raw.nc" "${filename}_tmp.nc" # set valid precipitation value range to -100 to 70 °C
-    if [[ "$file" != *"iHadCM3"* ]];then
-      cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
-    else
+    if [[ "$file" == *"iHadCM3"* ]];then
       cdo copy "${filename}_tmp.nc" "${filename}.nc"
+    elif [[ "$file" == *"iCESM"* ]];then
+      cdo settaxis,850-01-15,00:00:00,1month "${filename}_tmp.nc" "${filename}_tmp_tmp.nc"  # timeaxis wasn't set in zenodo files
+      cdo remapbil,$GRID "${filename}_tmp_tmp.nc" "${filename}.nc"   
+    else
+      cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
     fi
     cdo yearmean "${filename}.nc" "${filename}_yearly.nc"
   elif [[ "$file" == *"prec_raw"* ]];then
     cdo setvrange,-1,10000 "${filename}_raw.nc" "${filename}_tmp.nc" # set valid precipitation value range to -1 to 10000 mm/month
-    if [[ "$file" != *"iHadCM3"* ]];then
-      cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
-    else
+    if [[ "$file" == *"iHadCM3"* ]];then
       cdo copy "${filename}_tmp.nc" "${filename}.nc"
+    elif [[ "$file" == *"iCESM"* ]];then
+      cdo settaxis,850-01-15,00:00:00,1month "${filename}_tmp.nc" "${filename}_tmp_tmp.nc"  # timeaxis wasn't set in zenodo files
+      cdo remapbil,$GRID "${filename}_tmp_tmp.nc" "${filename}.nc"   
+    else
+      cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
     fi
     cdo yearmean "${filename}.nc" "${filename}_yearly.nc"
   else
