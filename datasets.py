@@ -267,6 +267,7 @@ def load_variables_and_timesteps(description, dataset_folder):
             if (np.ma.getmaskarray(res_variables[v]) != False).any():
                 m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-1, -2, -3)) > 0)[0]
                 masked_timesteps[m] = True
+    print("exclude {} timesteps".format(np.sum(masked_timesteps)))
     c_dates = c_dates[~masked_timesteps]
 
     for dataset_name, dataset_masks in masks.items():  # loop over all used datasets
