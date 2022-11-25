@@ -250,7 +250,7 @@ def load_variables_and_timesteps(description, dataset_folder):
                 variables[dataset_name][variable_name] = combine_variables(description, variables[dataset_name][variable_name])
             else:
                 raise NotImplementedError("Only Ico and Flat grids implemented")
-
+    return variables
     res_masks = {}
     res_variables = {}
 
@@ -333,6 +333,7 @@ def create_yearly_dataset(description, dataset_folder, output_folder):
 
     print("loading variables")
     # load the selected climate variables.
+    return load_variables_and_timesteps(description, dataset_folder)
     variables, masks, c_dates = load_variables_and_timesteps(description, dataset_folder)
 
     # split the variables into predictors and targets.
