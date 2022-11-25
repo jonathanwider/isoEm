@@ -276,7 +276,7 @@ def load_variables_and_timesteps(description, dataset_folder):
                     m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-1, -2, -3)) > 0)[0]
                     masked_timesteps[m] = True
             elif description["GRID_TYPE"] == "Ico":
-                    m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-2, -3)) > 0)[0]
+                    m = np.where(np.mean(np.ma.getmaskarray(res_variables[v]), axis=(-1, -2)) > 0)[0]
                     masked_timesteps[m] = True
             else:
                 raise NotImplementedError("Only Ico and Flat grids implemented")
