@@ -171,7 +171,6 @@ def load_variables_and_timesteps(description, dataset_folder):
     c_mask = np.logical_and(c_years >= description["START_YEAR"],
                             c_years < description["END_YEAR"])
     c_dates = c_years[c_mask]
-    print(c_dates)
 
     for dataset_name, dataset in datasets.items():  # loop over all used datasets
         variables[dataset_name] = {}
@@ -184,7 +183,6 @@ def load_variables_and_timesteps(description, dataset_folder):
             except KeyError:
                 years = util.get_years_months(dataset.variables["time"][:].data, dataset.variables["time"].units,
                                               dataset.variables["time"].calendar)[0]
-            print(years)
             # get the corresponding indices:
             indices = []
             if years is not None:
