@@ -216,6 +216,7 @@ def load_variables_and_timesteps(description, dataset_folder):
                 if dataset.variables[variable_name][:].data.shape[0] > 1:  # only if time dimension is not trivial
                     variables[dataset_name][variable_name] = np.squeeze(dataset.variables[variable_name][:])[indices,
                                                              description["LATITUDES_SLICE"][0]:description["LATITUDES_SLICE"][1], :]
+                    print("at import: any masked values:", (variables[dataset_name][variable_name].mask == True).any())
                 else:
                     variables[dataset_name][variable_name] = np.squeeze(
                         np.repeat(dataset.variables[variable_name][:][..., 1:-1, :], repeats=len(c_dates), axis=0))
@@ -223,6 +224,8 @@ def load_variables_and_timesteps(description, dataset_folder):
                 # load the marker for the missing value in the dataset
                 try:
                     missing_value = dataset.variables[variable_name].missing_value
+                    print("Missing value", missing_value)
+                    print("Any variable == missing value:", (variables[dataset_name][variable_name].data == missing_value).any())
                     variables[dataset_name][variable_name].data[variables[dataset_name][variable_name].data == missing_value] = np.nan
                 except AttributeError:
                     pass
