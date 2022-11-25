@@ -225,6 +225,7 @@ def load_variables_and_timesteps(description, dataset_folder):
                 try:
                     missing_value = dataset.variables[variable_name].missing_value
                     print("Missing value", missing_value)
+                    print(variable_name)
                     print("Any variable == missing value:", (variables[dataset_name][variable_name].data == missing_value).any())
                     variables[dataset_name][variable_name].data[variables[dataset_name][variable_name].data == missing_value] = np.nan
                 except AttributeError:
