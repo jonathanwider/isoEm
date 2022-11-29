@@ -193,7 +193,7 @@ def netcdf_from_rescaled_predictions(
 
         if dataset_description["TIMESCALE"] == "YEARLY":
             filename = os.path.join(
-                "Datasets_old",
+                "Datasets",
                 dataset_description["CLIMATE_MODEL"],
                 "Original",
                 "{}_yearly.nc".format(
@@ -202,7 +202,7 @@ def netcdf_from_rescaled_predictions(
             )
         elif dataset_description["TIMESCALE"] == "MONTHLY":
             filename = os.path.join(
-                "Datasets_old",
+                "Datasets",
                 dataset_description["CLIMATE_MODEL"],
                 "Original",
                 "{}.nc".format(list(dataset_description["TARGET_VARIABLES"].keys())[0]),
