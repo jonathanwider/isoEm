@@ -41,9 +41,16 @@ def interpolate_predictions(
     assert descriptions["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY"
     # load the predictions, undo the scaling
     if do_scaling:
-        rescaled_predictions, _, _ = get_rescaled_predictions_and_gt(
-            descriptions, predictions
-        )
+        if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Flat":
+            rescaled_predictions, _, _ = get_rescaled_predictions_and_gt(
+                descriptions, predictions
+            )
+        elif descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":
+            rescaled_predictions, _ = get_rescaled_predictions_and_gt(
+                descriptions, predictions
+            )
+        else:
+            raise NotImplementedError("Invalid grid type")
     else:
         rescaled_predictions = predictions
 

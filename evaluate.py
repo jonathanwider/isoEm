@@ -31,7 +31,9 @@ def get_rmse(predictions, targets, masks=None):
         masks = masks.reshape(masks.shape[0], -1)
         for i in range(ps.shape[1]):
             if np.sum(~masks[:, i]) > 0:
-                res[i] = mean_squared_error(ps[~masks[:, i], i], gt[~masks[:, i], i], squared=False)
+                res[i] = mean_squared_error(
+                    ps[~masks[:, i], i], gt[~masks[:, i], i], squared=False
+                )
     return res.reshape(*predictions.shape[1:])
 
 
@@ -39,6 +41,7 @@ def get_r2(predictions, targets, masks=None):
     """
     Calculate the R^2-score between predictions and targets.
     Assume the shape of the input starts with the timesteps.
+    Careful: Arguments are not commututive!
 
     @param predictions: Model predictions (rescaled)
     @param targets: Ground truth
@@ -46,11 +49,13 @@ def get_r2(predictions, targets, masks=None):
     @return: R^2-score, same shape as input without time dimension
     """
     rmse = get_rmse(predictions, targets, masks)  # calculate the RMSE
-    std = np.nanstd(targets, axis=0)  # calculate the standard deviation of the ground truth
+    std = np.nanstd(
+        targets, axis=0
+    )  # calculate the standard deviation of the ground truth
     if (std == 0).any():
         if np.logical_and(std == 0, np.sum(~masks, axis=(0, 1)) <= 1).any():
             std[std == 0] = np.nan
-    return 1 - rmse/std
+    return 1 - rmse / std
 
 
 def get_weighted_average(data, dataset_description):
@@ -68,7 +73,9 @@ def get_weighted_average(data, dataset_description):
     latitudes = np.array(dataset_description["LATITUDES"])
     longitudes = np.array(dataset_description["LONGITUDES"])
 
-    weights = np.tile(np.cos(np.deg2rad(latitudes))[:, None], len(longitudes))[np.newaxis, ...]
+    weights = np.tile(np.cos(np.deg2rad(latitudes))[:, None], len(longitudes))[
+        np.newaxis, ...
+    ]
     masked_data = np.ma.masked_array(data, np.isnan(data))
     data_avg = np.ma.average(masked_data, weights=weights, axis=(1, 2))
     return data_avg
@@ -85,8 +92,12 @@ def get_correlation(predictions, targets):
     for k in range(targets.shape[-3]):
         for i in range(targets.shape[-2]):
             for j in range(targets.shape[-1]):
-                nas = np.logical_or(np.isnan(predictions[:, k, i, j]), np.isnan(targets[:, k, i, j]))
-                pearson_correlation[k, i, j] = pearsonr(predictions[~nas, k, i, j], targets[~nas, k, i, j])[0]
+                nas = np.logical_or(
+                    np.isnan(predictions[:, k, i, j]), np.isnan(targets[:, k, i, j])
+                )
+                pearson_correlation[k, i, j] = pearsonr(
+                    predictions[~nas, k, i, j], targets[~nas, k, i, j]
+                )[0]
     return pearson_correlation
 
 
@@ -104,23 +115,41 @@ def load_compatible_available_runs(base_folder, conditions):
     counter = 0
     predictions_list = []
     descriptions_list = []
-    for folder in [d for d in os.listdir(base_folder) if os.path.isdir(os.path.join(base_folder, d))]:
-        files = [f for f in os.listdir(os.path.join(base_folder, folder)) if
-                 os.path.isfile(os.path.join(base_folder, folder, f))]
+    for folder in [
+        d
+        for d in os.listdir(base_folder)
+        if os.path.isdir(os.path.join(base_folder, d))
+    ]:
+        files = [
+            f
+            for f in os.listdir(os.path.join(base_folder, folder))
+            if os.path.isfile(os.path.join(base_folder, folder, f))
+        ]
         if "descriptions.gz" in files and "predictions.gz" in files:
-            with gzip.open(os.path.join(base_folder, folder, "descriptions.gz"), 'rb') as f:
+            with gzip.open(
+                os.path.join(base_folder, folder, "descriptions.gz"), "rb"
+            ) as f:
                 descriptions = pickle.load(f)
                 dataset_description = descriptions["DATASET_DESCRIPTION"]
                 model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
 
-            if util.check_dict_conditions(dataset_description, conditions["DATASET_DESCRIPTION"]) and \
-                    util.check_dict_conditions(model_training_description, conditions["MODEL_TRAINING_DESCRIPTION"]):
+            if util.check_dict_conditions(
+                dataset_description, conditions["DATASET_DESCRIPTION"]
+            ) and util.check_dict_conditions(
+                model_training_description, conditions["MODEL_TRAINING_DESCRIPTION"]
+            ):
                 counter += 1
-                with gzip.open(os.path.join(base_folder, folder, "predictions.gz"), 'rb') as f:
+                with gzip.open(
+                    os.path.join(base_folder, folder, "predictions.gz"), "rb"
+                ) as f:
                     prs = pickle.load(f)
                 predictions_list.append(prs)
-                descriptions_list.append({"DATASET_DESCRIPTION": dataset_description,
-                                          "MODEL_TRAINING_DESCRIPTION": model_training_description})
+                descriptions_list.append(
+                    {
+                        "DATASET_DESCRIPTION": dataset_description,
+                        "MODEL_TRAINING_DESCRIPTION": model_training_description,
+                    }
+                )
     print("{} matching runs found".format(counter))
     return predictions_list, descriptions_list
 
@@ -136,7 +165,11 @@ def undo_scaling(model_training_description, predictions, train_targets):
     rescaled_predictions = np.zeros_like(predictions)
     for j, mode in enumerate(model_training_description["S_MODE_TARGETS"]):
         if mode == "Global":
-            std = np.mean(np.nanstd(train_targets, axis=0, keepdims=True), axis=(1, 2), keepdims=True)
+            std = np.mean(
+                np.nanstd(train_targets, axis=0, keepdims=True),
+                axis=(1, 2),
+                keepdims=True,
+            )
             std[std == 0] = 1
             mean = np.nanmean(train_targets, axis=(0, 1, 2), keepdims=True)
             rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
@@ -146,7 +179,11 @@ def undo_scaling(model_training_description, predictions, train_targets):
             mean = np.nanmean(train_targets, axis=0, keepdims=True)
             rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
         elif mode == "Global_mean_pixelwise_std":
-            std = np.mean(np.nanstd(train_targets, axis=0, keepdims=True), axis=(1, 2), keepdims=True)
+            std = np.mean(
+                np.nanstd(train_targets, axis=0, keepdims=True),
+                axis=(1, 2),
+                keepdims=True,
+            )
             std[std == 0] = 1
             mean = np.nanmean(train_targets, axis=0, keepdims=True)
             rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
@@ -158,7 +195,9 @@ def undo_scaling(model_training_description, predictions, train_targets):
         elif mode == "None":
             rescaled_predictions[:, j, ...] = predictions[:, j, ...]
         else:
-            raise NotImplementedError("{} is not a valid keyword for standardization".format(mode))
+            raise NotImplementedError(
+                "{} is not a valid keyword for standardization".format(mode)
+            )
     return rescaled_predictions
 
 
@@ -177,14 +216,20 @@ def get_rescaled_predictions_and_gt(descriptions, predictions):
 
     assert "DATASET_FOLDER" in model_training_description.keys()
 
-    dataset = find_and_load_dataset(model_training_description["DATASET_FOLDER"], dataset_description, use_prints=False)
+    dataset = find_and_load_dataset(
+        model_training_description["DATASET_FOLDER"],
+        dataset_description,
+        use_prints=False,
+    )
 
     train_targets = dataset["train"]["targets"]
     test_targets = dataset["test"]["targets"]
     if dataset_description["GRID_TYPE"] == "Flat":
         test_masks = dataset["test"]["masks"]
 
-    rescaled_predictions = undo_scaling(model_training_description, predictions, train_targets)
+    rescaled_predictions = undo_scaling(
+        model_training_description, predictions, train_targets
+    )
 
     if dataset_description["GRID_TYPE"] == "Flat":
         return rescaled_predictions, test_targets, test_masks
@@ -210,14 +255,20 @@ def get_rescaled_predictions_and_gt_months(descriptions, predictions, do_split=F
     assert dataset_description["TIMESCALE"] == "MONTHLY"
     assert "DATASET_FOLDER" in model_training_description.keys()
 
-    dataset = find_and_load_dataset(model_training_description["DATASET_FOLDER"], dataset_description, use_prints=False)
+    dataset = find_and_load_dataset(
+        model_training_description["DATASET_FOLDER"],
+        dataset_description,
+        use_prints=False,
+    )
 
     t_months = dataset_description["TIMESTEPS_TEST"][:, 1]
 
     train_targets = dataset["train"]["targets"]
     test_targets = dataset["test"]["targets"]
     test_masks = dataset["test"]["masks"]
-    rescaled_predictions = undo_scaling(model_training_description, predictions, train_targets)
+    rescaled_predictions = undo_scaling(
+        model_training_description, predictions, train_targets
+    )
     if do_split:
         rescaled_predictions_months = []
         test_masks_months = []
@@ -240,22 +291,35 @@ def load_data_for_comparison(base_folder, conditions, do_split=False):
     @param do_split: Whether or not to split the data into individual months (on monthly timescale)
     @return: Lists of descriptions, rescaled predictions and ground truth
     """
-    predictions_list, descriptions_list = load_compatible_available_runs(base_folder, conditions)
+    predictions_list, descriptions_list = load_compatible_available_runs(
+        base_folder, conditions
+    )
     if do_split:
-        assert np.array([description["DATASET_DESCRIPTION"]["TIMESCALE"] == "MONTHLY" for description in descriptions_list]).all()
+        assert np.array(
+            [
+                description["DATASET_DESCRIPTION"]["TIMESCALE"] == "MONTHLY"
+                for description in descriptions_list
+            ]
+        ).all()
     rescaled_predictions_list = []
     ground_truth_list = []
     masks_list = []
     for i in range(len(predictions_list)):
         if descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "MONTHLY":
-            rp, gt, masks = get_rescaled_predictions_and_gt_months(descriptions_list[i], predictions_list[i], do_split=do_split)
+            rp, gt, masks = get_rescaled_predictions_and_gt_months(
+                descriptions_list[i], predictions_list[i], do_split=do_split
+            )
             masks_list.append(masks)
         elif descriptions_list[i]["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY":
             if descriptions_list[i]["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":
-                rp, gt = get_rescaled_predictions_and_gt(descriptions_list[i], predictions_list[i])
+                rp, gt = get_rescaled_predictions_and_gt(
+                    descriptions_list[i], predictions_list[i]
+                )
                 masks_list.append(None)
             else:
-                rp, gt, masks = get_rescaled_predictions_and_gt(descriptions_list[i], predictions_list[i])
+                rp, gt, masks = get_rescaled_predictions_and_gt(
+                    descriptions_list[i], predictions_list[i]
+                )
                 masks_list.append(masks)
         else:
             raise NotImplementedError("Invalid timescale.")
