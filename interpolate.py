@@ -209,6 +209,7 @@ def netcdf_from_rescaled_predictions(
             )
         else:
             raise NotImplementedError("Invalid timescale")
+        print(filename)
         original_dimensions = (
             nc.Dataset(filename)
             .variables[
