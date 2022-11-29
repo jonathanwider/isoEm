@@ -484,9 +484,10 @@ def netcdf_from_rescaled_predictions(
             rescaled_predictions, dataset_description
         )
 
-        dst_5_nbs.variables["d18O"][:] = rescaled_predictions_5_nbs
-        dst_5_nbs.close()
-        src_5_nbs.close()
+        dst_6_nbs.variables["d18O"][:] = rescaled_predictions_6_nbs
+        dst_6_nbs.close()
+        src_6_nbs.close()
+
         dst_5_nbs.variables["d18O"][:] = rescaled_predictions_5_nbs
         dst_5_nbs.close()
         src_5_nbs.close()
