@@ -77,7 +77,7 @@ corr_style["CBAR_LABELS"] = {"tsurf": "Temperature",
                              "prec": "Precipitation amount",
                              "slp": "Sea-level pressure"}
 corr_style["CBAR_EXTEND"] = "neither"
-corr_style["FIGSIZE"] = np.array([7, 5])
+corr_style["FIGSIZE"] = np.array([8, 4])
 
 # for plotting maps of temperature
 tsurf_style = dict(map_style)
