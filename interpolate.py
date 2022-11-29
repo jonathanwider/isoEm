@@ -37,7 +37,8 @@ def interpolate_predictions(
     @param do_scaling: Whether or not we want to rescale the data before saving
     @return:
     """
-    assert len(descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].keys()) == 1
+    assert len(descriptions["DATASET_DESCRIPTION"]
+               ["TARGET_VARIABLES"].keys()) == 1
     assert descriptions["DATASET_DESCRIPTION"]["TIMESCALE"] == "YEARLY"
     # load the predictions, undo the scaling
     if do_scaling:
@@ -70,12 +71,14 @@ def interpolate_predictions(
         )
         ds_5_nbs = nc.Dataset(
             os.path.join(
-                script_folder, "tmp_r_{}_nbs_5_{}.nc".format(resolution, interpolation)
+                script_folder, "tmp_r_{}_nbs_5_{}.nc".format(
+                    resolution, interpolation)
             )
         )
         ds_6_nbs = nc.Dataset(
             os.path.join(
-                script_folder, "tmp_r_{}_nbs_6_{}.nc".format(resolution, interpolation)
+                script_folder, "tmp_r_{}_nbs_6_{}.nc".format(
+                    resolution, interpolation)
             )
         )
 
@@ -96,17 +99,20 @@ def interpolate_predictions(
             (
                 ds_6_nbs.variables[
                     list(
-                        descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values()
+                        descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values(
+                        )
                     )[0][0]
                 ][:].data.shape[:-1]
                 + (len(indices_6_nbs) + 10,)
             )
         )
         res[..., indices_6_nbs] = ds_6_nbs.variables[
-            list(descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]
+            list(descriptions["DATASET_DESCRIPTION"]
+                 ["TARGET_VARIABLES"].values())[0][0]
         ][:].data
         res[..., indices_5_nbs] = ds_5_nbs.variables[
-            list(descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]
+            list(descriptions["DATASET_DESCRIPTION"]
+                 ["TARGET_VARIABLES"].values())[0][0]
         ][:].data
 
         dataset_description = dict(
@@ -137,7 +143,8 @@ def interpolate_predictions(
             )
         )
         res = ds_6_nbs.variables[
-            list(descriptions["DATASET_DESCRIPTION"]["TARGET_VARIABLES"].values())[0][0]
+            list(descriptions["DATASET_DESCRIPTION"]
+                 ["TARGET_VARIABLES"].values())[0][0]
         ][:].data
 
         print(
@@ -159,7 +166,8 @@ def interpolate_predictions(
     else:
         raise NotImplementedError("Invalid grid type")
 
-    s1 = util.create_hash_from_description(new_descriptions["DATASET_DESCRIPTION"])
+    s1 = util.create_hash_from_description(
+        new_descriptions["DATASET_DESCRIPTION"])
     s2 = util.create_hash_from_description(
         new_descriptions["MODEL_TRAINING_DESCRIPTION"]
     )
@@ -212,7 +220,8 @@ def netcdf_from_rescaled_predictions(
                 "Datasets",
                 dataset_description["CLIMATE_MODEL"],
                 "Original",
-                "{}.nc".format(list(dataset_description["TARGET_VARIABLES"].keys())[0]),
+                "{}.nc".format(
+                    list(dataset_description["TARGET_VARIABLES"].keys())[0]),
             )
         else:
             raise NotImplementedError("Invalid timescale")
@@ -221,7 +230,8 @@ def netcdf_from_rescaled_predictions(
             nc.Dataset(filename)
             .variables[
                 "{}".format(
-                    list(dataset_description["TARGET_VARIABLES"].values())[0][0]
+                    list(dataset_description["TARGET_VARIABLES"].values())[
+                        0][0]
                 )
             ]
             .dimensions
@@ -235,7 +245,8 @@ def netcdf_from_rescaled_predictions(
             nc.Dataset(filename)
             .variables[
                 "{}".format(
-                    list(dataset_description["TARGET_VARIABLES"].values())[0][0]
+                    list(dataset_description["TARGET_VARIABLES"].values())[
+                        0][0]
                 )
             ]
             .datatype
@@ -272,7 +283,8 @@ def netcdf_from_rescaled_predictions(
         # copy all file data except for the excluded
         for name, variable in src.variables.items():
             if name in tocopy:
-                x = dst.createVariable(name, variable.datatype, variable.dimensions)
+                x = dst.createVariable(
+                    name, variable.datatype, variable.dimensions)
                 dst[name][:] = src[name][:]
                 # copy variable attributes all at once via dictionary
                 dst[name].setncatts(src[name].__dict__)
@@ -280,18 +292,21 @@ def netcdf_from_rescaled_predictions(
             nc.Dataset(filename)
             .variables[
                 "{}".format(
-                    list(dataset_description["TARGET_VARIABLES"].values())[0][0]
+                    list(dataset_description["TARGET_VARIABLES"].values())[
+                        0][0]
                 )
             ]
             .__dict__
         )
         dst.createVariable(
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]),
+            "{}".format(
+                list(dataset_description["TARGET_VARIABLES"].values())[0][0]),
             original_dataype,
             necessary_dimensions,
         )
         dst.variables[
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])
+            "{}".format(
+                list(dataset_description["TARGET_VARIABLES"].values())[0][0])
         ].setncatts(target_var_attribute_dict)
         try:
             src["t"]
@@ -355,7 +370,8 @@ def netcdf_from_rescaled_predictions(
             nc.Dataset(filename_5_nbs)
             .variables[
                 "{}".format(
-                    list(dataset_description["TARGET_VARIABLES"].values())[0][0]
+                    list(dataset_description["TARGET_VARIABLES"].values())[
+                        0][0]
                 )
             ]
             .dimensions
@@ -364,7 +380,8 @@ def netcdf_from_rescaled_predictions(
             nc.Dataset(filename_6_nbs)
             .variables[
                 "{}".format(
-                    list(dataset_description["TARGET_VARIABLES"].values())[0][0]
+                    list(dataset_description["TARGET_VARIABLES"].values())[
+                        0][0]
                 )
             ]
             .dimensions
@@ -381,7 +398,8 @@ def netcdf_from_rescaled_predictions(
             nc.Dataset(filename_5_nbs)
             .variables[
                 "{}".format(
-                    list(dataset_description["TARGET_VARIABLES"].values())[0][0]
+                    list(dataset_description["TARGET_VARIABLES"].values())[
+                        0][0]
                 )
             ]
             .datatype
@@ -390,7 +408,8 @@ def netcdf_from_rescaled_predictions(
             nc.Dataset(filename_6_nbs)
             .variables[
                 "{}".format(
-                    list(dataset_description["TARGET_VARIABLES"].values())[0][0]
+                    list(dataset_description["TARGET_VARIABLES"].values())[
+                        0][0]
                 )
             ]
             .datatype
@@ -442,18 +461,21 @@ def netcdf_from_rescaled_predictions(
             nc.Dataset(filename_6_nbs)
             .variables[
                 "{}".format(
-                    list(dataset_description["TARGET_VARIABLES"].values())[0][0]
+                    list(dataset_description["TARGET_VARIABLES"].values())[
+                        0][0]
                 )
             ]
             .__dict__
         )
         dst_6_nbs.createVariable(
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]),
+            "{}".format(
+                list(dataset_description["TARGET_VARIABLES"].values())[0][0]),
             original_datatype_6_nbs,
             necessary_dimensions_6_nbs,
         )
         dst_6_nbs.variables[
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])
+            "{}".format(
+                list(dataset_description["TARGET_VARIABLES"].values())[0][0])
         ].setncatts(target_var_attribute_dict_6_nbs)
         dst_6_nbs.createVariable("t", "float64", "t")
         dst_6_nbs.createVariable("t_bnds", "float64", ("t", "bnds"))
@@ -463,18 +485,21 @@ def netcdf_from_rescaled_predictions(
             nc.Dataset(filename_5_nbs)
             .variables[
                 "{}".format(
-                    list(dataset_description["TARGET_VARIABLES"].values())[0][0]
+                    list(dataset_description["TARGET_VARIABLES"].values())[
+                        0][0]
                 )
             ]
             .__dict__
         )
         dst_5_nbs.createVariable(
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0]),
+            "{}".format(
+                list(dataset_description["TARGET_VARIABLES"].values())[0][0]),
             original_datatype_5_nbs,
             necessary_dimensions_5_nbs,
         )
         dst_5_nbs.variables[
-            "{}".format(list(dataset_description["TARGET_VARIABLES"].values())[0][0])
+            "{}".format(
+                list(dataset_description["TARGET_VARIABLES"].values())[0][0])
         ].setncatts(target_var_attribute_dict_5_nbs)
         dst_5_nbs.createVariable("t", "float64", "t")
         dst_5_nbs.createVariable("t_bnds", "float64", ("t", "bnds"))
@@ -549,11 +574,10 @@ def run_script(descriptions, script_folder, interpolation_type="cons1", resoluti
         assert (
             descriptions["DATASET_DESCRIPTION"]["CLIMATE_MODEL"] == "iHadCM3"
         ), "original grid description files missing for this models."
-
-        files_5_nb = "tmp_5_nbs"
-        files_6_nb = "tmp_6_nbs"
+        files_5_nb = os.path.join(script_folder, "tmp_5_nbs.nc")
+        files_6_nb = os.path.join(script_folder, "tmp_6_nbs.nc")
         script = os.path.join(script_folder, "ico_to_model.sh")
-        o_arg = "default_grid.txt"
+        o_arg = os.path.join(script_folder, "default_grid.txt")
         i_arg = interpolation_type
 
         g_arg = "{}grid_description_r_{}_nbs_6_ico.txt".format(
@@ -589,33 +613,38 @@ def interpolate_climate_model_data_to_ico_grid(
     @return:
     """
     path = os.path.join(
-        dataset_folder, model_name, "Original", "{}_yearly.nc".format(variable_name)
+        dataset_folder, model_name, "Original", "{}_yearly.nc".format(
+            variable_name)
     )
 
     tmp_path_5_nbs = os.path.join(
         dataset_folder,
         model_name,
         "Original",
-        "{}_yearly_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation),
+        "{}_yearly_r_{}_nbs_5_{}.nc".format(
+            variable_name, resolution, interpolation),
     )
     tmp_path_6_nbs = os.path.join(
         dataset_folder,
         model_name,
         "Original",
-        "{}_yearly_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation),
+        "{}_yearly_r_{}_nbs_6_{}.nc".format(
+            variable_name, resolution, interpolation),
     )
 
     new_path_5_nbs = os.path.join(
         dataset_folder,
         model_name,
         "Interpolated",
-        "{}_yearly_r_{}_nbs_5_{}.nc".format(variable_name, resolution, interpolation),
+        "{}_yearly_r_{}_nbs_5_{}.nc".format(
+            variable_name, resolution, interpolation),
     )
     new_path_6_nbs = os.path.join(
         dataset_folder,
         model_name,
         "Interpolated",
-        "{}_yearly_r_{}_nbs_6_{}.nc".format(variable_name, resolution, interpolation),
+        "{}_yearly_r_{}_nbs_6_{}.nc".format(
+            variable_name, resolution, interpolation),
     )
 
     script = os.path.join(script_folder, "model_to_ico.sh")
