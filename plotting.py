@@ -16,6 +16,7 @@ class FixPointNormalize(matplotlib.colors.Normalize):
     This may be useful for a `terrain` map, to set the "sea level"
     to a color in the blue/turquise range.
     """
+
     def __init__(self, vmin=None, vmax=None, sealevel=0, col_val=0.21875, clip=False):
         # sealevel is the fix point of the colormap (in data units)
         self.sealevel = sealevel
@@ -29,7 +30,7 @@ class FixPointNormalize(matplotlib.colors.Normalize):
 
 
 map_style = {
-    "FIGSIZE": (15, 12),
+    "FIGSIZE": np.array([7, 5]),
     "CBAR_FONTSIZE": 12,
     "PROJECTION": ccrs.Robinson(),
     "TITLE_FONTSIZE": 15
@@ -39,8 +40,10 @@ map_style = {
 r2_style = dict(map_style)
 r2_style["CMAP"] = matplotlib.colors.ListedColormap(["#67001f", "#b2182b", "#d6604d", "#f4a582", "#fddbc7",
                                                      "#d1e5f0", "#92c5de", "#4393c3", "#2166ac", "#053061"])
-r2_style["BOUNDS"] = np.concatenate((np.array([-1.0, -0.8, -0.6, -0.4, -0.2]), np.linspace(0, 1, 6)))
-r2_style["NORM"] = matplotlib.colors.BoundaryNorm(r2_style["BOUNDS"], r2_style["CMAP"].N)
+r2_style["BOUNDS"] = np.concatenate(
+    (np.array([-1.0, -0.8, -0.6, -0.4, -0.2]), np.linspace(0, 1, 6)))
+r2_style["NORM"] = matplotlib.colors.BoundaryNorm(
+    r2_style["BOUNDS"], r2_style["CMAP"].N)
 r2_style["CBAR_LABEL"] = r"$R^2$ score"
 r2_style["CBAR_EXTEND"] = "min"
 
@@ -49,7 +52,8 @@ mean_style = dict(map_style)
 mean_style["CMAP"] = matplotlib.colors.ListedColormap(["#003c30", "#01665e", "#35978f",
                                                        "#80cdc1", "#c7eae5", "#f6e8c3"])
 mean_style["BOUNDS"] = np.linspace(-30, 6, len(mean_style["CMAP"].colors) + 1)
-mean_style["NORM"] = matplotlib.colors.BoundaryNorm(mean_style["BOUNDS"], len(mean_style["CMAP"].colors))
+mean_style["NORM"] = matplotlib.colors.BoundaryNorm(
+    mean_style["BOUNDS"], len(mean_style["CMAP"].colors))
 mean_style["CBAR_LABEL"] = r"$\delta{}^{18}O$ [‰]"
 mean_style["CBAR_EXTEND"] = "both"
 
@@ -58,7 +62,8 @@ std_style = dict(map_style)
 std_style["CMAP"] = matplotlib.colors.ListedColormap(["#fef0d9", "#fdd49e", "#fdbb84",
                                                       "#fc8d59", "#ef6548", "#d7301f", "#990000"])
 std_style["BOUNDS"] = np.linspace(0, 7, len(std_style["CMAP"].colors) + 1)
-std_style["NORM"] = matplotlib.colors.BoundaryNorm(std_style["BOUNDS"], len(std_style["CMAP"].colors))
+std_style["NORM"] = matplotlib.colors.BoundaryNorm(
+    std_style["BOUNDS"], len(std_style["CMAP"].colors))
 std_style["CBAR_LABEL"] = r"$\delta{}^{18}O$ [‰]"
 std_style["CBAR_EXTEND"] = "max"
 
@@ -72,12 +77,13 @@ corr_style["CBAR_LABELS"] = {"tsurf": "Temperature",
                              "prec": "Precipitation amount",
                              "slp": "Sea-level pressure"}
 corr_style["CBAR_EXTEND"] = "neither"
-corr_style["FIGSIZE"] = (15, 9)
+corr_style["FIGSIZE"] = np.array([7, 5])
 
 # for plotting maps of temperature
 tsurf_style = dict(map_style)
 tsurf_style["CMAP"] = plt.get_cmap("RdBu_r")
-tsurf_style["NORM"] = matplotlib.colors.TwoSlopeNorm(vmin=-40, vmax=40, vcenter=0)
+tsurf_style["NORM"] = matplotlib.colors.TwoSlopeNorm(
+    vmin=-40, vmax=40, vcenter=0)
 tsurf_style["CBAR_LABEL"] = "Temperature [K]"
 tsurf_style["CBAR_EXTEND"] = "both"
 
@@ -107,7 +113,8 @@ def plot_map(ax, data, description, style, title=""):
     # remove white line
     field, lon_plot = add_cyclic_point(data, coord=lon)
     lo, la = np.meshgrid(lon_plot, lat)
-    layer = ax.pcolormesh(lo, la, field, transform=ccrs.PlateCarree(), cmap=style["CMAP"], norm=style["NORM"])
+    layer = ax.pcolormesh(lo, la, field, transform=ccrs.PlateCarree(
+    ), cmap=style["CMAP"], norm=style["NORM"])
 
     cbar = plt.colorbar(
         matplotlib.cm.ScalarMappable(cmap=style["CMAP"], norm=style["NORM"]),
@@ -152,7 +159,8 @@ def plot_masked_data(ax, data, description, style, title=""):
     lo, la = np.meshgrid(lons_plot[0], lat)
     cbars = []
     for i, key in enumerate(list(data.keys())):
-        ax.pcolormesh(lo, la, fields[i], transform=ccrs.PlateCarree(), cmap=style["CMAPS"][key], norm=style["NORM"])
+        ax.pcolormesh(lo, la, fields[i], transform=ccrs.PlateCarree(
+        ), cmap=style["CMAPS"][key], norm=style["NORM"])
 
     ax.coastlines()
 
@@ -180,7 +188,8 @@ def plot_ico_map(ax, data, description, style, title=""):
     spherical_vertices = cartesian_to_spherical(vertices)
     spherical_vertices_plot = np.zeros_like(spherical_vertices)
     spherical_vertices_plot[:, 0] = spherical_vertices[:, 1]  # longitude
-    spherical_vertices_plot[:, 0][spherical_vertices_plot[:, 0] == 360] = 0  # longitude
+    # longitude
+    spherical_vertices_plot[:, 0][spherical_vertices_plot[:, 0] == 360] = 0
     spherical_vertices_plot[:, 1] = spherical_vertices[:, 0]  # latitude
 
     ax.set_global()
@@ -258,7 +267,8 @@ def plot_map_3d(ax, data, description, style, title="", elev=18, azim=0, show_co
         ax.add_collection3d(polygon)
 
     if show_coastlines:
-        cls = get_coastline_xyz(r=1.016)  # value of r > 1 so that coastlines don't overlap with hexagons.
+        # value of r > 1 so that coastlines don't overlap with hexagons.
+        cls = get_coastline_xyz(r=1.016)
         for cl in cls:
             points = np.transpose(cl)
             for i in range(len(points) - 1):
@@ -281,5 +291,3 @@ def plot_map_3d(ax, data, description, style, title="", elev=18, azim=0, show_co
     cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
 
     cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
-
-
