@@ -137,7 +137,7 @@ def interpolate_predictions(
         ds_6_nbs = nc.Dataset(
             os.path.join(
                 script_folder,
-                "tmp_nbs_6_r_{}_nbs_6_{}.nc".format(
+                "tmp_6_nbs_r_{}_nbs_6_{}.nc".format(
                     descriptions["DATASET_DESCRIPTION"]["RESOLUTION"], interpolation
                 ),
             )
