@@ -137,7 +137,7 @@ def interpolate_predictions(
         ds_6_nbs = nc.Dataset(
             os.path.join(
                 script_folder,
-                "tmp_r_{}_nbs_6_{}.nc".format(
+                "tmp_nbs_6_r_{}_nbs_6_{}.nc".format(
                     descriptions["DATASET_DESCRIPTION"]["RESOLUTION"], interpolation
                 ),
             )
@@ -149,7 +149,7 @@ def interpolate_predictions(
 
         print(
             "When interpolating back to flat grid, only the 6nbs file is used, "
-            "because otherwise we have wrong results due to overlap"
+            "because otherwise we have wrong results due to overlap."
         )
 
         dataset_description = dict(
