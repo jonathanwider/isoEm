@@ -334,7 +334,7 @@ def netcdf_from_rescaled_predictions(
             "Datasets",
             dataset_description["CLIMATE_MODEL"],
             "Interpolated",
-            "{}_r_{}_nbs_5_{}.nc".format(
+            "{}_yearly_r_{}_nbs_5_{}.nc".format(
                 list(dataset_description["TARGET_VARIABLES"].keys())[0],
                 dataset_description["RESOLUTION"],
                 dataset_description["INTERPOLATION"],
@@ -344,7 +344,7 @@ def netcdf_from_rescaled_predictions(
             "Datasets",
             dataset_description["CLIMATE_MODEL"],
             "Interpolated",
-            "{}_r_{}_nbs_6_{}.nc".format(
+            "{}_yearly_r_{}_nbs_6_{}.nc".format(
                 list(dataset_description["TARGET_VARIABLES"].keys())[0],
                 dataset_description["RESOLUTION"],
                 dataset_description["INTERPOLATION"],
