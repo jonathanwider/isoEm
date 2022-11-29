@@ -165,17 +165,10 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
 
         dst = nc.Dataset(output_file, "w")
         dst.setncatts(src.__dict__)
-        print(original_dimensions)
-        print(necessary_dimensions)
         # copy dimensions
         for name, dimension in src.dimensions.items():
-            print(name)
             if name in dimscopy:
-                print("is in dimscopy")
                 dst.createDimension(name, (len(dimension) if not dimension.isunlimited() else None))
-        print(dst.dimensions)
-        print(dimscopy)
-        print(tocopy)
         # copy all file data except for the excluded
         for name, variable in src.variables.items():
             if name in tocopy:
@@ -303,12 +296,16 @@ def netcdf_from_rescaled_predictions(descriptions, rescaled_predictions, t_test,
 
         rescaled_predictions_5_nbs, rescaled_predictions_6_nbs = split_5_nbs_6_nbs(rescaled_predictions,
                                                                                    dataset_description)
-
-        dst_5_nbs.variables["dO18"][:] = rescaled_predictions_5_nbs
+        try:
+            dst_5_nbs.variables["dO18"][:] = rescaled_predictions_5_nbs
+        except KeyError:
+            dst_5_nbs.variables["d18O"][:] = rescaled_predictions_5_nbs            
         dst_5_nbs.close()
         src_5_nbs.close()
-
-        dst_5_nbs.variables["dO18"][:] = rescaled_predictions_5_nbs
+        try:
+            dst_5_nbs.variables["dO18"][:] = rescaled_predictions_5_nbs
+        except KeyError:
+            dst_5_nbs.variables["d18O"][:] = rescaled_predictions_5_nbs
         dst_5_nbs.close()
         src_5_nbs.close()
     else:
