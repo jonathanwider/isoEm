@@ -511,8 +511,16 @@ def split_5_nbs_6_nbs(rescaled_predictions, dataset_description):
     indices_5_nbs = np.array(indices_five_nb)
     print(rescaled_predictions.shape)
     print(indices_6_nbs.shape)
-    rescaled_predictions_5_nbs = np.squeeze(rescaled_predictions[..., indices_5_nbs])
-    rescaled_predictions_6_nbs = np.squeeze(rescaled_predictions[..., indices_6_nbs])
+    rescaled_predictions_5_nbs = np.squeeze(
+        rescaled_predictions.reshape(rescaled_predictions.shape[0], -1)[
+            ..., indices_5_nbs
+        ]
+    )
+    rescaled_predictions_6_nbs = np.squeeze(
+        rescaled_predictions.reshape(rescaled_predictions.shape[0], -1)[
+            ..., indices_6_nbs
+        ]
+    )
     return rescaled_predictions_5_nbs, rescaled_predictions_6_nbs
 
 
