@@ -38,5 +38,6 @@ do
 	nbs=$(echo "$GRID"| cut -d '_' -f 6)
 	res=$(echo "$GRID"| cut -d '_' -f 4)
 	filename=$(echo "$file"| cut -d '.' -f 1)
-	cdo -f nc remapcon,"$SCRIPT_DIR/${ORIGINAL}" -setgrid,"$SCRIPT_DIR/${GRID}" "$SCRIPT_DIR/$file" "$SCRIPT_DIR/${filename}_r_${res}_nbs_${nbs}_${INTERPOLATION}.nc"
+	cdo -f nc remapcon,"${SCRIPT_DIR}/${ORIGINAL}" -setgrid,"${SCRIPT_DIR}/${GRID}" "${SCRIPT_DIR}/${file}" "${SCRIPT_DIR}/${filename}_r_${res}_nbs_${nbs}_${INTERPOLATION}.nc"
+	echo "Outputfile: ${SCRIPT_DIR}/${filename}_r_${res}_nbs_${nbs}_${INTERPOLATION}.nc"
 done
