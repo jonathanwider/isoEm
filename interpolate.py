@@ -196,16 +196,16 @@ def netcdf_from_rescaled_predictions(
                 "Datasets_old",
                 dataset_description["CLIMATE_MODEL"],
                 "Original",
-                "{}.nc".format(list(dataset_description["TARGET_VARIABLES"].keys())[0]),
+                "{}_yearly.nc".format(
+                    list(dataset_description["TARGET_VARIABLES"].keys())[0]
+                ),
             )
         elif dataset_description["TIMESCALE"] == "MONTHLY":
             filename = os.path.join(
                 "Datasets_old",
                 dataset_description["CLIMATE_MODEL"],
                 "Original",
-                "{}_monthly.nc".format(
-                    list(dataset_description["TARGET_VARIABLES"].keys())[0]
-                ),
+                "{}.nc".format(list(dataset_description["TARGET_VARIABLES"].keys())[0]),
             )
         else:
             raise NotImplementedError("Invalid timescale")
