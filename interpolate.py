@@ -175,6 +175,7 @@ def interpolate_predictions(
     predictions_file = os.path.join(folder_name, "predictions.gz")
     descriptions_file = os.path.join(folder_name, "descriptions.gz")
 
+    print(folder_name)
     if util.test_if_folder_exists(folder_name):
         raise FileExistsError(
             "Specified configuration of dataset, model and training configuration already exists."
@@ -535,8 +536,6 @@ def split_5_nbs_6_nbs(rescaled_predictions, dataset_description):
     # create numpy arrays
     indices_6_nbs = np.array(indices_six_nb)
     indices_5_nbs = np.array(indices_five_nb)
-    print(rescaled_predictions.shape)
-    print(indices_6_nbs.shape)
     rescaled_predictions_5_nbs = np.squeeze(
         rescaled_predictions.reshape(rescaled_predictions.shape[0], -1)[
             ..., indices_5_nbs
