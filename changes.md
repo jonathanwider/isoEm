@@ -68,49 +68,4 @@
 |                            |                                                                                                                     |
 |                            |                                                                                                                     |
 
-todos today:
-- [ ] Fix memory issues
-- [ ] Make sure implementations reproduce results from thesis
 
-TODOs:
-- [x] Monthly dataset
-- [x] Precip weighted dataset
-- [x] UNet, train
-- [x] UNet, predict
-- [x] UNet spherical, train
-- [x] UNet spherical, predict
-- [x] Other Baselines
-    - [x] Test Random forest -> super slow.
-    - [x] Validation set for selecting n_pc for PCA regression
-- [x] Compare notebooks
-- [x] Train Monthly network
-    
-- [ ] Write Plotting functions from compare notebooks
-- [ ] fix problem that makes it possible to run runs with the same config twice
-- [x] Test Ico Data loading
-- [ ] Precip weighting, monthly in compare notebooks
-- [ ] make crossprediction possible
-    - [ ] New combined timesteps function:
-        - so far this was necessary because the raw slp dataset had missing timesteps. 
-        - We can't use the old one because time units differ even within climate models
-        - Additionally: Some of the temperature timesteps contain missing values → Probably I used a filled version?
-        - Now: Assume that all timesteps are present. Dont filter by date.
-        - BUT: Exclude dates if everything is none.
-    - [x] Load data from zenodo
-    - [ ] Investigate:
-        - [x] Calendar
-        - [x] Timesteps
-        - [ ] Mean state
-        - [x] Missing values
-        - [x] Grid Shape
-        - [x] Variable Names
-    - [ ] isoGSM and ECHAM5 would require using masked processing even on yearly scale… write function if time
-    - [ ] Think about which timesteps we want to use in crossprediction. All? Only new test set? Does the new testset need to align with the old one?
-
-More todo's: 
-- [ ] Interpolations between grid
-    - [ ] Can cdo be used from within python?
-    - [ ] Grid description file generation
-    - [ ] Automate interpolation to ...
-        - [ ] … generate datasets
-        - [ ] … interpolate results

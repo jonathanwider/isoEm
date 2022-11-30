@@ -1,4 +1,5 @@
 from evaluate import get_rescaled_predictions_and_gt, load_compatible_available_runs
+from train import find_and_load_dataset
 import util
 import netCDF4 as nc
 import numpy as np
@@ -613,7 +614,7 @@ def get_interpolated_data_and_gt(
     @return: Interpolated data and ground truth.
     """
     try:
-        interpolate_predictions(descriptions, data, output_folder=output_folder, script_folder=script_folder,
+        interpolate_predictions(copy.deepcopy(descriptions), data, output_folder=output_folder, script_folder=script_folder,
                                 resolution=resolution, interpolation=interpolation, do_scaling=do_scaling)
     except FileExistsError:
         print("Interpolated file already exists, use existing version.")
@@ -625,9 +626,24 @@ def get_interpolated_data_and_gt(
         descriptions_interpolated["DATASET_DESCRIPTION"]["GRID_TYPE"] = "Flat"
     descriptions_interpolated["DATASET_DESCRIPTION"]["RESULTS_INTERPOLATED"] = True
 
+    # Load the interpolated predictions
     predictions_list, descriptions_list = load_compatible_available_runs(
         output_folder, descriptions_interpolated)
-    print(len(predictions_list))
+
+    if len(predictions_list) > 1 or len(predictions_list) == 0:
+        raise RuntimeError("There should be exactly one stored version of the interpolated data, but {} were found".format(
+            len(predictions_list)))
+
+    # Get the corresponding ground truth
+    ignore_vars = ["RESULTS_INTERPOLATED", "LATITUDES_SLICE", "LATITUDES",
+                   "LONGITUDES", "GRID_SHAPE", "RESOLUTION", "INTERPOLATE_CORNERS", "INTERPOLATION"]
+    d_reduced = descriptions_list[0]["DATASET_DESCRIPTION"]
+    for l in ignore_vars:
+        d_reduced.pop(l, None)
+    ds = find_and_load_dataset(
+        descriptions_list[0]["MODEL_TRAINING_DESCRIPTION"]["DATASET_FOLDER"], d_reduced)
+
+    return predictions_list[0], ds["test"]["targets"].reshape(predictions_list[0].shape)
 
 
 def interpolate_climate_model_data_to_ico_grid(
