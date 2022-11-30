@@ -177,7 +177,6 @@ def interpolate_predictions(
     predictions_file = os.path.join(folder_name, "predictions.gz")
     descriptions_file = os.path.join(folder_name, "descriptions.gz")
 
-    print(folder_name)
     if util.test_if_folder_exists(folder_name):
         raise FileExistsError(
             "Specified configuration of dataset, model and training configuration already exists."
@@ -593,6 +592,7 @@ def run_script(descriptions, script_folder, interpolation_type="cons1", resoluti
     else:
         raise NotImplementedError("Invalid grid type")
 
+
 def get_interpolated_data_and_gt(
     descriptions,
     data,
@@ -613,18 +613,20 @@ def get_interpolated_data_and_gt(
     @return: Interpolated data and ground truth.
     """
     try:
-        interpolate_predictions(descriptions, data, output_folder=output_folder, script_folder=script_folder, resolution=resolution, interpolation=interpolation, do_scaling=do_scaling)
+        interpolate_predictions(descriptions, data, output_folder=output_folder, script_folder=script_folder,
+                                resolution=resolution, interpolation=interpolation, do_scaling=do_scaling)
     except FileExistsError:
         print("Interpolated file already exists, use existing version.")
-    
-    descriptions_interpolated = copy.copy(descriptions)
-    if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Flat": 
+
+    descriptions_interpolated = copy.deepcopy(descriptions)
+    if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Flat":
         descriptions_interpolated["DATASET_DESCRIPTION"]["GRID_TYPE"] = "Ico"
     else:
-        descriptions_interpolated["DATASET_DESCRIPTION"]["GRID_TYPE"] = "Flat"       
+        descriptions_interpolated["DATASET_DESCRIPTION"]["GRID_TYPE"] = "Flat"
     descriptions_interpolated["DATASET_DESCRIPTION"]["RESULTS_INTERPOLATED"] = True
 
-    predictions_list, descriptions_list = load_compatible_available_runs(output_folder, descriptions_interpolated)
+    predictions_list, descriptions_list = load_compatible_available_runs(
+        output_folder, descriptions_interpolated)
     print(len(predictions_list))
 
 
@@ -692,4 +694,4 @@ def interpolate_climate_model_data_to_ico_grid(
 
     os.rename(tmp_path_5_nbs, new_path_5_nbs)
     os.rename(tmp_path_6_nbs, new_path_6_nbs)
-    
+    cd
