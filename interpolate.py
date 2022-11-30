@@ -228,7 +228,6 @@ def netcdf_from_rescaled_predictions(
             )
         else:
             raise NotImplementedError("Invalid timescale")
-        print(filename)
         original_dimensions = (
             nc.Dataset(filename)
             .variables[
@@ -646,7 +645,7 @@ def get_interpolated_data_and_gt(
 
     if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":
         print("When interpolating to model grid, currently the iHadCM3 specifics are used.")
-        return predictions_list[0][..., 1:-1, :], ds["test"]["targets"].reshape(predictions_list[0].shape)
+        return predictions_list[0][..., 1:-1, :], ds["test"]["targets"].reshape(predictions_list[0][..., 1:-1, :].shape)
     else:
         return predictions_list[0], ds["test"]["targets"].reshape(predictions_list[0].shape)
 
