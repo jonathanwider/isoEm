@@ -1,8 +1,10 @@
-from evaluate import get_rescaled_predictions_and_gt
+from evaluate import get_rescaled_predictions_and_gt, load_compatible_available_runs
 import util
 import netCDF4 as nc
 import numpy as np
 import os
+
+import copy
 
 import gzip
 import pickle
@@ -119,7 +121,7 @@ def interpolate_predictions(
             {"RESULTS_INTERPOLATED": True}, **descriptions["DATASET_DESCRIPTION"]
         )
         dataset_description["GRID_TYPE"] = "Ico"
-        dataset_description["RESOLUTION"] = 5
+        dataset_description["RESOLUTION"] = resolution
         model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
 
         new_descriptions = {
@@ -551,7 +553,6 @@ def split_5_nbs_6_nbs(rescaled_predictions, dataset_description):
 
 def run_script(descriptions, script_folder, interpolation_type="cons1", resolution=5):
     """
-
     @param descriptions: Descriptions of dataset and (model and training)
     @param script_folder: Should contain the two scripts: ico_to_model.sh and model_to_ico.sh as
     well as grid description files for the icosahedral grid and model grids.
@@ -591,6 +592,40 @@ def run_script(descriptions, script_folder, interpolation_type="cons1", resoluti
 
     else:
         raise NotImplementedError("Invalid grid type")
+
+def get_interpolated_data_and_gt(
+    descriptions,
+    data,
+    output_folder,
+    script_folder="Scripts/",
+    resolution=5,
+    interpolation="cons1",
+    do_scaling=True,
+):
+    """
+    @param descriptions: Descriptions of dataset and {model and training}
+    @param data: Data to be interpolated
+    @param output_folder: Directory to store the interpolated data in.
+    @param script_folder: Should contain the two scripts: ico_to_model.sh and model_to_ico.sh as
+    well as grid description files for the icosahedral grid and model grids.
+    @param resolution: Resolution of the icosahedron that determines the resolution of the icosahedral grid we interpolate to
+    @param interpolation: Type of interpolation used. Supported are cons1 and NN   
+    @return: Interpolated data and ground truth.
+    """
+    try:
+        interpolate_predictions(descriptions, data, output_folder=output_folder, script_folder=script_folder, resolution=resolution, interpolation=interpolation, do_scaling=do_scaling)
+    except FileExistsError:
+        print("Interpolated file already exists, use existing version.")
+    
+    descriptions_interpolated = copy.copy(descriptions)
+    if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Flat": 
+        descriptions_interpolated["DATASET_DESCRIPTION"]["GRID_TYPE"] = "Ico"
+    else:
+        descriptions_interpolated["DATASET_DESCRIPTION"]["GRID_TYPE"] = "Flat"       
+    descriptions_interpolated["DATASET_DESCRIPTION"]["RESULTS_INTERPOLATED"] = True
+
+    predictions_list, descriptions_list = load_compatible_available_runs(output_folder, descriptions_interpolated)
+    print(len(predictions_list))
 
 
 def interpolate_climate_model_data_to_ico_grid(
@@ -657,3 +692,4 @@ def interpolate_climate_model_data_to_ico_grid(
 
     os.rename(tmp_path_5_nbs, new_path_5_nbs)
     os.rename(tmp_path_6_nbs, new_path_6_nbs)
+    
