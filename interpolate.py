@@ -625,6 +625,7 @@ def get_interpolated_data_and_gt(
     descriptions_interpolated["DATASET_DESCRIPTION"]["RESULTS_INTERPOLATED"] = True
 
     predictions_list, descriptions_list = load_compatible_available_runs(output_folder, descriptions_interpolated)
+    print(len(predictions_list))
 
 
 def interpolate_climate_model_data_to_ico_grid(
