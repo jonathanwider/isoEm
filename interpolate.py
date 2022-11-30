@@ -602,6 +602,7 @@ def get_interpolated_data_and_gt(
     resolution=5,
     interpolation="cons1",
     do_scaling=True,
+    latitude_slice=[1, -1]
 ):
     """
     @param descriptions: Descriptions of dataset and {model and training}
@@ -643,7 +644,11 @@ def get_interpolated_data_and_gt(
     ds = find_and_load_dataset(
         descriptions_list[0]["MODEL_TRAINING_DESCRIPTION"]["DATASET_FOLDER"], d_reduced)
 
-    return predictions_list[0], ds["test"]["targets"].reshape(predictions_list[0].shape)
+    if descriptions["DATASET_DESCRIPTION"]["GRIDTYPE"] == "Ico":
+        print("When interpolating to model grid, currently the iHadCM3 specifics are used.")
+        return predictions_list[0][..., 1:-1, :], ds["test"]["targets"].reshape(predictions_list[0].shape)
+    else:
+        return predictions_list[0], ds["test"]["targets"].reshape(predictions_list[0].shape)
 
 
 def interpolate_climate_model_data_to_ico_grid(
