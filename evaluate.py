@@ -93,7 +93,8 @@ def get_correlation(predictions, targets):
         for i in range(targets.shape[-2]):
             for j in range(targets.shape[-1]):
                 nas = np.logical_or(
-                    np.isnan(predictions[:, k, i, j]), np.isnan(targets[:, k, i, j])
+                    np.isnan(predictions[:, k, i, j]), np.isnan(
+                        targets[:, k, i, j])
                 )
                 pearson_correlation[k, i, j] = pearsonr(
                     predictions[~nas, k, i, j], targets[~nas, k, i, j]
@@ -138,6 +139,7 @@ def load_compatible_available_runs(base_folder, conditions):
             ) and util.check_dict_conditions(
                 model_training_description, conditions["MODEL_TRAINING_DESCRIPTION"]
             ):
+                print(os.path.join(base_folder, folder, "predictions.gz"), "rb")
                 counter += 1
                 with gzip.open(
                     os.path.join(base_folder, folder, "predictions.gz"), "rb"
@@ -172,12 +174,14 @@ def undo_scaling(model_training_description, predictions, train_targets):
             )
             std[std == 0] = 1
             mean = np.nanmean(train_targets, axis=(0, 1, 2), keepdims=True)
-            rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
+            rescaled_predictions[:, j, ...] = (
+                predictions[:, j, ...] * std) + mean
         elif mode == "Pixelwise":
             std = np.nanstd(train_targets, axis=0, keepdims=True)
             std[std == 0] = 1
             mean = np.nanmean(train_targets, axis=0, keepdims=True)
-            rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
+            rescaled_predictions[:, j, ...] = (
+                predictions[:, j, ...] * std) + mean
         elif mode == "Global_mean_pixelwise_std":
             std = np.mean(
                 np.nanstd(train_targets, axis=0, keepdims=True),
@@ -186,12 +190,14 @@ def undo_scaling(model_training_description, predictions, train_targets):
             )
             std[std == 0] = 1
             mean = np.nanmean(train_targets, axis=0, keepdims=True)
-            rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
+            rescaled_predictions[:, j, ...] = (
+                predictions[:, j, ...] * std) + mean
         elif mode == "Pixelwise_mean_global_std":
             std = np.nanstd(train_targets, axis=0, keepdims=True)
             std[std == 0] = 1
             mean = np.nanmean(train_targets, axis=(0, 1, 2), keepdims=True)
-            rescaled_predictions[:, j, ...] = (predictions[:, j, ...] * std) + mean
+            rescaled_predictions[:, j, ...] = (
+                predictions[:, j, ...] * std) + mean
         elif mode == "None":
             rescaled_predictions[:, j, ...] = predictions[:, j, ...]
         else:
@@ -274,7 +280,8 @@ def get_rescaled_predictions_and_gt_months(descriptions, predictions, do_split=F
         test_masks_months = []
         test_targets_months = []
         for i in range(12):
-            rescaled_predictions_months.append(rescaled_predictions[t_months == i])
+            rescaled_predictions_months.append(
+                rescaled_predictions[t_months == i])
             test_targets_months.append(test_targets[t_months == i])
             test_masks_months.append(test_masks[t_months == i])
         return rescaled_predictions_months, test_targets_months, test_masks_months
