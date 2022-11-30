@@ -102,13 +102,14 @@ def get_correlation(predictions, targets):
     return pearson_correlation
 
 
-def load_compatible_available_runs(base_folder, conditions):
+def load_compatible_available_runs(base_folder, conditions, print_folder_names=False):
     """
     Given a base folder to search in, list all the runs, that match the specified conditions. Search is shallow, so
     runs in subdirectories won't be detected.
 
     @param base_folder: Folder in which we want to search for runs.
     @param conditions: dict of conditions on data set and (model and training)
+    @param print_folder_names: If True, print the names of the compatible folders
     @return: List of paths to compatible folders
     """
     assert "DATASET_DESCRIPTION" in conditions.keys()
@@ -139,7 +140,8 @@ def load_compatible_available_runs(base_folder, conditions):
             ) and util.check_dict_conditions(
                 model_training_description, conditions["MODEL_TRAINING_DESCRIPTION"]
             ):
-                print(os.path.join(base_folder, folder, "predictions.gz"), "rb")
+                if print_folder_names:
+                    print(os.path.join(base_folder, folder, "predictions.gz"))
                 counter += 1
                 with gzip.open(
                     os.path.join(base_folder, folder, "predictions.gz"), "rb"

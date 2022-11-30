@@ -601,7 +601,8 @@ def get_interpolated_data_and_gt(
     resolution=5,
     interpolation="cons1",
     do_scaling=True,
-    latitude_slice=[1, -1]
+    latitude_slice=[1, -1],
+    print_folder_names=False
 ):
     """
     @param descriptions: Descriptions of dataset and {model and training}
@@ -611,6 +612,8 @@ def get_interpolated_data_and_gt(
     well as grid description files for the icosahedral grid and model grids.
     @param resolution: Resolution of the icosahedron that determines the resolution of the icosahedral grid we interpolate to
     @param interpolation: Type of interpolation used. Supported are cons1 and NN   
+    @param latitude_slice: Ignore latitudes outside the given slice (important because iHadCM3 has no valid data there)
+    @param print_folder_names: Print the foldernames when loading the interpolated data. Diagnostic tool.
     @return: Interpolated data and ground truth.
     """
     try:
@@ -628,7 +631,7 @@ def get_interpolated_data_and_gt(
 
     # Load the interpolated predictions
     predictions_list, descriptions_list = load_compatible_available_runs(
-        output_folder, descriptions_interpolated)
+        output_folder, descriptions_interpolated, print_folder_names=print_folder_names)
 
     if len(predictions_list) > 1 or len(predictions_list) == 0:
         raise RuntimeError("There should be exactly one stored version of the interpolated data, but {} were found".format(
@@ -645,7 +648,7 @@ def get_interpolated_data_and_gt(
 
     if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Ico":
         print("When interpolating to model grid, currently the iHadCM3 specifics are used.")
-        return predictions_list[0][..., 1:-1, :], ds["test"]["targets"].reshape(predictions_list[0][..., 1:-1, :].shape)
+        return predictions_list[0][..., latitude_slice[0]:latitude_slice[1], :], ds["test"]["targets"].reshape(predictions_list[0][..., latitude_slice[0]:latitude_slice[1], :].shape)
     else:
         return predictions_list[0], ds["test"]["targets"].reshape(predictions_list[0].shape)
 
@@ -714,4 +717,3 @@ def interpolate_climate_model_data_to_ico_grid(
 
     os.rename(tmp_path_5_nbs, new_path_5_nbs)
     os.rename(tmp_path_6_nbs, new_path_6_nbs)
-    cd
