@@ -413,7 +413,7 @@ def plot_timeseries(ax, data_pred, data_gt, loc, description, style):
     cor_std = np.std(cor, axis=0)
 
     ax.text(0.55, 0.1, r"Correlation: {:0.3f} +/- {:0.3f}, $R^2$score: {:0.3f} +/- {:0.3f}".format(cor_mean[loc_box[0], loc_box[1]], cor_std[loc_box[0], loc_box[1]],
-                                                                                                    metric_mean[loc_box[0], loc_box[1]], metric_std[loc_box[0], loc_box[1]]),
+                                                                                                   metric_mean[loc_box[0], loc_box[1]], metric_std[loc_box[0], loc_box[1]]),
             style='italic', bbox={'facecolor': 'white', 'alpha': 1.0, 'pad': 10}, horizontalalignment='center',
             verticalalignment='center', transform=ax.transAxes)
 
