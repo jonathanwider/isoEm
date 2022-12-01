@@ -105,6 +105,12 @@ prec_style["NORM"] = matplotlib.colors.Normalize(vmin=0, vmax=800)
 prec_style["CBAR_LABEL"] = "Precipitation [mm/month]"
 prec_style["CBAR_EXTEND"] = "both"
 
+# for plotting MNIST-digits
+digit_style = dict(map_style)
+digit_style["CMAP"] = plt.get_cmap("viridis")
+corr_style["FIGSIZE"] = np.array([6, 6])
+digit_style["NORM"] = matplotlib.colors.Normalize(vmin=0, vmax=256)
+
 
 def plot_map(ax, data, description, style, title=""):
     """
@@ -321,7 +327,7 @@ def get_coastline_xyz(r=1.):
     return coords
 
 
-def plot_map_3d(ax, data, description, style, title="", elev=18, azim=0, show_coastlines=True):
+def plot_map_3d(ax, data, description, style, title="", elev=18, azim=0, show_coastlines=True, show_colorbar=True):
     """
     Plot data of an icosahedral grid in 3d.
     @param ax: Axes to plot on. projection='3d' needs to be set
@@ -331,7 +337,8 @@ def plot_map_3d(ax, data, description, style, title="", elev=18, azim=0, show_co
     @param title: Title of the plot
     @param elev: Elevation of view position
     @param azim:Azimuth of view position
-    @param show_coastlines: Whether or not to display coastlines
+    @param show_coastlines: Whether or not to display coastline
+    @param show_colorbar: Whether to display a colorbar or not
     """
 
     from icosahedron import Icosahedron
@@ -359,17 +366,18 @@ def plot_map_3d(ax, data, description, style, title="", elev=18, azim=0, show_co
     ax.axes.set_zlim3d(bottom=-1, top=1)
     ax.view_init(elev, 180 + azim)
 
-    cbar = plt.colorbar(
-        matplotlib.cm.ScalarMappable(
-            cmap=style["CMAP"], norm=style["NORM"]),
-        spacing='proportional',
-        orientation='vertical',
-        extend=style["CBAR_EXTEND"],
-        ax=ax)
+    if show_colorbar:
+        cbar = plt.colorbar(
+            matplotlib.cm.ScalarMappable(
+                cmap=style["CMAP"], norm=style["NORM"]),
+            spacing='proportional',
+            orientation='vertical',
+            extend=style["CBAR_EXTEND"],
+            ax=ax)
 
-    cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
+        cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
 
-    cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
+        cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
 
 
 def plot_timeseries(ax, data_pred, data_gt, loc, description, style):
