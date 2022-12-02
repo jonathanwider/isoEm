@@ -108,7 +108,7 @@ prec_style["CBAR_EXTEND"] = "both"
 # for plotting MNIST-digits
 digit_style = dict(map_style)
 digit_style["CMAP"] = plt.get_cmap("viridis")
-corr_style["FIGSIZE"] = np.array([6, 6])
+digit_style["FIGSIZE"] = np.array([6, 6])
 digit_style["NORM"] = matplotlib.colors.Normalize(vmin=0, vmax=256)
 
 
