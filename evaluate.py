@@ -336,3 +336,25 @@ def load_data_for_comparison(base_folder, conditions, do_split=False):
         ground_truth_list.append(gt)
 
     return descriptions_list, rescaled_predictions_list, ground_truth_list, masks_list
+
+
+def get_trainset_mean(descriptions):
+    """
+    Return the training set mean of a given dataset. 
+    This is necessary to compute anomalies.
+    """
+    assert "DATASET_DESCRIPTION" in descriptions.keys()
+    assert "MODEL_TRAINING_DESCRIPTION" in descriptions.keys()
+
+    dataset_description = descriptions["DATASET_DESCRIPTION"]
+    model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
+
+    assert "DATASET_FOLDER" in model_training_description.keys()
+
+    dataset = find_and_load_dataset(
+        model_training_description["DATASET_FOLDER"],
+        dataset_description,
+        use_prints=False,
+    )
+
+    return np.nanmean(dataset["train"]["targets"], axis=(0,))

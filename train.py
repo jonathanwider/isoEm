@@ -28,6 +28,7 @@ def find_and_load_dataset(base_folder, conditions, use_prints=False):
     specify conditions more precisely and raise an Error
     """
     counter = 0
+    matching = []
     for folder in [d for d in os.listdir(base_folder) if os.path.isdir(os.path.join(base_folder, d))]:
         files = [f for f in os.listdir(os.path.join(base_folder, folder)) if
                  os.path.isfile(os.path.join(base_folder, folder, f))]
@@ -36,10 +37,11 @@ def find_and_load_dataset(base_folder, conditions, use_prints=False):
                 tmp_description = pickle.load(f)
             if util.check_dict_conditions(tmp_description, conditions, use_prints=use_prints):
                 counter += 1
+                matching.append(os.path.join(base_folder, folder, "dataset.gz"))
                 with gzip.open(os.path.join(base_folder, folder, "dataset.gz"), 'rb') as g:
                     dataset = pickle.load(g)
     if counter > 1:
-        raise ValueError("More than one directory matches the criteria, refine conditions.")
+        raise ValueError("More than one directory matches the criteria: {}, refine conditions".format(matching))
     elif counter == 1:
         return dataset
     else:

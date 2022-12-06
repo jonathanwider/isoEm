@@ -88,7 +88,7 @@ corr_style["CBAR_LABELS"] = {"tsurf": "Temperature",
                              "prec": "Precipitation amount",
                              "slp": "Sea-level pressure"}
 corr_style["CBAR_EXTEND"] = "neither"
-corr_style["FIGSIZE"] = np.array([8, 4])
+corr_style["FIGSIZE"] = np.array([9, 5])
 
 # for plotting maps of temperature
 tsurf_style = dict(map_style)
@@ -111,8 +111,16 @@ digit_style["CMAP"] = plt.get_cmap("viridis")
 digit_style["FIGSIZE"] = np.array([6, 6])
 digit_style["NORM"] = matplotlib.colors.Normalize(vmin=0, vmax=256)
 
+# for plotting MNIST-digits
+anom_style = dict(map_style)
+anom_style["CMAP"] = plt.get_cmap("RdBu")
+anom_style["FIGSIZE"] = np.array([8, 4])
+anom_style["NORM"] = matplotlib.colors.Normalize(vmin=-3, vmax=3)
+anom_style["CBAR_EXTEND"] = "both"
+anom_style["CBAR_LABEL"] = r"$\delta{}^{18}O$ anomaly [‰]"
 
-def plot_map(ax, data, description, style, title=""):
+
+def plot_map(ax, data, description, style, title="", cbar_orientation='horizontal', show_colorbar=True):
     """
     Plot data on a 2d grid in a given style.
     @param ax: Axis to plot on.
@@ -120,6 +128,8 @@ def plot_map(ax, data, description, style, title=""):
     @param description: A description of the used dataset. Used to extract latitudes and longitudes.
     @param style: A plotting style (sizes, fonts, etc.)
     @param title: Title of the plot
+    @param cbar_orientation: Orientation of the colorbar.
+    @param show_colorbar: Whether or not to show a colorbar.
     @return:
     """
     lat = np.array(description["LATITUDES"])
@@ -133,17 +143,18 @@ def plot_map(ax, data, description, style, title=""):
     layer = ax.pcolormesh(lo, la, field, transform=ccrs.PlateCarree(
     ), cmap=style["CMAP"], norm=style["NORM"])
 
-    cbar = plt.colorbar(
-        matplotlib.cm.ScalarMappable(
-            cmap=style["CMAP"], norm=style["NORM"]),
-        spacing='proportional',
-        orientation='horizontal',
-        extend=style["CBAR_EXTEND"],
-        ax=ax)
+    if show_colorbar:
+        cbar = plt.colorbar(
+            matplotlib.cm.ScalarMappable(
+                cmap=style["CMAP"], norm=style["NORM"]),
+            spacing='proportional',
+            orientation=cbar_orientation,
+            extend=style["CBAR_EXTEND"],
+            ax=ax)
 
-    cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
+        cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
 
-    cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
+        cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
 
     ax.coastlines()
 
@@ -380,7 +391,7 @@ def plot_map_3d(ax, data, description, style, title="", elev=18, azim=0, show_co
         cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
 
 
-def plot_timeseries(ax, data_pred, data_gt, loc, description, style):
+def plot_timeseries(ax, data_pred, data_gt, loc, loc_label, description, style):
     """
     For a given location plot the testset-timeseries at the closest gridbox.
     Mark missing values.
@@ -425,8 +436,8 @@ def plot_timeseries(ax, data_pred, data_gt, loc, description, style):
             style='italic', bbox={'facecolor': 'white', 'alpha': 1.0, 'pad': 10}, horizontalalignment='center',
             verticalalignment='center', transform=ax.transAxes)
 
-    ax.set_title("Compare timeseries of prediction and groundtruth at {:.1f} lat., {:.1f} lon.".format(
-        lat[loc_box[0]], lon[loc_box[1]]), fontsize=style["TITLE_FONTSIZE"])
+    ax.set_title("Time series at {}".format(
+        loc_label), fontsize=style["TITLE_FONTSIZE"])
 
     plt.legend(loc="upper right")
     plt.xlabel("timestep in test set")
