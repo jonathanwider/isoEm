@@ -65,6 +65,11 @@ def interpolate_predictions(
         script_folder,
     )
 
+    if do_scaling:
+        dataset_description = dict({"RESULTS_INTERPOLATED": True, "RESULTS_RESCALED": True}, **descriptions["DATASET_DESCRIPTION"])
+    else:
+        dataset_description = dict({"RESULTS_INTERPOLATED": True, "RESULTS_RESCALED": False}, **descriptions["DATASET_DESCRIPTION"])
+
     if descriptions["DATASET_DESCRIPTION"]["GRID_TYPE"] == "Flat":
         run_script(
             descriptions,
@@ -118,9 +123,6 @@ def interpolate_predictions(
                  ["TARGET_VARIABLES"].values())[0][0]
         ][:].data
 
-        dataset_description = dict(
-            {"RESULTS_INTERPOLATED": True}, **descriptions["DATASET_DESCRIPTION"]
-        )
         dataset_description["GRID_TYPE"] = "Ico"
         dataset_description["RESOLUTION"] = resolution
         model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
@@ -154,15 +156,6 @@ def interpolate_predictions(
             "When interpolating back to flat grid, only the 6nbs file is used, "
             "because otherwise we have wrong results due to overlap."
         )
-
-        if do_scaling:
-            dataset_description = dict(
-                {"RESULTS_INTERPOLATED": True, "RESULTS_RESCALED": True}, **descriptions["DATASET_DESCRIPTION"]
-            )
-        else:
-            dataset_description = dict(
-                {"RESULTS_INTERPOLATED": True, "RESULTS_RESCALED": False}, **descriptions["DATASET_DESCRIPTION"]
-            )
         dataset_description["GRID_TYPE"] = "Flat"
         model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
 
@@ -645,7 +638,7 @@ def get_interpolated_data_and_gt(
             len(predictions_list)))
 
     # Get the corresponding ground truth
-    ignore_vars = ["RESULTS_INTERPOLATED", "LATITUDES_SLICE", "LATITUDES",
+    ignore_vars = ["RESULTS_INTERPOLATED", "LATITUDES_SLICE", "LATITUDES", "RESULTS_RESCALED",
                    "LONGITUDES", "GRID_SHAPE", "RESOLUTION", "INTERPOLATE_CORNERS", "INTERPOLATION"]
     d_reduced = descriptions_list[0]["DATASET_DESCRIPTION"]
     for l in ignore_vars:
