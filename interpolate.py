@@ -118,6 +118,9 @@ def interpolate_predictions(
                  ["TARGET_VARIABLES"].values())[0][0]
         ][:].data
 
+        charts = Icosahedron(r=resolution).get_charts_cut()
+        res = res.reshape(res.shape[0], 1, charts.shape[0]*charts.shape[1], charts.shape[2])
+        
         dataset_description = dict(
             {"RESULTS_INTERPOLATED": True}, **descriptions["DATASET_DESCRIPTION"]
         )
@@ -149,6 +152,8 @@ def interpolate_predictions(
             list(descriptions["DATASET_DESCRIPTION"]
                  ["TARGET_VARIABLES"].values())[0][0]
         ][:].data
+        
+        res = res[:,np.newaxis,...]
 
         print(
             "When interpolating back to flat grid, only the 6nbs file is used, "
