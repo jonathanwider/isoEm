@@ -44,9 +44,11 @@ def predict_save_randomforest_pixelwise(dataset_description, model_training_desc
     dataset_description = find_and_load_dataset_description(model_training_description["DATASET_FOLDER"],
                                                             dataset_description)
     if model_training_description["CREATE_VALIDATIONSET"]:
-        _, _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+        _, _, test_ds = load_data(
+            dataset_description, model_training_description, base_folder)
     else:
-        _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+        _, test_ds = load_data(dataset_description,
+                               model_training_description, base_folder)
     x_te = test_ds[:][0].numpy()
 
     predictions = predict_randomforest(x_te, model)
@@ -59,7 +61,8 @@ def predict_save_randomforest_pixelwise(dataset_description, model_training_desc
     model_file = os.path.join(folder_name, "model.gz")
     descriptions_file = os.path.join(folder_name, "descriptions.gz")
     if util.test_if_folder_exists(folder_name):
-        raise FileExistsError("Specified configuration of data set, model and training configuration already exists.")
+        raise FileExistsError(
+            "Specified configuration of data set, model and training configuration already exists.")
     else:
         os.makedirs(folder_name)
 
@@ -113,9 +116,11 @@ def predict_save_linreg_pixelwise(dataset_description, model_training_descriptio
                                                             dataset_description)
 
     if model_training_description["CREATE_VALIDATIONSET"]:
-        _, _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+        _, _, test_ds = load_data(
+            dataset_description, model_training_description, base_folder)
     else:
-        _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+        _, test_ds = load_data(dataset_description,
+                               model_training_description, base_folder)
 
     x_te = test_ds[:][0].numpy()
 
@@ -132,7 +137,8 @@ def predict_save_linreg_pixelwise(dataset_description, model_training_descriptio
     model_file = os.path.join(folder_name, "model.gz")
     descriptions_file = os.path.join(folder_name, "descriptions.gz")
     if util.test_if_folder_exists(folder_name):
-        raise FileExistsError("Specified configuration of data set, model and training configuration already exists.")
+        raise FileExistsError(
+            "Specified configuration of data set, model and training configuration already exists.")
     else:
         os.makedirs(folder_name)
 
@@ -181,9 +187,11 @@ def predict_save_pca(dataset_description, model_training_description, base_folde
     dataset_description = find_and_load_dataset_description(model_training_description["DATASET_FOLDER"],
                                                             dataset_description)
     if model_training_description["CREATE_VALIDATIONSET"]:
-        _, _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+        _, _, test_ds = load_data(
+            dataset_description, model_training_description, base_folder)
     else:
-        _, test_ds = load_data(dataset_description, model_training_description, base_folder)
+        _, test_ds = load_data(dataset_description,
+                               model_training_description, base_folder)
     x_te = test_ds[:][0].numpy()
 
     predictions = predict_pca(x_te, pca, pca_targets, model)
@@ -200,7 +208,8 @@ def predict_save_pca(dataset_description, model_training_description, base_folde
     descriptions_file = os.path.join(folder_name, "descriptions.gz")
 
     if util.test_if_folder_exists(folder_name):
-        raise FileExistsError("Specified configuration of dataset, model and training configuration already exists.")
+        raise FileExistsError(
+            "Specified configuration of dataset, model and training configuration already exists.")
     else:
         os.makedirs(folder_name)
 
@@ -232,7 +241,8 @@ def predict_unet(x, x_loader, model_training_description, model):
     @param model: Trained UNet model
     @return:
     """
-    assert model_training_description["MODEL_TYPE"] in ["UNet_Ico", "UNet_Flat"]
+    assert model_training_description["MODEL_TYPE"] in [
+        "UNet_Ico", "UNet_Flat"]
     predictions_model = torch.zeros_like(x[...][1])
 
     # loop over test loader
@@ -260,16 +270,20 @@ def predict_save_unet(dataset_description, model_training_description, base_fold
     @param model: UNet model
     """
     if model_training_description["CREATE_VALIDATIONSET"] is True:
-        _, _, testloader, _, _, testset = load_data(dataset_description, model_training_description, base_folder)
+        _, _, testloader, _, _, testset = load_data(
+            dataset_description, model_training_description, base_folder)
     else:
-        _, testloader, _, testset = load_data(dataset_description, model_training_description, base_folder)
+        _, testloader, _, testset = load_data(
+            dataset_description, model_training_description, base_folder)
 
     dataset_description = find_and_load_dataset_description(model_training_description["DATASET_FOLDER"],
                                                             dataset_description)
 
-    predictions = predict_unet(testset, testloader, model_training_description, model)
+    predictions = predict_unet(
+        testset, testloader, model_training_description, model)
     if model_training_description["MODEL_TYPE"] == "UNet_Flat":
-        predictions = T.Resize(size=dataset_description["GRID_SHAPE"])(predictions).numpy()
+        predictions = T.Resize(size=dataset_description["GRID_SHAPE"])(
+            predictions).numpy()
 
     descriptions = {"DATASET_DESCRIPTION": dataset_description,
                     "MODEL_TRAINING_DESCRIPTION": model_training_description}
@@ -281,7 +295,8 @@ def predict_save_unet(dataset_description, model_training_description, base_fold
     descriptions_file = os.path.join(folder_name, "descriptions.gz")
 
     if util.test_if_folder_exists(folder_name):
-        raise FileExistsError("Specified configuration of dataset, model and training configuration already exists.")
+        raise FileExistsError(
+            "Specified configuration of dataset, model and training configuration already exists.")
     else:
         os.makedirs(folder_name)
 
@@ -325,12 +340,14 @@ def interpolate_data_between_grids(data, in_description, out_description):
     lat_mg_out, lon_mg_out = np.meshgrid(lat_out, lon_out, indexing='ij')
 
     ds = data.shape
-    data = data.reshape(-1, ds[-2], ds[-1])  # flatten everything but lat and lon
+    # flatten everything but lat and lon
+    data = data.reshape(-1, ds[-2], ds[-1])
 
     res = np.zeros((data.shape[0], len(lat_out), len(lon_out)))
 
     for i in range(len(data)):
-        interp = RegularGridInterpolator((lat_in, lon_in), data[i], bounds_error=False, fill_value=None)
+        interp = RegularGridInterpolator(
+            (lat_in, lon_in), data[i], bounds_error=False, fill_value=None)
         res[i] = interp((lat_mg_out, lon_mg_out))
 
     return res

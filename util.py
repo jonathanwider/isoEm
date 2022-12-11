@@ -14,21 +14,25 @@ def flatten(l):
     return [item for sublist in l for item in sublist]
 
 
-def check_dict_conditions(dic, conditions, use_prints=False):
+def check_dict_conditions(dic, conditions, keywords_blacklist=[], use_prints=False):
     """
     Test whether dict "dic" fullfills the given conditions "conditions".
     The latter are given as a array of key-value pairs, values may be lists/tuples.
-    If prints==True, information on mismatche can be printed.
+    If prints==True, information on mismatche can be printed. If a blacklisted keyword appears in the dicts keys, the function returns False.
     """
     for key, value in conditions.items():
         if key in dic.keys():
             if not np.array(dic[key] == value).all():
                 if use_prints:
-                    print("Difference:", key, "Original:", dic[key], "Condition:", value)
+                    print("Difference:", key, "Original:",
+                          dic[key], "Condition:", value)
                 return False
         else:
             if use_prints:
                 print("Key not contained in dataset:", key)
+            return False
+    for key in keywords_blacklist:
+        if key in dic.keys():
             return False
     return True
 
@@ -62,7 +66,8 @@ def create_hash_from_description(description):
     Create a hash value that can than be used to identify duplicates of folders.
     """
     # to be able to hash, we need tuples instead of lists and frozensets instead of dicts.
-    p = json.dumps(description, ensure_ascii=False, sort_keys=True, indent=None, separators=(',', ':'), cls=jsonEncoder)
+    p = json.dumps(description, ensure_ascii=False, sort_keys=True,
+                   indent=None, separators=(',', ':'), cls=jsonEncoder)
     return hashlib.sha256(p.encode('utf-8')).hexdigest()[:30]
 
 
@@ -82,16 +87,19 @@ def get_years_months(t, units, calendar):
         if calendar == "360_day":
             y_ref = 801
             m_ref = 0
-            years = y_ref + (t // 360)  # in the dataset the year (2954) corresponds to year 850
+            # in the dataset the year (2954) corresponds to year 850
+            years = y_ref + (t // 360)
             months = (t+m_ref*30) % 360 // 30
     elif units == "month as %Y%m.%f":
         timesteps = [t_.split(".")[0] for t_ in t.astype(str)]
         years = [int(t_[:-2]) for t_ in timesteps]
-        months = [int(t_[-2:])-1 for t_ in timesteps]  # want months to start with zero instead of one
+        # want months to start with zero instead of one
+        months = [int(t_[-2:])-1 for t_ in timesteps]
     elif units == "day as %Y%m%d.%f":
         timesteps = [t_.split(".")[0] for t_ in t.astype(str)]
         years = [int(t_[:-4]) for t_ in timesteps]
-        months = [int(t_[-4:-2])-1 for t_ in timesteps]  # want months to start with zero instead of one
+        # want months to start with zero instead of one
+        months = [int(t_[-4:-2])-1 for t_ in timesteps]
     elif units == "months since 850-1-15 00:00:00":
         years = 850 + t // 12
         months = 0 + t % 12
@@ -99,14 +107,15 @@ def get_years_months(t, units, calendar):
         if calendar == "360_day":
             y_ref = 654
             m_ref = 11
-            years = - y_ref + 850 + (t // 360)  # in the dataset the year (2954) corresponds to year 850
+            # in the dataset the year (2954) corresponds to year 850
+            years = - y_ref + 850 + (t // 360)
             months = (t+m_ref*30) % 360 // 30
     elif units == "days since 0000-01-01 00:00:00":
         return None, None
     else:
         raise NotImplementedError("Invalid date format")
     return np.array(years), np.array(months)
-    
+
 
 def add_dates(y1, m1, y2, m2):
     m_res = (m1 + m2) % 11
@@ -153,9 +162,11 @@ def load_longitudes_latitudes(description, dset):
     assert "latitude" in dset.variables.keys() or "lat" in dset.variables.keys()
     assert "longitude" in dset.variables.keys() or "lon" in dset.variables.keys()
     try:
-        lat = tuple(dset.variables["latitude"][description["LATITUDES_SLICE"][0]:description["LATITUDES_SLICE"][1]].data)
+        lat = tuple(dset.variables["latitude"][description["LATITUDES_SLICE"]
+                    [0]:description["LATITUDES_SLICE"][1]].data)
     except KeyError:
-        lat = tuple(dset.variables["lat"][description["LATITUDES_SLICE"][0]:description["LATITUDES_SLICE"][1]].data)
+        lat = tuple(dset.variables["lat"][description["LATITUDES_SLICE"]
+                    [0]:description["LATITUDES_SLICE"][1]].data)
     try:
         lon = tuple(dset.variables["longitude"][:].data)
     except KeyError:
@@ -171,11 +182,15 @@ def load_units_cals(description, dsets):
     @return: Lists of units and calendars
     """
     try:
-        units = [ds.variables["t"].units for ds in dsets if ds.variables["t"][:].data.shape[0] > 1]
-        cals = [ds.variables["t"].calendar for ds in dsets if ds.variables["t"][:].data.shape[0] > 1]
+        units = [
+            ds.variables["t"].units for ds in dsets if ds.variables["t"][:].data.shape[0] > 1]
+        cals = [ds.variables["t"].calendar for ds in dsets if ds.variables["t"]
+                [:].data.shape[0] > 1]
     except KeyError:
-        units = [ds.variables["time"].units for ds in dsets if ds.variables["time"][:].data.shape[0] > 1]
-        cals = [ds.variables["time"].calendar for ds in dsets if ds.variables["time"][:].data.shape[0] > 1]
+        units = [
+            ds.variables["time"].units for ds in dsets if ds.variables["time"][:].data.shape[0] > 1]
+        cals = [ds.variables["time"].calendar for ds in dsets if ds.variables["time"]
+                [:].data.shape[0] > 1]
 
     return units, cals
 
@@ -194,4 +209,5 @@ def cartesian_to_spherical(data):
     # format in HadCM3: lat:(-90,90), lon(0,360)
     theta = 90 - np.arccos(z / r) * 180 / np.pi  # to degrees
     phi = 180 + np.arctan2(y, x) * 180 / np.pi
-    return np.array([theta, phi]).transpose((1, 0))  # careful, this will only work if the shape is correct
+    # careful, this will only work if the shape is correct
+    return np.array([theta, phi]).transpose((1, 0))

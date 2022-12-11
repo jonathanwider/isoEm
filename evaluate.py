@@ -103,13 +103,14 @@ def get_correlation(predictions, targets):
     return pearson_correlation
 
 
-def load_compatible_available_runs(base_folder, conditions, print_folder_names=False):
+def load_compatible_available_runs(base_folder, conditions, keywords_blacklist=[], print_folder_names=False):
     """
     Given a base folder to search in, list all the runs, that match the specified conditions. Search is shallow, so
     runs in subdirectories won't be detected.
 
     @param base_folder: Folder in which we want to search for runs.
     @param conditions: dict of conditions on data set and (model and training)
+    @param keywords_blacklist: List of keywords we want to blacklist (runs with descriptions including these keywords will be ignored).
     @param print_folder_names: If True, print the names of the compatible folders
     @return: List of paths to compatible folders
     """
@@ -137,9 +138,9 @@ def load_compatible_available_runs(base_folder, conditions, print_folder_names=F
                 model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
 
             if util.check_dict_conditions(
-                dataset_description, conditions["DATASET_DESCRIPTION"]
+                dataset_description, conditions["DATASET_DESCRIPTION"], keywords_blacklist=keywords_blacklist
             ) and util.check_dict_conditions(
-                model_training_description, conditions["MODEL_TRAINING_DESCRIPTION"]
+                model_training_description, conditions["MODEL_TRAINING_DESCRIPTION"], keywords_blacklist=keywords_blacklist
             ):
                 if print_folder_names:
                     print(os.path.join(base_folder, folder, "predictions.gz"))
@@ -235,9 +236,11 @@ def get_rescaled_predictions_and_gt(descriptions, predictions):
         d_reduced = copy.deepcopy(dataset_description)
         for l in ignore_vars:
             d_reduced.pop(l, None)
-        dataset = find_and_load_dataset(model_training_description["DATASET_FOLDER"], d_reduced, use_prints=False)
+        dataset = find_and_load_dataset(
+            model_training_description["DATASET_FOLDER"], d_reduced, use_prints=False)
     else:
-        dataset = find_and_load_dataset(model_training_description["DATASET_FOLDER"], dataset_description, use_prints=False)
+        dataset = find_and_load_dataset(
+            model_training_description["DATASET_FOLDER"], dataset_description, use_prints=False)
     train_targets = dataset["train"]["targets"]
     test_targets = dataset["test"]["targets"]
     if dataset_description["GRID_TYPE"] == "Flat":
@@ -302,17 +305,18 @@ def get_rescaled_predictions_and_gt_months(descriptions, predictions, do_split=F
         return rescaled_predictions, test_targets, test_masks
 
 
-def load_data_for_comparison(base_folder, conditions, do_split=False):
+def load_data_for_comparison(base_folder, conditions, keywords_blacklist=[], do_split=False):
     """
     For all runs, that match the corresponding definition, load the descriptions of dataset and (model and training)
     and return ground truth and rescaled predictions.
     @param base_folder: Folder in which we want to search for runs.
     @param conditions: dict of conditions on data set and (model and training)
+    @param keywords_blacklist: If a keyword from this list occurs in a description, we discard the run
     @param do_split: Whether or not to split the data into individual months (on monthly timescale)
     @return: Lists of descriptions, rescaled predictions and ground truth
     """
     predictions_list, descriptions_list = load_compatible_available_runs(
-        base_folder, conditions
+        base_folder, conditions, keywords_blacklist=keywords_blacklist
     )
     if do_split:
         assert np.array(
