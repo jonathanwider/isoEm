@@ -5,6 +5,7 @@ import numpy as np
 import os.path
 import pickle
 import gzip
+import copy
 
 from train import find_and_load_dataset
 import util
@@ -231,17 +232,12 @@ def get_rescaled_predictions_and_gt(descriptions, predictions):
         do_rescale = False
         ignore_vars = ["RESULTS_INTERPOLATED", "LATITUDES_SLICE", "LATITUDES", "RESULTS_RESCALED",
                        "LONGITUDES", "GRID_SHAPE", "RESOLUTION", "INTERPOLATE_CORNERS", "INTERPOLATION"]
-        d_reduced = dataset_description["DATASET_DESCRIPTION"]
+        d_reduced = copy.deepcopy(dataset_description)
         for l in ignore_vars:
             d_reduced.pop(l, None)
-        dataset_description = d_reduced
-
-    dataset = find_and_load_dataset(
-        model_training_description["DATASET_FOLDER"],
-        dataset_description,
-        use_prints=False,
-    )
-
+        dataset = find_and_load_dataset(model_training_description["DATASET_FOLDER"], d_reduced, use_prints=False)
+    else:
+        dataset = find_and_load_dataset(model_training_description["DATASET_FOLDER"], dataset_description, use_prints=False)
     train_targets = dataset["train"]["targets"]
     test_targets = dataset["test"]["targets"]
     if dataset_description["GRID_TYPE"] == "Flat":

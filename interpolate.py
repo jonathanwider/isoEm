@@ -130,6 +130,7 @@ def interpolate_predictions(
                           * charts.shape[1], charts.shape[2])
         dataset_description["GRID_TYPE"] = "Ico"
         dataset_description["RESOLUTION"] = resolution
+        dataset_description["INTERPOLATION"] = interpolation
         model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
 
         new_descriptions = {
@@ -191,7 +192,6 @@ def interpolate_predictions(
         os.makedirs(folder_name)
 
     print("writing predictions")
-    print(res.shape)
     with gzip.open(predictions_file, "wb") as f:
         pickle.dump(res, f)
 
