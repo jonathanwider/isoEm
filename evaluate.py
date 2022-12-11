@@ -211,7 +211,9 @@ def undo_scaling(model_training_description, predictions, train_targets):
 
 def get_rescaled_predictions_and_gt(descriptions, predictions):
     """
-    For a given dataset and model description, load the ground truth test set and rescale the predictions.
+    For a given dataset and model description, load the ground truth test set and rescale the predictions. 
+    Can also handle results that got interpolated from one grid to another.
+
     @param descriptions: Descriptions for dataset and (model and training)
     @param predictions: Predictions of the ML model. Potentially to be rescaled.
     @return: Rescaled predictions and ground truth for the test set.
@@ -224,6 +226,16 @@ def get_rescaled_predictions_and_gt(descriptions, predictions):
 
     assert "DATASET_FOLDER" in model_training_description.keys()
 
+    do_rescale = True
+    if "RESULTS_INTERPOLATED" in dataset_description.keys():
+        do_rescale = False
+        ignore_vars = ["RESULTS_INTERPOLATED", "LATITUDES_SLICE", "LATITUDES", "RESULTS_RESCALED",
+                       "LONGITUDES", "GRID_SHAPE", "RESOLUTION", "INTERPOLATE_CORNERS", "INTERPOLATION"]
+        d_reduced = dataset_description["DATASET_DESCRIPTION"]
+        for l in ignore_vars:
+            d_reduced.pop(l, None)
+        dataset_description = d_reduced
+
     dataset = find_and_load_dataset(
         model_training_description["DATASET_FOLDER"],
         dataset_description,
@@ -235,9 +247,12 @@ def get_rescaled_predictions_and_gt(descriptions, predictions):
     if dataset_description["GRID_TYPE"] == "Flat":
         test_masks = dataset["test"]["masks"]
 
-    rescaled_predictions = undo_scaling(
-        model_training_description, predictions, train_targets
-    )
+    if do_rescale:
+        rescaled_predictions = undo_scaling(
+            model_training_description, predictions, train_targets
+        )
+    else:
+        rescaled_predictions = predictions
 
     if dataset_description["GRID_TYPE"] == "Flat":
         return rescaled_predictions, test_targets, test_masks
