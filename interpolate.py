@@ -157,11 +157,11 @@ def interpolate_predictions(
 
         if do_scaling:
             dataset_description = dict(
-                {"RESULTS_INTERPOLATED": True, "RESULTS_RESCALED": False}, **descriptions["DATASET_DESCRIPTION"]
+                {"RESULTS_INTERPOLATED": True, "RESULTS_RESCALED": True}, **descriptions["DATASET_DESCRIPTION"]
             )
         else:
             dataset_description = dict(
-                {"RESULTS_INTERPOLATED": True}, **descriptions["DATASET_DESCRIPTION"]
+                {"RESULTS_INTERPOLATED": True, "RESULTS_RESCALED": False}, **descriptions["DATASET_DESCRIPTION"]
             )
         dataset_description["GRID_TYPE"] = "Flat"
         model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
