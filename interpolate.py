@@ -191,6 +191,7 @@ def interpolate_predictions(
         os.makedirs(folder_name)
 
     print("writing predictions")
+    print(res.shape)
     with gzip.open(predictions_file, "wb") as f:
         pickle.dump(res, f)
 
@@ -645,7 +646,7 @@ def get_interpolated_data_and_gt(
             len(predictions_list)))
 
     # Get the corresponding ground truth
-    ignore_vars = ["RESULTS_INTERPOLATED", "LATITUDES_SLICE", "LATITUDES",
+    ignore_vars = ["RESULTS_INTERPOLATED", "LATITUDES_SLICE", "LATITUDES", "RESULTS_RESCALED",
                    "LONGITUDES", "GRID_SHAPE", "RESOLUTION", "INTERPOLATE_CORNERS", "INTERPOLATION"]
     d_reduced = descriptions_list[0]["DATASET_DESCRIPTION"]
     for l in ignore_vars:
