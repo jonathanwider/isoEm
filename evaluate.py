@@ -310,6 +310,7 @@ def load_data_for_comparison(base_folder, conditions, do_split=False):
                 for description in descriptions_list
             ]
         ).all()
+
     rescaled_predictions_list = []
     ground_truth_list = []
     masks_list = []
