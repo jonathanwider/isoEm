@@ -132,7 +132,7 @@ diff_fine_style["CBAR_LABEL"] = r"$R^2$ score difference"
 diff_fine_style["CBAR_EXTEND"] = "both"
 
 
-def plot_map(ax, data, description, style, title="", cbar_orientation='horizontal', show_colorbar=True):
+def plot_map(ax, data, description, style, title="", cbar_orientation='horizontal', show_colorbar=True, rasterized=True):
     """
     Plot data on a 2d grid in a given style.
     @param ax: Axis to plot on.
@@ -142,6 +142,7 @@ def plot_map(ax, data, description, style, title="", cbar_orientation='horizonta
     @param title: Title of the plot
     @param cbar_orientation: Orientation of the colorbar.
     @param show_colorbar: Whether or not to show a colorbar.
+    @param rasterized: Whether or not to rasterize the colormesh.
     @return:
     """
     lat = np.array(description["LATITUDES"])
@@ -153,7 +154,7 @@ def plot_map(ax, data, description, style, title="", cbar_orientation='horizonta
     field, lon_plot = add_cyclic_point(data, coord=lon)
     lo, la = np.meshgrid(lon_plot, lat)
     layer = ax.pcolormesh(lo, la, field, transform=ccrs.PlateCarree(
-    ), cmap=style["CMAP"], norm=style["NORM"])
+    ), cmap=style["CMAP"], norm=style["NORM"], rasterized=rasterized)
 
     if show_colorbar:
         cbar = plt.colorbar(
@@ -179,7 +180,7 @@ def find_gridbox(array, value):
     return idx
 
 
-def plot_map_markers(ax, locs, data, description, style, title="", locs_labels=None):
+def plot_map_markers(ax, locs, data, description, style, title="", locs_labels=None, rasterized=True):
     """
     Plot data on a 2d grid in a given style.
     @param ax: Axis to plot on.
@@ -189,6 +190,7 @@ def plot_map_markers(ax, locs, data, description, style, title="", locs_labels=N
     @param style: A plotting style (sizes, fonts, etc.)
     @param title: Title of the plot
     @param locs_labels: List of labels for the locations. If not provided, don't display a legend
+    @param rasterized: Whether or not to rasterize the colormesh.
     @return:
     """
     lat = np.array(description["LATITUDES"])
@@ -209,7 +211,7 @@ def plot_map_markers(ax, locs, data, description, style, title="", locs_labels=N
     field, lon_plot = add_cyclic_point(data, coord=lon)
     lo, la = np.meshgrid(lon_plot, lat)
     layer = ax.pcolormesh(lo, la, field, transform=ccrs.PlateCarree(
-    ), cmap=style["CMAP"], norm=style["NORM"])
+    ), cmap=style["CMAP"], norm=style["NORM"], rasterized=rasterized)
 
     for i in range(len(locs_boxes)):
         if locs_labels == None:
@@ -237,7 +239,7 @@ def plot_map_markers(ax, locs, data, description, style, title="", locs_labels=N
     ax.set_title(title, fontsize=style["TITLE_FONTSIZE"])
 
 
-def plot_masked_data(ax, data, description, style, title=""):
+def plot_masked_data(ax, data, description, style, title="", rasterized=True):
     """
     Plot data on a 2d grid in a given style.
     @param ax: Axes to plot on
@@ -245,6 +247,7 @@ def plot_masked_data(ax, data, description, style, title=""):
     @param description: A description of the used dataset. Used to extract latitudes and longitudes.
     @param style: A plotting style (sizes, fonts, etc.)
     @param title: Title of the plot
+    @param rasterized: Whether or not to rasterize the colormesh.
     @return:
     """
 
@@ -265,14 +268,14 @@ def plot_masked_data(ax, data, description, style, title=""):
     cbars = []
     for i, key in enumerate(list(data.keys())):
         ax.pcolormesh(lo, la, fields[i], transform=ccrs.PlateCarree(
-        ), cmap=style["CMAPS"][key], norm=style["NORM"])
+        ), cmap=style["CMAPS"][key], norm=style["NORM"], rasterized=rasterized)
 
     ax.coastlines()
 
     ax.set_title(title, fontsize=style["TITLE_FONTSIZE"])
 
 
-def plot_ico_map(ax, data, description, style, title=""):
+def plot_ico_map(ax, data, description, style, title="", rasterized=True):
     """
     Plot icosahedral data in a given style.
     @param ax: Axes to plot on
@@ -280,6 +283,7 @@ def plot_ico_map(ax, data, description, style, title=""):
     @param description: A description of the used dataset. Used to extract latitudes and longitudes.
     @param style: A plotting style (sizes, fonts, etc.)
     @param title: Title of the plot
+    @param rasterized: Whether or not to rasterize the colormesh.
     @return:
     """
     from icosahedron import Icosahedron
@@ -309,7 +313,7 @@ def plot_ico_map(ax, data, description, style, title=""):
         if np.amax(tmp[:, 0]) - np.amin(tmp[:, 0]) > 180:
             tmp[tmp > 180] = tmp[tmp > 180] - 360
         polygon = mpatches.Polygon(tmp,
-                                   transform=ccrs.PlateCarree())
+                                   transform=ccrs.PlateCarree(), rasterized=rasterized)
         polygon.set_color(style["CMAP"](style["NORM"](data[i])))
         ax.add_patch(polygon)
 
