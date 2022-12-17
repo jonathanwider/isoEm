@@ -118,9 +118,6 @@ if __name__ == "__main__":
     parser.add_argument('-dmax', dest='h', action='store',
                         default=100, required=False,
                         help='Maximum of desired d18O range (default: 100)')
-    parser.add_argument('-dmax', dest='h', action='store',
-                        default=100, required=False,
-                        help='Maximum of desired d18O range (default: 100)')
     parser.add_argument('--createico', dest='create_ico', action='store_true',
                         help='If flag set, interpolate to create files required for Icosahedral UNet.')
     parser.add_argument('-ico_resolution', dest='res', action='store',
