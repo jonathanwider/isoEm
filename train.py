@@ -816,7 +816,7 @@ def train_random_forest_pixelwise(dataset_description, model_training_descriptio
     # append coordinates to predictor variables, lon as cos(lon), sin(lon)
     x_tr = append_coords(x_tr)
 
-    # combine information from all pixels into one training set.
+    # combine information from all pixels into one training set incorporating all grid boxes.
     x_tr = x_tr.transpose(0, 2, 3, 1).reshape(-1, x_tr.shape[1])
     y_tr = y_tr.transpose(0, 2, 3, 1).reshape(-1, y_tr.shape[1])
 

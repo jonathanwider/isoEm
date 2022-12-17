@@ -17,7 +17,7 @@ def project_sphere_on_xy_plane(grid, projection_origin):
 
     sx, sy, sz = projection_origin
     x, y, z = grid
-    z = z.copy() + 1
+    z = z.copy() + 1  # assumes a radius of 1
 
     t = -z / (z - sz)
     qx = t * (x - sx) + x
@@ -148,19 +148,28 @@ def main():
     print("getting mnist data")
     from torchvision import datasets
     datasets.MNIST.resources = [
-        ('https://ossci-datasets.s3.amazonaws.com/mnist/train-images-idx3-ubyte.gz', 'f68b3c2dcbeaaa9fbdd348bbdeb94873'),
-        ('https://ossci-datasets.s3.amazonaws.com/mnist/train-labels-idx1-ubyte.gz', 'd53e105ee54ea40749a09fcbcd1e9432'),
-        ('https://ossci-datasets.s3.amazonaws.com/mnist/t10k-images-idx3-ubyte.gz', '9fb629c4189551a2d022fa330f9573f3'),
-        ('https://ossci-datasets.s3.amazonaws.com/mnist/t10k-labels-idx1-ubyte.gz', 'ec29112dd5afa0611ce80d1b7f02629c')
+        ('https://ossci-datasets.s3.amazonaws.com/mnist/train-images-idx3-ubyte.gz',
+         'f68b3c2dcbeaaa9fbdd348bbdeb94873'),
+        ('https://ossci-datasets.s3.amazonaws.com/mnist/train-labels-idx1-ubyte.gz',
+         'd53e105ee54ea40749a09fcbcd1e9432'),
+        ('https://ossci-datasets.s3.amazonaws.com/mnist/t10k-images-idx3-ubyte.gz',
+         '9fb629c4189551a2d022fa330f9573f3'),
+        ('https://ossci-datasets.s3.amazonaws.com/mnist/t10k-labels-idx1-ubyte.gz',
+         'ec29112dd5afa0611ce80d1b7f02629c')
     ]
-    trainset = datasets.MNIST(root=args.mnist_data_folder, train=True, download=True)
-    testset = datasets.MNIST(root=args.mnist_data_folder, train=False, download=True)
-    mnist_train = {'images': trainset.data.numpy(), 'labels': trainset.targets.numpy()}
-    mnist_test = {'images': testset.data.numpy(), 'labels': testset.targets.numpy()}
+    trainset = datasets.MNIST(
+        root=args.mnist_data_folder, train=True, download=True)
+    testset = datasets.MNIST(root=args.mnist_data_folder,
+                             train=False, download=True)
+    mnist_train = {'images': trainset.data.numpy(
+    ), 'labels': trainset.targets.numpy()}
+    mnist_test = {'images': testset.data.numpy(
+    ), 'labels': testset.targets.numpy()}
 
     ico = Icosahedron(r=args.refinement, rad=1, c=np.array([0, 0, 0]))
     grid = ico.get_charts_cut()
-    grid = grid.reshape(grid.shape[0] * grid.shape[1], grid.shape[2], grid.shape[3])
+    grid = grid.reshape(
+        grid.shape[0] * grid.shape[1], grid.shape[2], grid.shape[3])
 
     # result
     dataset = {}
@@ -178,8 +187,8 @@ def main():
             n_rots = 60
         else:
             n_rots = 1
-        # array to store the projected MNIST digits in.
 
+        # array to store the projected MNIST digits in.
         projections = np.ndarray(
             (signals.shape[0]*n_rots, grid.shape[0], grid.shape[1]), dtype=np.uint8)
 
@@ -187,21 +196,25 @@ def main():
         # again in every step.
         if rot_type[label] == 'ico_rot':
             perms = all_rotations_icosahedron()
-            rotated_grids = np.zeros((n_rots, *grid.shape))  # get object with correct shape to store values in
+            # get object with correct shape to store values in
+            rotated_grids = np.zeros((n_rots, *grid.shape))
 
             for i, perm in enumerate(perms):
-                ico_r = Icosahedron(r=args.refinement, rad=1, c=np.array([0, 0, 0]), perm=perm)
+                ico_r = Icosahedron(r=args.refinement, rad=1,
+                                    c=np.array([0, 0, 0]), perm=perm)
                 rotated_grids[i] = ico_r.get_charts_cut().reshape(grid.shape)
 
         while current < n_signals:  # as long as we still have MNIST digits to process...
             if rot_type[label] == 'no_rot':
-                rotated_grids = grid[None,:]  # if no rotation just keep identity.
+                # if no rotation just keep identity.
+                rotated_grids = grid[None, :]
             elif rot_type[label] == 'full_rot':
                 # if rot type is full: get n_rots random rotation matrices:
                 rotated_grids = np.zeros((n_rots, *grid.shape))
                 for i in range(n_rots):
                     rot = rand_rotation_matrix(deflection=args.noise)
-                    rotated_grids[i] = ico.get_rotated_charts_cut(rot).reshape(grid.shape)
+                    rotated_grids[i] = ico.get_rotated_charts_cut(
+                        rot).reshape(grid.shape)
             # elif rot_type[label] == 'ico_rot':  # do nothing because we have already precomputed.
 
             # get indices of the current chunk
@@ -209,7 +222,8 @@ def main():
                                           current + args.chunk_size))
             chunk = signals[idxs]  # get a chunk of MNIST
             for i, r_grid in enumerate(rotated_grids):
-                projections[idxs*n_rots+i] = project_2d_on_sphere(chunk, r_grid.transpose(2, 0, 1))
+                projections[idxs*n_rots +
+                            i] = project_2d_on_sphere(chunk, r_grid.transpose(2, 0, 1))
             current += args.chunk_size
             print("\r{0}/{1}".format(current, n_signals), end="")
         print("")
