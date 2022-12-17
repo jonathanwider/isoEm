@@ -107,4 +107,4 @@ The spherical Network architecture is a implemented based on the paper [Gauge Eq
 The repository is based on publically available source code from ehoogeboom's [hexaconv](https://github.com/ehoogeboom/hexaconv) ([paper](https://arxiv.org/pdf/1803.02108.pdf))
 and makes use of the [forked pytorch version](https://github.com/adambielski/GrouPy) of [GrouPy](https://github.com/tscohen/GrouPy) ([paper](https://arxiv.org/pdf/1602.07576.pdf)). 
 Additionally code for creating the spherical-MNIST dataset is adapted from [S2CNN](https://github.com/jonas-koehler/s2cnn).
-Code for CoordConv is from [CoordConv](https://github.com/walsvid/CoordConv) ([paper](https://proceedings.neurips.cc/paper/2018/file/60106888f8977b71e1f15db7bc9a88d1-Paper.pdf)).
+Code for CoordConv is from [CoordConv](https://github.com/walsvid/CoordConv) ([paper](https://proceedings.neurips.cc/paper/2018/file/60106888f8977b71e1f15db7bc9a88d1-Paper.pdf)). For implementing UNets, we use a flexible [decoder-encoder skeleton](https://github.com/imagirom/ConfNets).
