@@ -32,7 +32,7 @@ The required packages can then be installed with
 
 Additionally, to create some of the plots, `cartopy` must be installed via `conda` or `pip`. To open the jupyter notebooks, use `pip install notebook`, if not already installed.
 
-Climate Data Operators (CDO) is required to interpolate between grids.
+[Climate Data Operators (CDO)](https://code.mpimet.mpg.de/projects/cdo/) is required to interpolate between grids.
 
 Feel free to contact me in case of problems with the installation.
 
