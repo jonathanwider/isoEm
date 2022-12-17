@@ -37,7 +37,7 @@ Additionally, to create some of the plots, `cartopy` must be installed via `cond
 
 # Content-description
 The repository contains tools to:
-* create datasets from netcdf4 simulation files.
+* Download required climate simulation files from zenodo, as well as for downloading the mnist dataset.
 * run and create icosahedral and flat UNet models
 * compare the results
 * interpolate dataset between different grid (implemented: icosahedral and flat)
