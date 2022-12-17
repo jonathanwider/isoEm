@@ -58,7 +58,7 @@ In the following we give a short description of the files and directories in thi
 | CoordConv | Adapted from [CoordConv](https://github.com/walsvid/CoordConv), we implement a version that can deal with cylindral padding and with the coordinate discontinuity in the longitudes(360°-0°) |
 | Grids | Stores the grid description files that are necessary to interpolate between flat and icosahedral grid. | 
 | MNIST_data | Holds data for the spherical MNIST validation task. Processed datasets not included, can be created from original MNIST using `gendata.py`|
-| Scripts | Scripts to interpolate between icosahedral and flat grid. Sample grid description files are already contained. Files to be interpolated must be in this directory |
+| Scripts | Scripts to interpolate between icosahedral and flat grid. Sample grid description files are already contained.|
 | groupy | [GrouPy](https://github.com/tscohen/GrouPy). This folder implements the building blocks for the icosahedral CNN. We combine a [forked pytorch version](https://github.com/adambielski/GrouPy) and adaptations to the hexagonal grid ([hexaconv](https://github.com/ehoogeboom/hexaconv)).|
 | `Best_configuration_yearly_original_grid.ipynb` | Notebook that goes into details on the results of the best performing methods (sections: 4.2.5, 5.2.1)|
 | `Compare_Architectures_On_ico_grid.ipynb` | Used for comparing predictions from networks on the icosahedral grid (sections: 4.2.2, 5.2.3) |
