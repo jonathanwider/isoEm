@@ -1,5 +1,5 @@
 *.gz
-*.vscode
+.vscode/
 data
 *.idea
 *.ipynb_checkpoints
