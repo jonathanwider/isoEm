@@ -34,7 +34,6 @@ Additionally, to create some of the plots, `cartopy` must be installed via `cond
 
 [Climate Data Operators (CDO)](https://code.mpimet.mpg.de/projects/cdo/) is required to interpolate between grids.
 
-Feel free to contact me in case of problems with the installation.
 
 # Content-description
 The repository contains tools to:
