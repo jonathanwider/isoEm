@@ -32,13 +32,12 @@ The required packages can then be installed with
 
 Additionally, to create some of the plots, `cartopy` must be installed via `conda` or `pip`. To open the jupyter notebooks, use `pip install notebook`, if not already installed.
 
-Climate Data Operators (CDO) is required to interpolate between grids.
+[Climate Data Operators (CDO)](https://code.mpimet.mpg.de/projects/cdo/) is required to interpolate between grids.
 
-Feel free to contact me in case of problems with the installation.
 
 # Content-description
 The repository contains tools to:
-* create datasets from netcdf4 simulation files.
+* Download required climate simulation files from zenodo, as well as for downloading the mnist dataset.
 * run and create icosahedral and flat UNet models
 * compare the results
 * interpolate dataset between different grid (implemented: icosahedral and flat)
@@ -107,4 +106,4 @@ The spherical Network architecture is a implemented based on the paper [Gauge Eq
 The repository is based on publically available source code from ehoogeboom's [hexaconv](https://github.com/ehoogeboom/hexaconv) ([paper](https://arxiv.org/pdf/1803.02108.pdf))
 and makes use of the [forked pytorch version](https://github.com/adambielski/GrouPy) of [GrouPy](https://github.com/tscohen/GrouPy) ([paper](https://arxiv.org/pdf/1602.07576.pdf)). 
 Additionally code for creating the spherical-MNIST dataset is adapted from [S2CNN](https://github.com/jonas-koehler/s2cnn).
-Code for CoordConv is from [CoordConv](https://github.com/walsvid/CoordConv) ([paper](https://proceedings.neurips.cc/paper/2018/file/60106888f8977b71e1f15db7bc9a88d1-Paper.pdf)).
+Code for CoordConv is from [CoordConv](https://github.com/walsvid/CoordConv) ([paper](https://proceedings.neurips.cc/paper/2018/file/60106888f8977b71e1f15db7bc9a88d1-Paper.pdf)). For implementing UNets, we use a flexible [decoder-encoder skeleton](https://github.com/imagirom/ConfNets).
