@@ -1,8 +1,14 @@
 *.gz
+*.vscode
 data
 *.idea
 *.ipynb_checkpoints
 *.nc
 *.jpg
 *.png
+*.pdf
+*.svg
 *.pt
+*.tfevents*
+MNIST_data*
+__pycache__/
