@@ -121,7 +121,7 @@ if __name__ == "__main__":
     parser.add_argument('--createico', dest='create_ico', action='store_true',
                         help='If flag set, interpolate to create files required for Icosahedral UNet.')
     parser.add_argument('-ico_resolution', dest='res', action='store',
-                        default=100, required=False,
+                        default=5, required=False,
                         help='Resolution level of the icosahedral grid (default: 5)')
     parser.add_argument('-ico_interpolation', dest='interpolation', action='store',
                         default="cons1", required=False,
