@@ -108,7 +108,8 @@ def project_2d_on_sphere(signal, grid, projection_origin=None):
 
 def main():
     parser = argparse.ArgumentParser()
-
+    parser.add_argument("--non_default_setup", dest="default_setup", action="store_false",
+                        help="If this flag isn't set, just use a default setup and produce all required MNIST datasets as in paper.")
     parser.add_argument("--refinement",
                         help="the refinement level of the icosahedral grid",
                         type=int,
@@ -171,70 +172,144 @@ def main():
     grid = grid.reshape(
         grid.shape[0] * grid.shape[1], grid.shape[2], grid.shape[3])
 
-    # result
-    dataset = {}
+    if args.default_setup:
+        print("Use default setup for producing spherical MNIST dataset")
+        configs = [["no_rot", "no_rot"], ["no_rot", "ico_rot"], ["no_rot", "full_rot"], [
+            "ico_rot", "ico_rot"], ["ico_rot", "full_rot"], ["full_rot", "full_rot"]]
+        for config in configs:
+            # result
+            print("Current configuration: training set: {}, test set: {}".format(
+                config[0], config[1]))
+            dataset = {}
 
-    rot_type = {"train": args.rot_type_train, "test": args.rot_type_test}
+            rot_type = {"train": config[0], "test": config[1]}
 
-    for label, data in zip(["train", "test"], [mnist_train, mnist_test]):
+            for label, data in zip(["train", "test"], [mnist_train, mnist_test]):
 
-        print("projecting {0} data set".format(label))
-        current = 0
-        signals = data['images'].reshape(-1, 28, 28).astype(np.float64)
-        n_signals = signals.shape[0]
+                print("projecting {0} data set".format(label))
+                current = 0
+                signals = data['images'].reshape(-1, 28, 28).astype(np.float64)
+                n_signals = signals.shape[0]
 
-        if rot_type[label] in ['ico_rot', 'full_rot']:
-            n_rots = 60
-        else:
-            n_rots = 1
+                if rot_type[label] in ['ico_rot', 'full_rot']:
+                    n_rots = 60
+                else:
+                    n_rots = 1
 
-        # array to store the projected MNIST digits in.
-        projections = np.ndarray(
-            (signals.shape[0]*n_rots, grid.shape[0], grid.shape[1]), dtype=np.uint8)
+                # array to store the projected MNIST digits in.
+                projections = np.ndarray(
+                    (signals.shape[0]*n_rots, grid.shape[0], grid.shape[1]), dtype=np.uint8)
 
-        # if the rotation type is icosahedral we precompute a list of all charts so we don't have do do it
-        # again in every step.
-        if rot_type[label] == 'ico_rot':
-            perms = all_rotations_icosahedron()
-            # get object with correct shape to store values in
-            rotated_grids = np.zeros((n_rots, *grid.shape))
+                # if the rotation type is icosahedral we precompute a list of all charts so we don't have do do it
+                # again in every step.
+                if rot_type[label] == 'ico_rot':
+                    perms = all_rotations_icosahedron()
+                    # get object with correct shape to store values in
+                    rotated_grids = np.zeros((n_rots, *grid.shape))
 
-            for i, perm in enumerate(perms):
-                ico_r = Icosahedron(r=args.refinement, rad=1,
-                                    c=np.array([0, 0, 0]), perm=perm)
-                rotated_grids[i] = ico_r.get_charts_cut().reshape(grid.shape)
+                    for i, perm in enumerate(perms):
+                        ico_r = Icosahedron(r=4, rad=1,
+                                            c=np.array([0, 0, 0]), perm=perm)
+                        rotated_grids[i] = ico_r.get_charts_cut().reshape(
+                            grid.shape)
 
-        while current < n_signals:  # as long as we still have MNIST digits to process...
-            if rot_type[label] == 'no_rot':
-                # if no rotation just keep identity.
-                rotated_grids = grid[None, :]
-            elif rot_type[label] == 'full_rot':
-                # if rot type is full: get n_rots random rotation matrices:
+                while current < n_signals:  # as long as we still have MNIST digits to process...
+                    if rot_type[label] == 'no_rot':
+                        # if no rotation just keep identity.
+                        rotated_grids = grid[None, :]
+                    elif rot_type[label] == 'full_rot':
+                        # if rot type is full: get n_rots random rotation matrices:
+                        rotated_grids = np.zeros((n_rots, *grid.shape))
+                        for i in range(n_rots):
+                            rot = rand_rotation_matrix(deflection=1.0)
+                            rotated_grids[i] = ico.get_rotated_charts_cut(
+                                rot).reshape(grid.shape)
+                    # elif rot_type[label] == 'ico_rot':  # do nothing because we have already precomputed.
+
+                    # get indices of the current chunk
+                    idxs = np.arange(current, min(n_signals,
+                                                  current + 500))
+                    chunk = signals[idxs]  # get a chunk of MNIST
+                    for i, r_grid in enumerate(rotated_grids):
+                        projections[idxs*n_rots +
+                                    i] = project_2d_on_sphere(chunk, r_grid.transpose(2, 0, 1))
+                    current += args.chunk_size
+                    print("\r{0}/{1}".format(current, n_signals), end="")
+                print("")
+                dataset[label] = {
+                    'images': projections,
+                    'labels': np.repeat(data['labels'], n_rots)
+                }
+            print("writing pickle")
+            with gzip.open("MNIST_data/sph_ico_mnist_train_{}_test_{}.gz".format(config[0], config[1]), 'wb') as f:
+                pickle.dump(dataset, f)
+            print("done")
+    else:
+        # result
+        dataset = {}
+
+        rot_type = {"train": args.rot_type_train, "test": args.rot_type_test}
+
+        for label, data in zip(["train", "test"], [mnist_train, mnist_test]):
+
+            print("projecting {0} data set".format(label))
+            current = 0
+            signals = data['images'].reshape(-1, 28, 28).astype(np.float64)
+            n_signals = signals.shape[0]
+
+            if rot_type[label] in ['ico_rot', 'full_rot']:
+                n_rots = 60
+            else:
+                n_rots = 1
+
+            # array to store the projected MNIST digits in.
+            projections = np.ndarray(
+                (signals.shape[0]*n_rots, grid.shape[0], grid.shape[1]), dtype=np.uint8)
+
+            # if the rotation type is icosahedral we precompute a list of all charts so we don't have do do it
+            # again in every step.
+            if rot_type[label] == 'ico_rot':
+                perms = all_rotations_icosahedron()
+                # get object with correct shape to store values in
                 rotated_grids = np.zeros((n_rots, *grid.shape))
-                for i in range(n_rots):
-                    rot = rand_rotation_matrix(deflection=args.noise)
-                    rotated_grids[i] = ico.get_rotated_charts_cut(
-                        rot).reshape(grid.shape)
-            # elif rot_type[label] == 'ico_rot':  # do nothing because we have already precomputed.
 
-            # get indices of the current chunk
-            idxs = np.arange(current, min(n_signals,
-                                          current + args.chunk_size))
-            chunk = signals[idxs]  # get a chunk of MNIST
-            for i, r_grid in enumerate(rotated_grids):
-                projections[idxs*n_rots +
-                            i] = project_2d_on_sphere(chunk, r_grid.transpose(2, 0, 1))
-            current += args.chunk_size
-            print("\r{0}/{1}".format(current, n_signals), end="")
-        print("")
-        dataset[label] = {
-            'images': projections,
-            'labels': np.repeat(data['labels'], n_rots)
-        }
-    print("writing pickle")
-    with gzip.open(args.output_file, 'wb') as f:
-        pickle.dump(dataset, f)
-    print("done")
+                for i, perm in enumerate(perms):
+                    ico_r = Icosahedron(r=args.refinement, rad=1,
+                                        c=np.array([0, 0, 0]), perm=perm)
+                    rotated_grids[i] = ico_r.get_charts_cut().reshape(
+                        grid.shape)
+
+            while current < n_signals:  # as long as we still have MNIST digits to process...
+                if rot_type[label] == 'no_rot':
+                    # if no rotation just keep identity.
+                    rotated_grids = grid[None, :]
+                elif rot_type[label] == 'full_rot':
+                    # if rot type is full: get n_rots random rotation matrices:
+                    rotated_grids = np.zeros((n_rots, *grid.shape))
+                    for i in range(n_rots):
+                        rot = rand_rotation_matrix(deflection=args.noise)
+                        rotated_grids[i] = ico.get_rotated_charts_cut(
+                            rot).reshape(grid.shape)
+                # elif rot_type[label] == 'ico_rot':  # do nothing because we have already precomputed.
+
+                # get indices of the current chunk
+                idxs = np.arange(current, min(n_signals,
+                                              current + args.chunk_size))
+                chunk = signals[idxs]  # get a chunk of MNIST
+                for i, r_grid in enumerate(rotated_grids):
+                    projections[idxs*n_rots +
+                                i] = project_2d_on_sphere(chunk, r_grid.transpose(2, 0, 1))
+                current += args.chunk_size
+                print("\r{0}/{1}".format(current, n_signals), end="")
+            print("")
+            dataset[label] = {
+                'images': projections,
+                'labels': np.repeat(data['labels'], n_rots)
+            }
+        print("writing pickle")
+        with gzip.open(args.output_file, 'wb') as f:
+            pickle.dump(dataset, f)
+        print("done")
 
 
 if __name__ == '__main__':
