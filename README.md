@@ -55,6 +55,26 @@ The repository contains tools to:
 * To run and evaluate the experiments on **monthly timescale**, use the ```Experiments_monthly.ipynb``` notebook.
 * To run, evaluate and plot the ***crossprediction*** experiments, use the ```Experiments_crossprediction.ipynb``` notebook.
 
+## Files and subdirectories and their meaning:
+
+| Directory/File name| Short description of content|
+| ------------- |-------------|
+| ```CoordConv/``` | Code for [CoordConv](https://github.com/walsvid/CoordConv). Slightly modified to work with cylindrical padding (fact that longitudes on earth have periodic boundary condition).|
+|```Grids/```| Directory grid description files get stored in. CDO can extract the natural grid from .nc files if necessary.|
+|```Scripts/```| Contains scripts that are used to interpolate between the flat plate carrée grid and the icosahedral grid. These scripts get used by funcitons in ```interpolate.py``` |
+|```Scripts/```| Contains scripts that are used to interpolate between the flat plate carrée grid and the icosahedral grid. These scripts get used by functions in ```interpolate.py```. The directory also contains the used grid description files.|
+| ```Test_notebooks/``` |  Notebooks that were used to test several aspects of the code. Todo: maybe delete this.|
+| ```groupy/``` | A [forked pytorch version of groupy](https://github.com/adambielski/GrouPy) that was adapted to hexagonal convolution as in [hexaconv](https://github.com/ehoogeboom/hexaconv). Used to build the convolutional layers of the icosahedral neural network|
+| ```Experiments_crossprediction.ipynb``` | Crossprediction experiments: Train network on data from one climate model, then predict on other climate models. |
+| ```Experiments_monthly_data.ipynb``` | Experiments on monthly data. On this time scale there are a lot more missing values than on annual scale. |
+| ```Experiments_validate_MNIST.ipynb``` | Recreation of a task from [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf) to validate our implementation of the icosahedral neural network|
+| ```Experiments_yearly.ipynb``` | Experiments on yearly data. Only producing datasets, training models and making predictions|
+| ```Experiments_yearly_evaluate.ipynb``` | Evaluate the results of previously run experiments on yearly data|
+| ```Plot_3d.ipynb``` | An example application of a plotting function that can plot icosahedral data in 3d, including coastlines. todo: maybe move/delete this|
+| ```Plot_MNIST_digits.ipynb``` | Plots some of the digits from the icoMNIST dataset.|
+| ```base.py``` | Defines some basic functions that are used in the construction of the flat and icosahedral UNets.|
+| ```datasets.py``` | Functions to create data sets used in training from climate model data. Here e.g. the split into test and training set happens and the used variables are selected.|
+| ```download_required_files.py``` | Downloads the climate model data from [zenodo](https://zenodo.org/record/6610684) and applies preprocessing, see (isotope emulation workflow)[###Isotope emulation]. |
 # Sources
 
 The spherical Network architecture is a implemented based on the paper [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf).
