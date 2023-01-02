@@ -74,7 +74,7 @@ The repository contains tools to:
 | ```Plot_MNIST_digits.ipynb``` | Plots some of the digits from the icoMNIST dataset.|
 | ```base.py``` | Defines some basic functions that are used in the construction of the flat and icosahedral UNets.|
 | ```datasets.py``` | Functions to create data sets used in training from climate model data. Here e.g. the split into test and training set happens and the used variables are selected.|
-| ```download_required_files.py``` | Downloads the climate model data from [zenodo](https://zenodo.org/record/6610684) and applies preprocessing, see [isotope emulation workflow](###Isotope emulation). |
+| ```download_required_files.py``` | Downloads the climate model data from [zenodo](https://zenodo.org/record/6610684) and applies preprocessing, see [isotope emulation workflow](#Workflow). |
 # Sources
 
 The spherical Network architecture is a implemented based on the paper [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf).
