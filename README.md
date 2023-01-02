@@ -44,11 +44,12 @@ The repository contains tools to:
 ## Workflow
 
 ### Validation experiment:
-* The ```gendata.py``` script downloads the MNIST data set. The data set is projected onto an icosahedral grid of refinement-level $r=4$. It is possible to select from a range of rotation types that can be applied to test and training set. ```gendata.py```
+* The ```gendata.py``` script downloads the MNIST data set. The data set is projected onto an icosahedral grid of refinement level $r=4$. It is possible to select from a range of rotation types that can be applied to test and training set.
 * The ```Experiments_validate_MNIST.ipynb``` can be used to recreate the validation experiment once the corresponding datasets have been created with ```gendata.py```.
 
 ### Isotope emulation:
-After downloading repo, 
+* The ```download_required_files.py``` script can be used to downloads the required climate simulation data from [zenodo](https://zenodo.org/record/6610684). For each variable we set a range of physically valid values. We interpolate all simulation data to the grid of the iHadCM3 grid using bilinear interpolation from [CDO](https://code.mpimet.mpg.de/projects/cdo/). In addition to the monthly data sets, yearly averaged data sets are created. If the ```--createico``` flag is set, the yearly data sets are interpolated to the icosahedral grid with a first order conservative remapping (by default). These interpolated datasetsare required for experiments with the icosahedral neural network architectures. To run experiments on the yearly averaged data sets use ```Experiments_yearly.ipynb``` notebook. The simulation results are stored in a directory, whose name is a hash that contains the information on parameters set during dataset creation, the training and the selected ML model.
+* 
 
 # Sources
 
