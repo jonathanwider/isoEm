@@ -8,10 +8,9 @@
 
 # Introduction
 
-This repository documents the code that was written for the Master's Thesis "Can Convolutional Neural Networks Replace the Physics-based
-Simulation of Oxygen Isotope Ratios in Precipitation?". Parts of the code are adapted from other repositories, see [Sources](#Sources).
+This repository contains code to emulate stable oxygen isotopes in precipitation using various machine learning methods. Parts of the code are adapted from other repositories, see [Sources](#Sources).
 
-The underlying simulation data is not provided with this repository, it is stored locally together with the created plots and Output of the emulation runs on the servers of the Stacy/Spacy group. 
+The underlying simulation data is not provided with this repository, but a script to download it from [zenodo](https://zenodo.org/record/6610684) is included.
 
 
 
@@ -37,69 +36,59 @@ Additionally, to create some of the plots, `cartopy` must be installed via `cond
 
 # Content-description
 The repository contains tools to:
-* Download required climate simulation files from zenodo, as well as for downloading the mnist dataset.
-* run and create icosahedral and flat UNet models
+* Download required climate simulation files from zenodo and the MNIST dataset for a validation task of one type of network architecture (icosahedral CNN)
+* run and create icosahedral and flat UNet models as well as simpler baseline models
 * compare the results
 * interpolate dataset between different grid (implemented: icosahedral and flat)
 
 ## Workflow
-A typical workflow for the isotope-emulation task is as follows:
-* OPTIONAL: If necessary, interpolate the flat basis data to the icosahedral grid (this only has to be done once) using one of the scripts in the `Scripts/` directory.
-* Open one of the jupyter notebooks for Dataset generation (names of these notebooks start with `Dataset`). Within the notebook there are many possibilities to configure the dataset. One can for example select different predictor variables, the way the data is split to test and training set and more. A folder is created, in which the dataset is stored together with a `dataset-description.gz` file that stores information on the creation of the dataset.
-* Open a notebook for running the architectures (names of these notebooks start with `Run`). These notebooks with determining a dataset-folder to work on based on selecting open parameters of the dataset. The notebooks let you configure many parameters of the used models and training. The results of each run get saved in a subfolder of the dataset-folder. The name of the folder in which the data gets stored is selected by hashing the dictionary containing model and training configurations. Before saving a run, hash-collisions are checked in order to avoid running accidentally running runs for the same configuration multiple times. Inside the directory, we store a file containing the model and training configuration (`model_training_description.gz`) and the predictions (`predictions.gz`) of the model on the test set.
-* OPTIONAL: If necessary, the predictions can then be interpolated from one grid to another. This is necessary when comparing flat and icosahedral network architectures. The procedure is a little complicated: First netcdf4 files are computed in the notebooks starting with `Netcdf_from_`. These then need to be copied to the `Scripts` directory. In the scripts directory there are two python scripts than control shell scripts executing the interpolation using `CDO` (Climate Data Operators). The interpolated results must then be copied back to the original directory.
 
-* Results can then be compared using one of the notebooks starting with `Compare`. These notebooks first load the model predictions and the required groundtruth from the dataset. They undo the standardization of the predictions and later provide plotting functions - thus creating the plots used in this thesis.
+### Validation experiment:
+* The ```gendata.py``` script downloads the MNIST data set. The data set is projected onto an icosahedral grid of refinement level $r=4$. It is possible to select from a range of rotation types that can be applied to test and training set.
+* The ```Experiments_validate_MNIST.ipynb``` can be used to recreate the validation experiment once the corresponding datasets have been created with ```gendata.py```.
 
-In the following we give a short description of the files and directories in this repository. 
+### Isotope emulation:
+* The ```download_required_files.py``` script can be used to downloads the required climate simulation data from [zenodo](https://zenodo.org/record/6610684). For each variable we set a range of physically valid values. We interpolate all simulation data to the grid of the iHadCM3 cliamte model using bilinear interpolation from [CDO](https://code.mpimet.mpg.de/projects/cdo/). In addition to the monthly data sets, yearly averaged data sets are created. If the ```--createico``` flag is set, the yearly data sets are interpolated to the icosahedral grid with a first order conservative remapping (by default). These interpolated datasetsare required for experiments with the icosahedral neural network architectures. 
+* To run experiments on the **yearly averaged data sets** use ```Experiments_yearly.ipynb``` notebook. The simulation results are stored in a directory, whose name is a hash that contains the information on parameters set during dataset creation, the training and the selected ML model.
+* To evaluate the results of the yearly experiments use the ```Experiments_yearly_evaluate.ipynb``` notebook. In general, when evaluating parameters of the desired dataset, ML model and training procedure can be specified - and the suitable results folder is opened automatically.
+* Plots for the results can be created using the ```Plot_results.ipynb``` notebook.
+* To run and evaluate the experiments on **monthly timescale**, use the ```Experiments_monthly.ipynb``` notebook.
+* To run, evaluate and plot the ***crossprediction*** experiments, use the ```Experiments_crossprediction.ipynb``` notebook.
 
-| Foldername/Filename | Description |
-| ----------- | ----------- |
-| CoordConv | Adapted from [CoordConv](https://github.com/walsvid/CoordConv), we implement a version that can deal with cylindral padding and with the coordinate discontinuity in the longitudes(360°-0°) |
-| Grids | Stores the grid description files that are necessary to interpolate between flat and icosahedral grid. | 
-| MNIST_data | Holds data for the spherical MNIST validation task. Processed datasets not included, can be created from original MNIST using `gendata.py`|
-| Scripts | Scripts to interpolate between icosahedral and flat grid. Sample grid description files are already contained.|
-| groupy | [GrouPy](https://github.com/tscohen/GrouPy). This folder implements the building blocks for the icosahedral CNN. We combine a [forked pytorch version](https://github.com/adambielski/GrouPy) and adaptations to the hexagonal grid ([hexaconv](https://github.com/ehoogeboom/hexaconv)).|
-| `Best_configuration_yearly_original_grid.ipynb` | Notebook that goes into details on the results of the best performing methods (sections: 4.2.5, 5.2.1)|
-| `Compare_Architectures_On_ico_grid.ipynb` | Used for comparing predictions from networks on the icosahedral grid (sections: 4.2.2, 5.2.3) |
-| `Compare_Architectures_On_original_grid.ipynb` | Used for comparing predictions from networks on the flat grid (sections: 4.2.2, 5.2.3) |
-| `Compare_Hyperparameter_effects_On_original_grid.ipynb` | Compare results for different "hyperparameter-tuned architectures (sections: 4.2.4, 5.2.5) |
-| `Compare_Modifications_to_flat_UNet.ipynb` | Used for comparing predictions from different "modified" flat architectures (sections: 4.2.1, 5.2.2) |
-| `Compare_Results_On_ico_grid.ipynb` | "Base" notebook that was used to develop plotting and comparing on icosahedral grid |
-| `Compare_Results_On_original_grid.ipynb` | "Base" notebook that was used to develop plotting and comparing on flat grid, used to create several plots in appendix |
-| `Compare_Results_On_original_grid_monthly.ipynb` | Used to compare results for monthly architectures (sections: 4.3, 5.3) |
-| `Compare_Results_On_original_grid_n_pc.ipynb` | Used for small side experiment: Dependence of the baseline achitecture on the number of Principal Components (Appendix) |
-| `Compare_Results_On_original_grid_precip_weighted.ipynb` | To compare results with and without weighting the isotopic ratios by precipitation amount (section: Appendix) |
-| `Dataset_from_interpolated_files.ipynb` | Create an icosahedral dataset. Before doing this, the flat data needs to be interpolated to the icosahedral grid using the scripts in the `Script` directory |
-| `Dataset_from_original_netcdf_files_flat.ipynb` | Create a dataset from the original plate carrée output |
-| `Dataset_from_original_netcdf_files_flat_months.ipynb` | Create a dataset from the original plate carrée output on monthly scale. Allows selecting single months and using predictor variables from multiple months. |
-| `Dataset_from_original_netcdf_files_flat_months.ipynb` | Create a dataset from the original plate carrée output while weighting the variables by the amount of precipitation at every gridbox and timestep. |
-| `Explore_hadcm3_dataset.ipynb` | Documents some investigations into the used HadCM3 datasets. |
-| `Grid_description_files.ipynb` | Used to create grid description files that are required to perform interpolations with cdo. |
-| `Hyperparameter_tuning_flat.ipynb` | Notebooks that was used to tune the learning rate of the flat network architecture using ray-tune. Output of the tuning not including in this repository, results are stored on the Stacy server however.|
-| `Netcdf_from_flat_ML_model_output.ipynb` | Create NetCDF files that are required to interpolate the output of ML model to other grids if necessary. |
-| `Netcdf_from_ico_ML_model_output.ipynb` | Create NetCDF files that are required to interpolate the output of ML model to other grids if necessary, other interpolation direction |
-| `PCA_dependence_on_nb_PC.ipynb` | Used to run the classical baseline for different numbers of principle components. |
-| `Plot_MNIST_digits.ipynb` | Plots some sample digits from the icosahedral/spherical MNIST dataset. |
-| `Plot_correlations_meanstate_variance.ipynb` | As the name suggests: plots correlation maps, mean state and variance in the HadCM3 dataset (monthly and yearly) |
-| `Plot_spherical_data.ipynb` | Plot some examples of data on the "bulged out" grid of the icosahedron. |
-| `Single_variables_yearly_original_dataset.ipynb` | Calculates correlation coefficients between simulation and emulation at ice core drilling sites for simulations with single predictor variables. |
-| `Test_equivariance.ipynb` | Testing the equivariance of the icosahedral CNN, was used for debugging. |
-| `Test_ico_grid.ipynb` | Some plots of the icosaherdral grid and the charts that cover it. |
-| `Test_padding.ipynb` | Testing the padding of the icosahedral CNN (had to be reimplemented by us). |
-| `Validate_IcoCNN_on_IcoMNIST.ipynb` | Icosahedral MNIST validation experiment. Run here, results get stored by tensorboard in ``Validate` folder. |
-| `base.py` | Base Modules that are used in the configurable UNet. |
-| `gendata.py ` | Generate the icosahedral MNIST datasets from the standard one. Allows applying rotations (either random or icosahedral) |
-| `ico_unet.py ` | Classes defining the flat and icosahedral UNets. |
-| `icosahedron.py ` | Creation of the icosahedral grid. Rotations of the grid. Plotting functions. |
-| `modules.py` | Defines several modules used in the icosahedral and flat UNets (padding, convolutions, batch norm, ...) |
-| `run_classical.ipynb ` | Run the classical baseline on flat data. |
-| `run_ico_classical.ipynb` |  Run the classical baseline on icosahedral data. |
-| `run_ico_unet_systematic.ipynb` |  Run the icosahedral UNet. |
-| `run_unet_systematic_flat-even-deeper.ipynb` | Run a deeper version of the flat UNet. |
-| `run_unet_systematic_flat-even-wider.ipynb` | Run a wider version of the flat UNet. |
-| `run_unet_systematic_flat-monthly.ipynb` | Run the flat UNet on monthly data. |
-| `run_unet_systematic_flat.ipynb` | Run the flat UNet on yearly data. |
+## Files and subdirectories and their content:
+
+| Directory or file name| Short description of content|
+| ------------- |-------------|
+| ```CoordConv/``` | Code for [CoordConv](https://github.com/walsvid/CoordConv). Slightly modified to work with cylindrical padding (fact that longitudes on earth have periodic boundary condition).|
+|```Grids/```| Directory grid description files get stored in. CDO can extract the natural grid from .nc files if necessary.|
+|```Scripts/```| Contains scripts that are used to interpolate between the flat plate carrée grid and the icosahedral grid. These scripts get used by funcitons in ```interpolate.py``` |
+|```Scripts/```| Contains scripts that are used to interpolate between the flat plate carrée grid and the icosahedral grid. These scripts get used by functions in ```interpolate.py```. The directory also contains the used grid description files.|
+| ```Test_notebooks/``` |  Notebooks that were used to test several aspects of the code. Todo: maybe delete this.|
+| ```groupy/``` | A [forked pytorch version of groupy](https://github.com/adambielski/GrouPy) that was adapted to hexagonal convolution as in [hexaconv](https://github.com/ehoogeboom/hexaconv). Used to build the convolutional layers of the icosahedral neural network|
+| ```Experiments_crossprediction.ipynb``` | Crossprediction experiments: Train network on data from one climate model, then predict on other climate models. |
+| ```Experiments_monthly_data.ipynb``` | Experiments on monthly data. On this time scale there are a lot more missing values than on annual scale. |
+| ```Experiments_validate_MNIST.ipynb``` | Recreation of a task from [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf) to validate our implementation of the icosahedral neural network|
+| ```Experiments_yearly.ipynb``` | Experiments on yearly data. Only producing datasets, training models and making predictions|
+| ```Experiments_yearly_evaluate.ipynb``` | Evaluate the results of previously run experiments on yearly data|
+| ```Plot_3d.ipynb``` | An example application of a plotting function that can plot icosahedral data in 3d, including coastlines. todo: maybe move/delete this|
+| ```Plot_MNIST_digits.ipynb``` | Plots some of the digits from the icoMNIST dataset.|
+| ```base.py``` | Defines some basic functions that are used in the construction of the flat and icosahedral UNets.|
+| ```datasets.py``` | Functions to create data sets used in training from climate model data. Here e.g. the split into test and training set happens and the used variables are selected.|
+| ```download_required_files.py``` | Downloads the climate model data from [zenodo](https://zenodo.org/record/6610684) and applies preprocessing, see [isotope emulation workflow](#Workflow). |
+| ```evaluate.py``` | Functions for evaluating trained models (e.g. to compute metrics like correlation or R2-score) |
+| ```gendata.py``` | Download and generate the icoMNIST dataset |
+| ```generate_grid_description_files.py``` | Interpolation from and to the icosahedral grid with [CDO](https://code.mpimet.mpg.de/projects/cdo/) requires grid description files of the icosahedral grid. If a configuration that deviates from our choice is to be implemented (e.g. in resolution), this script can generate the corresponding description file. |
+| ```ìco_unet.py``` | Classes for flat and icosahedral UNet architectures. |
+| ```icosahedron.py``` | Defines a class that represents the icosahedral grid. |
+| ```ìnterpolate.py``` | Functions to interpolate predictions or entire climate model data sets between grids. They make use of the scripts stored in ```Scripts/```|
+| ```modules.py``` | Predefines some modules that are used in the construction of flat and icosahedral UNet |
+| ```plotting.py``` | Plotting functions including map plots for plate carrée and icosahedral data. Maps require ```cartopy``` to be installed. |
+| ```predict.py``` | Functions to do predictions with trained ML-models. |
+| ```preprocess.sh``` | Preprocessing script used by ```download_required_files.py``` |
+| ```train.py``` | Functions to train ML-models on previously created data sets. |
+| ```train_tune_pca.py``` | Defines a function that does hyperparameter selection for the PCA-regression baseline. |
+| ```util.py``` | Small helper functions. |
+
 # Sources
 
 The spherical Network architecture is a implemented based on the paper [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf).
