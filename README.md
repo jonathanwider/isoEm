@@ -53,7 +53,7 @@ The repository contains tools to:
 * To evaluate the results of the yearly experiments use the ```Experiments_yearly_evaluate.ipynb``` notebook.
 * Plots for the results can be created using the ```Plot_results.ipynb``` notebook.
 * To run and evaluate the experiments on **monthly timescale**, use the ```Experiments_monthly.ipynb``` notebook.
-* To run, evaluate and plot the ***Crossprediction*** experiments, use the ```Experiments_crossprediction.ipynb``` notebook.
+* To run, evaluate and plot the ***crossprediction*** experiments, use the ```Experiments_crossprediction.ipynb``` notebook.
 
 # Sources
 
