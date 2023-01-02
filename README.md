@@ -75,6 +75,20 @@ The repository contains tools to:
 | ```base.py``` | Defines some basic functions that are used in the construction of the flat and icosahedral UNets.|
 | ```datasets.py``` | Functions to create data sets used in training from climate model data. Here e.g. the split into test and training set happens and the used variables are selected.|
 | ```download_required_files.py``` | Downloads the climate model data from [zenodo](https://zenodo.org/record/6610684) and applies preprocessing, see [isotope emulation workflow](#Workflow). |
+| ```evaluate.py``` | Functions for evaluating trained models (e.g. to compute metrics like correlation or R2-score) |
+| ```gendata.py``` | Download and generate the icoMNIST dataset |
+| ```generate_grid_description_files.py``` | Interpolation from and to the icosahedral grid with [CDO](https://code.mpimet.mpg.de/projects/cdo/) requires grid description files of the icosahedral grid. If a configuration that deviates from our choice is to be implemented (e.g. in resolution), this script can generate the corresponding description file. |
+| ```ìco_unet.py``` | Classes for flat and icosahedral UNet architectures. |
+| ```icosahedron.py``` | Defines a class that represents the icosahedral grid. |
+| ```ìnterpolate.py``` | Functions to interpolate predictions or entire climate model data sets between grids. They make use of the scripts stored in ```Scripts/```|
+| ```modules.py``` | Predefines some modules that are used in the construction of flat and icosahedral UNet |
+| ```plotting.py``` | Plotting functions including map plots for plate carrée and icosahedral data. Maps require ```cartopy``` to be installed. |
+| ```predict.py``` | Functions to do predictions with trained ML-models. |
+| ```preprocess.sh``` | Preprocessing script used by ```download_required_files.py``` |
+| ```train.py``` | Functions to train ML-models on previously created data sets. |
+| ```train_tune_pca.py``` | Defines a function that does hyperparameter selection for the PCA-regression baseline. |
+| ```util.py``` | Small helper functions. |
+
 # Sources
 
 The spherical Network architecture is a implemented based on the paper [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf).
