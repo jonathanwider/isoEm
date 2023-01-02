@@ -55,7 +55,7 @@ The repository contains tools to:
 * To run and evaluate the experiments on **monthly timescale**, use the ```Experiments_monthly.ipynb``` notebook.
 * To run, evaluate and plot the ***crossprediction*** experiments, use the ```Experiments_crossprediction.ipynb``` notebook.
 
-## Files and subdirectories and their meaning:
+## Files and subdirectories and their content:
 
 | Directory or file name| Short description of content|
 | ------------- |-------------|
