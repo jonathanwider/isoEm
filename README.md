@@ -57,7 +57,7 @@ The repository contains tools to:
 
 ## Files and subdirectories and their meaning:
 
-| Directory/File name| Short description of content|
+| Directory or file name| Short description of content|
 | ------------- |-------------|
 | ```CoordConv/``` | Code for [CoordConv](https://github.com/walsvid/CoordConv). Slightly modified to work with cylindrical padding (fact that longitudes on earth have periodic boundary condition).|
 |```Grids/```| Directory grid description files get stored in. CDO can extract the natural grid from .nc files if necessary.|
