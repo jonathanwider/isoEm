@@ -30,28 +30,23 @@
 | INDICES_TEST               | Indices of the testset in the dataset (automatically generated)                                                     |
 | INDICES_TRAIN              | Indices of the trainingset in the dataset (automatically generated)                                                 |
 | SPLIT_YEAR                 | Alternatively to giving a TEST_FRACTION, one can also provide a year, based on which the data will be split into test and training set                                                                                                                                       |
-|                            |                                                                                                                     |
+| PRECIP_WEIGHTING           | Whether or not to weight individual months by precipitation amount when creating yearly datasets (only for yearly time scale)                                                                                                                                                    |
 |                            |                                                                                                                     |
 |                            |                                                                                                                     |
 
 ## ML models and training (model_training_description):
 | Name                       | Purpose                                                                                                             |
 |----------------------------|---------------------------------------------------------------------------------------------------------------------|
-| Model-training-description |                                                                                                                     |
-| MODELTYPE                  | Type of model we want to use                                                                                        |
-| CREATE_VALIDATIONSET       | Whether or not we want to create a validationset                                                                    |
-| SHUFFLE_VALIDATIONSET      |                                                                                                                     |
-|                            |                                                                                                                     |
-| DATASET_FOLDER             |                                                                                                                     |
-|                            |                                                                                                                     |
-| RUN_NR                     | Number of run in the dataset                                                                                        |
-|                            |                                                                                                                     |
-| BATCHSIZE                  | Batchsize of UNet Models                                                                                            |
-| DEPTH                      | Depth of UNets Models                                                                                               |
-| NUM_EPOCHS                 | Number of Epochs for training UNet, can be set to "early_stopping"                                                  |
-| PATIENCE                   | If using early stopping, this parameter determines for how many epochs we train without improvement before aborting |
-|                            |                                                                                                                     |
-| S_MODE_PREDICTORS          | Standardization mode for prediction variables                                                                       |
+| MODELTYPE                  | Type of model we want to use: Valid choices: ```UNet_Flat```, ```UNet_Ico```, ```LinReg_Pixelwise```, ```RandomForest_Pixelwise```, ````PCA_Flat```, ```PCA_Ico```                                                                                       |
+| CREATE_VALIDATIONSET       | Whether or not we want to create a validationset. The validation set is split of the training set.                                                                                                                                                                                |
+| SHUFFLE_VALIDATIONSET      | Whether to shuffle the training set before creating the validation set or split it off chronologically              |
+| DATASET_FOLDER             | Folder that was given as "base folder" when creating the corresponding dataset, i.e. the folder in which the data set folder is stored                                                                                                                                          |
+| RUN_NR                     | Number of run with the given configuration of data set, model and training (to run the same configuration multiple times)                                                                                                                                                        |
+| BATCHSIZE                  | UNet Batchsize of UNet Models (UNets only)                                                                          |
+| DEPTH                      | Depth of UNets Models (UNets only)                                                                                  |
+| NUM_EPOCHS                 | Number of epochs for training UNets, can be set to "early_stopping" or an integer val                               |
+| PATIENCE                   | If using early stopping, this parameter determines for how many epochs we train without an improvement of the global minimum loss before aborting the training                                                                                                                  |
+| S_MODE_PREDICTORS          | Standardization mode for prediction variables: Can be set individually for each variable. Valid choices: ```"None"```, ```"Pixelwise"```, ```"Global_mean_pixelwise_std"```, ```"Pixelwise_mean_global_std"```, ```"Global"```                                            |
 | S_MODE_TARGETS             | Standardization mode for target variables                                                                           |
 |                            |                                                                                                                     |
 | N_PC_PREDICTORS            | Number of principle components for predictor variables                                                              |
