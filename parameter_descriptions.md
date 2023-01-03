@@ -2,7 +2,7 @@
 
 ## Datasets:
 
-| Name                | Purpose                                                                                                             |
+| Name                       | Purpose                                                                                                             |
 |----------------------------|---------------------------------------------------------------------------------------------------------------------|
 | DSET_NB                    | A number assigne to the dataset. Used to create multple datasets with the same configuration                        |
 | GRID_TYPE                  | "Flat" or "Ico"                                                                                                     |
@@ -33,6 +33,10 @@
 |                            |                                                                                                                     |
 |                            |                                                                                                                     |
 |                            |                                                                                                                     |
+
+## ML models and training (model_training_description):
+| Name                       | Purpose                                                                                                             |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------|
 | Model-training-description |                                                                                                                     |
 | MODELTYPE                  | Type of model we want to use                                                                                        |
 | CREATE_VALIDATIONSET       | Whether or not we want to create a validationset                                                                    |
