@@ -47,12 +47,10 @@
 | NUM_EPOCHS                 | Number of epochs for training UNets, can be set to "early_stopping" or an integer val                               |
 | PATIENCE                   | If using early stopping, this parameter determines for how many epochs we train without an improvement of the global minimum loss before aborting the training                                                                                                                  |
 | S_MODE_PREDICTORS          | Standardization mode for prediction variables: Can be set individually for each variable. Valid choices: ```"None"```, ```"Pixelwise"```, ```"Global_mean_pixelwise_std"```, ```"Pixelwise_mean_global_std"```, ```"Global"```                                            |
-| S_MODE_TARGETS             | Standardization mode for target variables                                                                           |
-|                            |                                                                                                                     |
-| N_PC_PREDICTORS            | Number of principle components for predictor variables                                                              |
-| N_PC_TARGETS               | Number of principle components for target variables                                                                 |
-| REGTYPE                    | Type of according Linear Model                                                                                      |
-|                            |                                                                                                                     |
-|                            |                                                                                                                     |
+| S_MODE_TARGETS             | Standardization mode for target variables. Valid choices: ```"None"```, ```"Pixelwise"```, ```"Global_mean_pixelwise_std"```, ```"Pixelwise_mean_global_std"```, ```"Global"```                                                                                                  |
+| N_PC_PREDICTORS            | PCA-regression: Number of principle components for predictor variables                                              |
+| N_PC_TARGETS               | PCA-regression: Number of principle components for target variables                                                 |
+| REGTYPE                    | PCA-regression: Type of regression model used in the reduced space. Valid choices are ```"linreg"``` and ```"lasso"```                                                                                                                                                            |
+
 
 
