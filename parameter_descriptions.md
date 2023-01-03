@@ -36,6 +36,8 @@ During data set creation, set up of the ML methods and the training, choices can
 
 
 | PRECIP_WEIGHTING           | Whether or not to weight individual months by precipitation amount when creating yearly datasets (only for yearly time scale)                                                                                                                                                    |
+| RESULTS_INTERPOLATED       | Whether or not the emulation results have been interpolated from one grid to another after the emulation (set automatically during interpolation, GRID_TYPE is changed as well)                                                                                                       |
+| RESULTS_RESCALED           | Whether or not the predictions were rescaled during the interpolation (set automatically during interpolation)      |
 
 ## ML models and training (model_training_description):
 | Name                       | Purpose                                                                                                             |
@@ -66,8 +68,7 @@ During data set creation, set up of the ML methods and the training, choices can
 | LOSS                       | Loss function to use. Implemented are two choices for flat UNet: A masked MSE loss and an area weighted loss.       |
 | N_PC_TARGETS               | PCA-regression: Number of principle components for target variables                                                 |
 | REGTYPE                    | PCA-regression: Type of regression model used in the reduced space. Valid choices are ```"linreg"``` and ```"lasso"```                                                                                                                                                            |
-| RESULTS_INTERPOLATED       | Whether or not the results have been interpolated from one grid to another after the emulation (set automatically during interpolation, GRID_TYPE is changed as well)                                                                                                       |
-| RESULTS_RESCALED           | Whether or not the predictions were rescaled during the interpolation (set automatically during interpolation)      |
+
 
 
 
