@@ -13,6 +13,7 @@ During data set creation, set up of the ML methods and the training, choices can
 | REFERENCE_DATE             | Stores the reference date used by the climate model, i.e. in reference to what date timesteps are stored (filled automatically)                                                                                                                                     |                                                                                                         
 | DO_SHUFFLE                 | Whether or not the data should be shuffled before splitting into test and training set (our default: don't shuffle) |
 | TEST_FRACTION              | What fraction of the dataset is split of as training set                                                            |
+| SPLIT_YEAR                 | Alternatively to giving a TEST_FRACTION, one can also provide a year, based on which the data will be split into test and training set                                                                                                                                       |
 | CLIMATE_MODEL              | Specify which climate model is used: Valid arguments: "iHadCM3", "GISS", "ECHAM5", "isoGSM", "iCESM"                |
 | LATITUDES_SLICE            | If using a flat grid,  exclude this number of pixels at bottom and top of latitude, e.g. [1,-1] excludes the first and last latitude value. (flat grid only)                                                                                                                   |
 | LATITUDES                  | Array containing the latitudes of the used flat grid (flat grids only)                                              |
@@ -29,9 +30,11 @@ During data set creation, set up of the ML methods and the training, choices can
 | RESOLUTION                 | When using icosahedral data: Refinement level of the grid (interpolated data on the given resolution required)      |
 | INTERPOLATE_CORNERS        | Ico: Whether or not we interpolate the corners pixels of the icosahedron                                            |
 | INTERPOLATION              | The type of interpolation used by cdo, usually ```cons1``` (first order conservative), ```NN``` (nearest neighbor) possible to.                                                                                                                                                |
-| INDICES_TEST               | Indices of the testset in the dataset (automatically generated)                                                     |
-| INDICES_TRAIN              | Indices of the trainingset in the dataset (automatically generated)                                                 |
-| SPLIT_YEAR                 | Alternatively to giving a TEST_FRACTION, one can also provide a year, based on which the data will be split into test and training set                                                                                                                                       |
+| INDICES_TEST               | Indices of the test set in the dataset (automatically generated)                                                    |
+| INDICES_TRAIN              | Indices of the training set in the dataset (automatically generated)                                                |
+| TIMESTEPS_TEST             | Time steps of the test set in the dataset (automatically generated)                                                 |
+
+
 | PRECIP_WEIGHTING           | Whether or not to weight individual months by precipitation amount when creating yearly datasets (only for yearly time scale)                                                                                                                                                    |
 
 ## ML models and training (model_training_description):
