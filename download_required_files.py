@@ -84,6 +84,7 @@ def preprocess_required_files(output_directory="Datasets/", low=-100, high=100, 
         for f in ["isotopes_raw.nc", "prec_raw.nc", "tsurf_raw.nc"]:
             file = os.path.join(output_directory, m, "Original", f)
             script = os.path.join("./preprocess.sh")
+            # if no grid is specified, use the iHadCM3 grid.
             if grid is None:
                 call([script, "-f", file, "-u", str(high), "-l", str(low), "-g",
                      os.path.join(output_directory, "iHadCM3/Original/tsurf_raw.nc")])
