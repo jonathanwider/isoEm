@@ -1,21 +1,15 @@
-# Basic strategy:
-- Simplify by reducing number of jupyter notebooks and moving to script files.
-- Don't create folders if not necessary.
-- Save dataset-description within model-description.
-- Only use the condition check implemented yesterday.
+# Specifying choices keywoards and valid parameters that can be used to create datasets and configure ML-Methods and training:
 
-## Datasets: Which entries do we need?
+## Datasets:
 
-| name                       | Purpose                                                                                                             |
+| Name                | Purpose                                                                                                             |
 |----------------------------|---------------------------------------------------------------------------------------------------------------------|
-| DSET_NB                    | Create multiple data sets with identical arguments                                                                  |
-| GRID_TYPE                  | Flat or icosahedral                                                                                                 |
+| DSET_NB                    | A number assigne to the dataset. Used to create multple datasets with the same configuration                        |
+| GRID_TYPE                  | "Flat" or "Ico"                                                                                                     |
 |                            |                                                                                                                     |
-| CALENDAR                   | Calendar used by the climate model (filled automatically)                                                           |
-| T_UNITS                    | Time units used by the climate model (filled automatically)                                                         |
-| REFERENCE_DATE             | Reference date used by the climate model (filled automatically)                                                     |
-|                            |                                                                                                                     |
-|                            |                                                                                                                     |
+| CALENDAR                   | Stores the calendar types of the used climate model (filled automatically)                                          |
+| T_UNITS                    | Stores the time units used by the climate model (filled automatically)                                              |
+| REFERENCE_DATE             | Stores the reference date used by the climate model, i.e. in reference to what date timesteps are stored (filled automatically)                                                                                                                                     |                                                                                                         
 | DO_SHUFFLE                 | Whether timesteps are shuffled or not                                                                               |
 | TEST_FRACTION              | Fraction of dataset used for testing                                                                                |
 |                            |                                                                                                                     |
