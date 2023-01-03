@@ -1,4 +1,6 @@
-# Specifying choices keywoards and valid parameters that can be used to create datasets and configure ML-Methods and training:
+# Specifying keywoards and valid parameters that can be used to create datasets and configure ML-Methods and training:
+
+During data set creation, set up of the ML methods and the training, choices can be made. The following table gives a list of possible parameters and valid configurations.
 
 ## Datasets (dataset_description):
 
