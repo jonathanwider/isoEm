@@ -39,20 +39,33 @@ During data set creation, set up of the ML methods and the training, choices can
 ## ML models and training (model_training_description):
 | Name                       | Purpose                                                                                                             |
 |----------------------------|---------------------------------------------------------------------------------------------------------------------|
-| MODELTYPE                  | Type of model we want to use: Valid choices: ```UNet_Flat```, ```UNet_Ico```, ```LinReg_Pixelwise```, ```RandomForest_Pixelwise```, ````PCA_Flat```, ```PCA_Ico```                                                                                       |
+| MODELTYPE                  | Type of model we want to use: Valid choices: ```UNet_Flat```, ```UNet_Ico```, ```LinReg_Pixelwise```, ```RandomForest_Pixelwise```, ```PCA_Flat```, ```PCA_Ico```                                                                                        |
 | CREATE_VALIDATIONSET       | Whether or not we want to create a validationset. The validation set is split of the training set.                                                                                                                                                                                |
 | SHUFFLE_VALIDATIONSET      | Whether to shuffle the training set before creating the validation set or split it off chronologically              |
 | DATASET_FOLDER             | Folder that was given as "base folder" when creating the corresponding dataset, i.e. the folder in which the data set folder is stored                                                                                                                                          |
 | RUN_NR                     | Number of run with the given configuration of data set, model and training (to run the same configuration multiple times)                                                                                                                                                        |
-| BATCHSIZE                  | UNet Batchsize of UNet Models (UNets only)                                                                          |
-| DEPTH                      | Depth of UNets Models (UNets only)                                                                                  |
-| NUM_EPOCHS                 | Number of epochs for training UNets, can be set to "early_stopping" or an integer val                               |
-| PATIENCE                   | If using early stopping, this parameter determines for how many epochs we train without an improvement of the global minimum loss before aborting the training                                                                                                                  |
 | S_MODE_PREDICTORS          | Standardization mode for prediction variables: Can be set individually for each variable. Valid choices: ```"None"```, ```"Pixelwise"```, ```"Global_mean_pixelwise_std"```, ```"Pixelwise_mean_global_std"```, ```"Global"```                                            |
 | S_MODE_TARGETS             | Standardization mode for target variables. Valid choices: ```"None"```, ```"Pixelwise"```, ```"Global_mean_pixelwise_std"```, ```"Pixelwise_mean_global_std"```, ```"Global"```                                                                                                  |
 | N_PC_PREDICTORS            | PCA-regression: Number of principle components for predictor variables                                              |
+| BATCHSIZE                  | UNet Batchsize of UNet Models (UNets only)                                                                          |
+| LEARNING_RATE              | UNet learning rate (UNets only)                                                                                     |
+| IN_CHANNELS                | Number of input channels of the UNet (UNets only)                                                                   |
+| CHANNELS_FIRST_CONV        | Number of output channels of the first convolutional layer of the UNet (UNets only)                                 |
+| OUT_CHANNELS               | Number of output channels of the UNet (UNets only)                                                                  |
+| FMAPS                      | Number of filter maps at every depth in the UNet-arch, tuple (UNets only)                                           |
+| ACTIVATION                 | Type of activation function used in the UNet (UNets only)                                                           |
+| NORMALIZATION              | Normalization type used in the UNet, e.g. ```torch.nn.BatchNorm2d``` (UNets only)                                   |
+| OPTIMIZER                  | Numerical optimizer used to train the UNet, e.g. ```"Adam"``` (UNets only)                                          |
+| DEVICE                     | Device the training took place on (UNets only)                                                                      |
+| DEPTH                      | Depth of UNets Models (UNets only)                                                                                  |
+| NUM_EPOCHS                 | Number of epochs for training UNets, can be set to "early_stopping" or an integer val                               |
+| PATIENCE                   | If using early stopping, this parameter determines for how many epochs we train without an improvement of the global minimum loss before aborting the training                                                                                                                  |
+| USE_CYLINDRICAL_PADDING    | Whether or not to use cylindrical padding (flat UNet only)                                                          |
+| USE_COORD_CONV             | Whether or not to use coordconv (flat UNet only)                                                                    |
+| LOSS                       | Loss function to use. Implemented are two choices for flat UNet: A masked MSE loss and an area weighted loss.       |
 | N_PC_TARGETS               | PCA-regression: Number of principle components for target variables                                                 |
 | REGTYPE                    | PCA-regression: Type of regression model used in the reduced space. Valid choices are ```"linreg"``` and ```"lasso"```                                                                                                                                                            |
+
 
 
 
