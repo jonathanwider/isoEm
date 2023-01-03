@@ -1,6 +1,6 @@
 # Specifying choices keywoards and valid parameters that can be used to create datasets and configure ML-Methods and training:
 
-## Datasets:
+## Datasets (dataset_description):
 
 | Name                       | Purpose                                                                                                             |
 |----------------------------|---------------------------------------------------------------------------------------------------------------------|
