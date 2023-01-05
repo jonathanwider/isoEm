@@ -43,10 +43,6 @@ The repository contains tools to:
 
 ## Workflow
 
-### Validation experiment:
-* The ```gendata.py``` script downloads the MNIST data set. The data set is projected onto an icosahedral grid of refinement level $r=4$. It is possible to select from a range of rotation types that can be applied to test and training set.
-* The ```Experiments_validate_MNIST.ipynb``` can be used to recreate the validation experiment once the corresponding datasets have been created with ```gendata.py```.
-
 ### Isotope emulation:
 * The ```download_required_files.py``` script can be used to downloads the required climate simulation data from [zenodo](https://zenodo.org/record/6610684). For each variable we set a range of physically valid values. We interpolate all simulation data to the grid of the iHadCM3 cliamte model using bilinear interpolation from [CDO](https://code.mpimet.mpg.de/projects/cdo/). In addition to the monthly data sets, yearly averaged data sets are created. If the ```--createico``` flag is set, the yearly data sets are interpolated to the icosahedral grid with a first order conservative remapping (by default). These interpolated datasetsare required for experiments with the icosahedral neural network architectures. 
 * When creating data sets and running experiments, a lot of free choices remain. The parameter choices are then passed to functions as dicts, usually ```dataset_description``` for setttings related to the creation of the dataset and ```model_training_description``` for parameters that concern the training procedure and ML models that are used. For details on choices of these lists, see [parameter_descriptions.md](/parameter_descriptions.md). Parameters to reproduce our results are already specified in the corresponding jupyter notebooks.
@@ -55,6 +51,10 @@ The repository contains tools to:
 * Plots for the results can be created using the ```Plot_results.ipynb``` notebook.
 * To run and evaluate the experiments on **monthly timescale**, use the ```Experiments_monthly.ipynb``` notebook.
 * To run, evaluate and plot the ***crossprediction*** experiments, use the ```Experiments_crossprediction.ipynb``` notebook.
+
+### Validation experiment:
+* The ```gendata.py``` script downloads the MNIST data set. The data set is projected onto an icosahedral grid of refinement level $r=4$. It is possible to select from a range of rotation types that can be applied to test and training set.
+* The ```Experiments_validate_MNIST.ipynb``` can be used to recreate the validation experiment once the corresponding datasets have been created with ```gendata.py```.
 
 ## Files and subdirectories and their content:
 
