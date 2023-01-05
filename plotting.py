@@ -30,19 +30,15 @@ class FixPointNormalize(matplotlib.colors.Normalize):
 
 
 timeseries_style = {
-    "FIGSIZE": np.array([8, 4]),
-    "CBAR_FONTSIZE": 12,
+    "ASPECT_RATIO": 2,
     "COLOR": "#31a354",
-    "TITLE_FONTSIZE": 15,
-    "MARKERSIZE": 9
+    "TITLE_FONTSIZE": 8,
 }
 
 map_style = {
-    "FIGSIZE": np.array([7, 5]),
-    "CBAR_FONTSIZE": 12,
+    "ASPECT_RATIO": 7/5,
     "PROJECTION": ccrs.Robinson(),
-    "TITLE_FONTSIZE": 15,
-    "MARKERSIZE": 9
+    "TITLE_FONTSIZE": 8,
 }
 
 # for plotting maps of R^2 score
@@ -88,7 +84,7 @@ corr_style["CBAR_LABELS"] = {"tsurf": "Temperature",
                              "prec": "Precipitation amount",
                              "slp": "Sea-level pressure"}
 corr_style["CBAR_EXTEND"] = "neither"
-corr_style["FIGSIZE"] = np.array([9, 5])
+corr_style["ASPECT_RATIO"] = 9/5
 
 # for plotting maps of temperature
 tsurf_style = dict(map_style)
@@ -108,13 +104,13 @@ prec_style["CBAR_EXTEND"] = "both"
 # for plotting MNIST-digits
 digit_style = dict(map_style)
 digit_style["CMAP"] = plt.get_cmap("viridis")
-digit_style["FIGSIZE"] = np.array([6, 6])
+digit_style["ASPECT_RATIO"] = 1
 digit_style["NORM"] = matplotlib.colors.Normalize(vmin=0, vmax=256)
 
 # for plotting MNIST-digits
 anom_style = dict(map_style)
-anom_style["CMAP"] = plt.get_cmap("RdBu")
-anom_style["FIGSIZE"] = np.array([8, 4])
+anom_style["CMAP"] = plt.get_cmap("BrBG")
+anom_style["ASPECT_RATIO"] = 2
 anom_style["NORM"] = matplotlib.colors.Normalize(vmin=-3, vmax=3)
 anom_style["CBAR_EXTEND"] = "both"
 anom_style["CBAR_LABEL"] = r"$\delta{}^{18}O$ anomaly [‰]"
@@ -132,7 +128,7 @@ diff_fine_style["CBAR_LABEL"] = r"$R^2$ score difference"
 diff_fine_style["CBAR_EXTEND"] = "both"
 
 
-def plot_map(ax, data, description, style, title="", cbar_orientation='horizontal', show_colorbar=True, rasterized=True):
+def plot_map(ax, data, description, style, title="", cbar_orientation='horizontal', show_colorbar=True, show_colorbar_label=True, rasterized=True):
     """
     Plot data on a 2d grid in a given style.
     @param ax: Axis to plot on.
@@ -142,6 +138,7 @@ def plot_map(ax, data, description, style, title="", cbar_orientation='horizonta
     @param title: Title of the plot
     @param cbar_orientation: Orientation of the colorbar.
     @param show_colorbar: Whether or not to show a colorbar.
+    @param show_colorbar_label: Whether or not to show a colorbar label
     @param rasterized: Whether or not to rasterize the colormesh.
     @return:
     """
@@ -164,10 +161,8 @@ def plot_map(ax, data, description, style, title="", cbar_orientation='horizonta
             orientation=cbar_orientation,
             extend=style["CBAR_EXTEND"],
             ax=ax)
-
-        cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
-
-        cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
+        if show_colorbar_label:
+            cbar.set_label(style["CBAR_LABEL"])
 
     ax.coastlines()
 
@@ -204,7 +199,7 @@ def plot_map_markers(ax, locs, data, description, style, title="", locs_labels=N
         locs_boxes[i, 1] = int(find_gridbox(lon, loc[1]))
 
     # define markers that can be used:
-    markers = ["o", "P", "*", "D", "p"]
+    markers = ["*", "P", "o", "D", "p"]
 
     ax.set_global()
     # remove white line
@@ -216,25 +211,24 @@ def plot_map_markers(ax, locs, data, description, style, title="", locs_labels=N
     for i in range(len(locs_boxes)):
         if locs_labels == None:
             ax.plot(locs[i, 1], locs[i, 0], marker=markers[i], linestyle="None",
-                    color="k", markersize=style["MARKERSIZE"], transform=ccrs.Geodetic())
+                    color="k", transform=ccrs.Geodetic())
         else:
-            ax.plot(locs[i, 1], locs[i, 0], marker=markers[i], linestyle="None", color="k",
-                    markersize=style["MARKERSIZE"], transform=ccrs.Geodetic(), label=locs_labels[i])
+            ax.plot(locs[i, 1], locs[i, 0], marker=markers[i], linestyle="None",
+                    color="k", transform=ccrs.Geodetic(), label=locs_labels[i])
 
     cbar = plt.colorbar(
         matplotlib.cm.ScalarMappable(
             cmap=style["CMAP"], norm=style["NORM"]),
         spacing='proportional',
-        orientation='horizontal',
+        orientation='vertical',
         extend=style["CBAR_EXTEND"],
         ax=ax)
 
-    cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
-    cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
+    cbar.set_label(style["CBAR_LABEL"])
 
     ax.coastlines()
-    if locs_labels != None:
-        ax.legend()
+    # if locs_labels != None:
+    #     ax.legend()
 
     ax.set_title(title, fontsize=style["TITLE_FONTSIZE"])
 
@@ -275,7 +269,7 @@ def plot_masked_data(ax, data, description, style, title="", rasterized=True):
     ax.set_title(title, fontsize=style["TITLE_FONTSIZE"])
 
 
-def plot_ico_map(ax, data, description, style, title="", rasterized=True):
+def plot_ico_map(ax, data, description, style, title="", show_colorbar=True, rasterized=True):
     """
     Plot icosahedral data in a given style.
     @param ax: Axes to plot on
@@ -283,6 +277,7 @@ def plot_ico_map(ax, data, description, style, title="", rasterized=True):
     @param description: A description of the used dataset. Used to extract latitudes and longitudes.
     @param style: A plotting style (sizes, fonts, etc.)
     @param title: Title of the plot
+    @param show_colorbar: Whether or not to show a colorbar.
     @param rasterized: Whether or not to rasterize the colormesh.
     @return:
     """
@@ -317,17 +312,16 @@ def plot_ico_map(ax, data, description, style, title="", rasterized=True):
         polygon.set_color(style["CMAP"](style["NORM"](data[i])))
         ax.add_patch(polygon)
 
-    cbar = plt.colorbar(
-        matplotlib.cm.ScalarMappable(
-            cmap=style["CMAP"], norm=style["NORM"]),
-        spacing='proportional',
-        orientation='horizontal',
-        extend=style["CBAR_EXTEND"],
-        ax=ax)
+    if show_colorbar:
+        cbar = plt.colorbar(
+            matplotlib.cm.ScalarMappable(
+                cmap=style["CMAP"], norm=style["NORM"]),
+            spacing='proportional',
+            orientation='horizontal',
+            extend=style["CBAR_EXTEND"],
+            ax=ax)
 
-    cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
-
-    cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
+        cbar.set_label(style["CBAR_LABEL"])
 
     ax.coastlines()
 
@@ -402,9 +396,7 @@ def plot_map_3d(ax, data, description, style, title="", elev=18, azim=0, show_co
             extend=style["CBAR_EXTEND"],
             ax=ax)
 
-        cbar.set_label(style["CBAR_LABEL"], fontsize=style["CBAR_FONTSIZE"])
-
-        cbar.ax.tick_params(labelsize=style["CBAR_FONTSIZE"])
+        cbar.set_label(style["CBAR_LABEL"])
 
 
 def plot_timeseries(ax, data_pred, data_gt, loc, loc_label, description, style):
@@ -423,9 +415,6 @@ def plot_timeseries(ax, data_pred, data_gt, loc, loc_label, description, style):
     loc_box[0] = int(find_gridbox(lat, loc[0]))
     loc_box[1] = int(find_gridbox(lon, loc[1]))
 
-    ax.plot(data_gt[:, 0, loc_box[0], loc_box[1]],
-            label='ground truth', color='k')
-
     r2 = np.zeros(
         (data_pred.shape[0], data_pred.shape[3], data_pred.shape[4]))
     cor = np.zeros(
@@ -439,22 +428,32 @@ def plot_timeseries(ax, data_pred, data_gt, loc, loc_label, description, style):
     mean_pred = np.mean(data_pred, axis=0)
 
     ax.plot(mean_pred[:, 0, loc_box[0], loc_box[1]],
-            label='prediction, average', color=style["COLOR"])
-    ax.fill_between(np.arange(len(mean_pred[:, 0, loc_box[0], loc_box[1]])), min_pred[:, 0, loc_box[0], loc_box[1]], max_pred[:, 0, loc_box[0], loc_box[1]],
-                    label='min-max prediction', color=style["COLOR"], alpha=0.5)
+            label='mean, emulation', color=style["COLOR"], linewidth=0.8)
+    # ax.fill_between(np.arange(len(mean_pred[:, 0, loc_box[0], loc_box[1]])), min_pred[:, 0, loc_box[0], loc_box[1]], max_pred[:, 0, loc_box[0], loc_box[1]],
+    #                 label='min-max emulation', color=style["COLOR"], alpha=0.9, linewidth=0.0)
+    ax.plot(data_gt[:, 0, loc_box[0], loc_box[1]],
+            label='ground truth', color='k', linewidth=0.8)
+
     metric_mean = np.mean(r2, axis=0)
     metric_std = np.std(r2, axis=0)
     cor_mean = np.mean(cor, axis=0)
     cor_std = np.std(cor, axis=0)
 
-    ax.text(0.55, 0.1, r"Correlation: {:0.3f} +/- {:0.3f}, $R^2$score: {:0.3f} +/- {:0.3f}".format(cor_mean[loc_box[0], loc_box[1]], cor_std[loc_box[0], loc_box[1]],
+    """
+    ax.text(0.55, 0.1, r"Corr: {:0.3f} +/- {:0.3f}, $R^2$score: {:0.3f} +/- {:0.3f}".format(cor_mean[loc_box[0], loc_box[1]], cor_std[loc_box[0], loc_box[1]],
                                                                                                    metric_mean[loc_box[0], loc_box[1]], metric_std[loc_box[0], loc_box[1]]),
-            style='italic', bbox={'facecolor': 'white', 'alpha': 1.0, 'pad': 10}, horizontalalignment='center',
-            verticalalignment='center', transform=ax.transAxes)
+    
+    """
+    ax.text(0.01, 0.01, r"Corr: {:0.2f} +/- {:0.2f}".format(cor_mean[loc_box[0], loc_box[1]], cor_std[loc_box[0], loc_box[1]]),
+            horizontalalignment='left', verticalalignment='bottom', transform=ax.transAxes)
 
     ax.set_title("Time series at {}".format(
         loc_label), fontsize=style["TITLE_FONTSIZE"])
 
-    plt.legend(loc="upper right")
     plt.xlabel("timestep in test set")
     plt.ylabel(r"${}^{18}\delta(O)$ [‰]")
+
+
+def add_label_to_axes(ax, label, style):
+    ax.text(.01, .99, label, ha='left', va='top',
+            transform=ax.transAxes)

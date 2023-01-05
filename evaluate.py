@@ -103,6 +103,29 @@ def get_correlation(predictions, targets):
     return pearson_correlation
 
 
+def get_acc(anom_pred, anom_gt, dataset_description):
+    """
+    Given predicted and true anomalies, compute the anomaly correlation coefficient. Weight by area. Only implemented for flat grid.
+
+    @param anom_pred: Predicted anomaly (prediction after removing true training set mean)
+    @param anom_gt: True anomaly (ground truth after removing true training set mean)
+    @param dataset_description: Description of the used data set. Used to extract the latitudes and longitudes of the grid.
+    """
+    assert not np.isnan(anom_gt).any() and not np.isnan(anom_pred).any()
+
+    # load the true dataset description taking input as conditions.
+    latitudes = np.array(dataset_description["LATITUDES"])
+    longitudes = np.array(dataset_description["LONGITUDES"])
+
+    weights = np.tile(np.cos(np.deg2rad(latitudes))[:, None], len(longitudes))
+    # weights = weights.reshape(anom_pred.shape)
+
+    numerator = np.sum(anom_gt*anom_pred*weights, axis=(-2, -1))
+    denominator = np.sqrt(np.sum(weights*anom_gt*anom_gt, axis=(-1, -2))
+                          * np.sum(weights*anom_gt*anom_pred, axis=(-1, -2)))
+    return numerator/denominator
+
+
 def load_compatible_available_runs(base_folder, conditions, keywords_blacklist=[], print_folder_names=False):
     """
     Given a base folder to search in, list all the runs, that match the specified conditions. Search is shallow, so
