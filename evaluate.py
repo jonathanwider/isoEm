@@ -74,11 +74,10 @@ def get_weighted_average(data, dataset_description):
     latitudes = np.array(dataset_description["LATITUDES"])
     longitudes = np.array(dataset_description["LONGITUDES"])
 
-    weights = np.tile(np.cos(np.deg2rad(latitudes))[:, None], len(longitudes))[
-        np.newaxis, ...
-    ]
+    weights = np.tile(np.cos(np.deg2rad(latitudes))[:, None], len(longitudes))
+    weights = np.ones_like(data)*weights
     masked_data = np.ma.masked_array(data, np.isnan(data))
-    data_avg = np.ma.average(masked_data, weights=weights, axis=(1, 2))
+    data_avg = np.ma.average(masked_data, weights=weights, axis=(-1, -2))
     return data_avg
 
 
@@ -397,3 +396,25 @@ def get_trainset_mean(descriptions):
     )
 
     return np.nanmean(dataset["train"]["targets"], axis=(0,))
+
+
+def get_testset(descriptions):
+    """
+    Return the training set mean of a given dataset. 
+    This is necessary to compute anomalies.
+    """
+    assert "DATASET_DESCRIPTION" in descriptions.keys()
+    assert "MODEL_TRAINING_DESCRIPTION" in descriptions.keys()
+
+    dataset_description = descriptions["DATASET_DESCRIPTION"]
+    model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
+
+    assert "DATASET_FOLDER" in model_training_description.keys()
+
+    dataset = find_and_load_dataset(
+        model_training_description["DATASET_FOLDER"],
+        dataset_description,
+        use_prints=False,
+    )
+
+    return dataset["test"]
