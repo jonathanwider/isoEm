@@ -127,6 +127,12 @@ diff_fine_style["NORM"] = matplotlib.colors.Normalize(vmin=-0.09, vmax=0.09)
 diff_fine_style["CBAR_LABEL"] = r"$R^2$ score difference"
 diff_fine_style["CBAR_EXTEND"] = "both"
 
+std_anom_style = dict(map_style)
+std_anom_style["CMAP"] = plt.get_cmap("PiYG")
+std_anom_style["NORM"] = matplotlib.colors.Normalize(vmin=-1, vmax=1)
+std_anom_style["CBAR_LABEL"] = r"Standardized data"
+std_anom_style["CBAR_EXTEND"] = "both"
+
 
 def plot_map(ax, data, description, style, title="", cbar_orientation='horizontal', show_colorbar=True, show_colorbar_label=True, rasterized=True):
     """

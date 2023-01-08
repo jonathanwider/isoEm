@@ -418,3 +418,25 @@ def get_testset(descriptions):
     )
 
     return dataset["test"]
+
+
+def get_trainingset(descriptions):
+    """
+    Return the training set mean of a given dataset. 
+    This is necessary to compute anomalies.
+    """
+    assert "DATASET_DESCRIPTION" in descriptions.keys()
+    assert "MODEL_TRAINING_DESCRIPTION" in descriptions.keys()
+
+    dataset_description = descriptions["DATASET_DESCRIPTION"]
+    model_training_description = descriptions["MODEL_TRAINING_DESCRIPTION"]
+
+    assert "DATASET_FOLDER" in model_training_description.keys()
+
+    dataset = find_and_load_dataset(
+        model_training_description["DATASET_FOLDER"],
+        dataset_description,
+        use_prints=False,
+    )
+
+    return dataset["train"]
