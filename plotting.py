@@ -133,6 +133,12 @@ std_anom_style["NORM"] = matplotlib.colors.Normalize(vmin=-1, vmax=1)
 std_anom_style["CBAR_LABEL"] = r"Standardized data"
 std_anom_style["CBAR_EXTEND"] = "both"
 
+std_anom_style_d18O = dict(map_style)
+std_anom_style_d18O["CMAP"] = plt.get_cmap("PuOr")
+std_anom_style_d18O["NORM"] = matplotlib.colors.Normalize(vmin=-1, vmax=1)
+std_anom_style_d18O["CBAR_LABEL"] = r"Standardized data"
+std_anom_style_d18O["CBAR_EXTEND"] = "both"
+
 
 def plot_map(ax, data, description, style, title="", cbar_orientation='horizontal', show_colorbar=True, show_colorbar_label=True, rasterized=True):
     """
