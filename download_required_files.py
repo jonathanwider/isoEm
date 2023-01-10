@@ -25,30 +25,30 @@ def download_file(url, filename):
 
 def download_required_files(output_directory="Datasets/"):
     filenames = {"ECHAM5": [
-        "https://zenodo.org/record/6610684/files/ECHAM5-wiso_d18O_850-1849.nc",
-        "https://zenodo.org/record/6610684/files/ECHAM5-wiso_prec_850-1849.nc",
-        "https://zenodo.org/record/6610684/files/ECHAM5-wiso_tsurf_850-1849.nc"
+        "https://zenodo.org/record/7516327/files/ECHAM5-wiso_d18O_850-1849.nc",
+        "https://zenodo.org/record/7516327/files/ECHAM5-wiso_prec_850-1849.nc",
+        "https://zenodo.org/record/7516327/files/ECHAM5-wiso_tsurf_850-1849.nc"
     ],
         "GISS": [
-            "https://zenodo.org/record/6610684/files/GISS-E2-R_d18O_850-1849.nc",
-            "https://zenodo.org/record/6610684/files/GISS-E2-R_prec_850-1849.nc",
-            "https://zenodo.org/record/6610684/files/GISS-E2-R_tsurf_850-1849.nc"
+            "https://zenodo.org/record/7516327/files/GISS-E2-R_d18O_850-1849.nc",
+            "https://zenodo.org/record/7516327/files/GISS-E2-R_prec_850-1849.nc",
+            "https://zenodo.org/record/7516327/files/GISS-E2-R_tsurf_850-1849.nc"
     ],
 
         "iCESM": [
-            "https://zenodo.org/record/6610684/files/iCESM_d18O_850-1849.nc",
-            "https://zenodo.org/record/6610684/files/iCESM_prec_850-1849.nc",
-            "https://zenodo.org/record/6610684/files/iCESM_tsurf_850-1849.nc"
+            "https://zenodo.org/record/7516327/files/iCESM_d18O_850-1849.nc",
+            "https://zenodo.org/record/7516327/files/iCESM_prec_850-1849.nc",
+            "https://zenodo.org/record/7516327/files/iCESM_tsurf_850-1849.nc"
     ],
         "iHadCM3": [
-            "https://zenodo.org/record/6610684/files/iHadCM3_d18O_850-1849.nc",
-            "https://zenodo.org/record/6610684/files/iHadCM3_prec_850-1849.nc",
-            "https://zenodo.org/record/6610684/files/iHadCM3_tsurf_850-1849.nc"
+            "https://zenodo.org/record/7516327/files/iHadCM3_d18O_850-1849.nc",
+            "https://zenodo.org/record/7516327/files/iHadCM3_prec_850-1849.nc",
+            "https://zenodo.org/record/7516327/files/iHadCM3_tsurf_850-1849.nc"
     ],
         "isoGSM": [
-            "https://zenodo.org/record/6610684/files/isoGSM_d18O_850-1849.nc",
-            "https://zenodo.org/record/6610684/files/isoGSM_prec_850-1849.nc",
-            "https://zenodo.org/record/6610684/files/isoGSM_tsurf_850-1849.nc"]
+            "https://zenodo.org/record/7516327/files/isoGSM_d18O_850-1849.nc",
+            "https://zenodo.org/record/7516327/files/isoGSM_prec_850-1849.nc",
+            "https://zenodo.org/record/7516327/files/isoGSM_tsurf_850-1849.nc"]
     }
     for climate_model in filenames.keys():
         tmp_folder = os.path.join(output_directory, climate_model, "Original/")
