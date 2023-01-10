@@ -26,7 +26,7 @@ def download_file(url, filename):
 def download_required_files(output_directory="Datasets/"):
     filenames = {"ECHAM5": [
         "https://zenodo.org/record/7516327/files/ECHAM5-wiso_d18O_850-1849.nc",
-        "https://zenodo.org/record/7516327/files/ECHAM5-wiso_prec_850-1849.nc",
+        "https://zenodo.org/record/7516327/files/ECHAM5_prec_mm_850-1849.nc",
         "https://zenodo.org/record/7516327/files/ECHAM5-wiso_tsurf_850-1849.nc"
     ],
         "GISS": [

@@ -53,9 +53,6 @@ for file in $FILES; do
     cdo setvrange,173,343 "${filename}_raw.nc" "${filename}_tmp.nc" # set valid precipitation value range to -100 to 70 °C
     if [[ "$file" == *"iHadCM3"* ]];then
       cdo copy "${filename}_tmp.nc" "${filename}.nc"
-    elif [[ "$file" == *"iCESM"* ]];then
-      cdo settaxis,850-01-15,00:00:00,1month "${filename}_tmp.nc" "${filename}_tmp_tmp.nc"  # timeaxis wasn't set in zenodo files
-      cdo remapbil,$GRID "${filename}_tmp_tmp.nc" "${filename}.nc"   
     else
       cdo remapbil,$GRID "${filename}_tmp.nc" "${filename}.nc"
     fi
