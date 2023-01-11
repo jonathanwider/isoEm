@@ -60,7 +60,7 @@ mean_style["CMAP"] = matplotlib.colors.ListedColormap(["#003c30", "#01665e", "#3
 mean_style["BOUNDS"] = np.linspace(-30, 6, len(mean_style["CMAP"].colors) + 1)
 mean_style["NORM"] = matplotlib.colors.BoundaryNorm(
     mean_style["BOUNDS"], len(mean_style["CMAP"].colors))
-mean_style["CBAR_LABEL"] = r"$\delta{}^{18}O$ [‰]"
+mean_style["CBAR_LABEL"] = r"$\delta{}^{18}$O [‰]"
 mean_style["CBAR_EXTEND"] = "both"
 
 # for plotting maps of isotopic std deviation
@@ -71,7 +71,7 @@ std_style["BOUNDS"] = np.linspace(
     0, 7, len(std_style["CMAP"].colors) + 1)
 std_style["NORM"] = matplotlib.colors.BoundaryNorm(
     std_style["BOUNDS"], len(std_style["CMAP"].colors))
-std_style["CBAR_LABEL"] = r"$\delta{}^{18}O$ [‰]"
+std_style["CBAR_LABEL"] = r"$\delta{}^{18}$O [‰]"
 std_style["CBAR_EXTEND"] = "max"
 
 # for plotting maps of correlations
@@ -113,7 +113,7 @@ anom_style["CMAP"] = plt.get_cmap("BrBG")
 anom_style["ASPECT_RATIO"] = 2
 anom_style["NORM"] = matplotlib.colors.Normalize(vmin=-3, vmax=3)
 anom_style["CBAR_EXTEND"] = "both"
-anom_style["CBAR_LABEL"] = r"$\delta{}^{18}O$ anomaly [‰]"
+anom_style["CBAR_LABEL"] = r"$\delta{}^{18}$O anomaly [‰]"
 
 diff_style = dict(map_style)
 diff_style["CMAP"] = plt.get_cmap("PiYG")
@@ -463,7 +463,7 @@ def plot_timeseries(ax, data_pred, data_gt, loc, loc_label, description, style):
         loc_label), fontsize=style["TITLE_FONTSIZE"])
 
     plt.xlabel("timestep in test set")
-    plt.ylabel(r"${}^{18}\delta(O)$ [‰]")
+    plt.ylabel(r"$\delta{}^{18}$O [‰]")
 
 
 def add_label_to_axes(ax, label, style):
