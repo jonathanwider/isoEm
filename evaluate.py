@@ -37,26 +37,52 @@ def get_rmse(predictions, targets, masks=None):
                 )
     return res.reshape(*predictions.shape[1:])
 
+def get_mse(predictions, targets, masks=None):
+    """
+    Calculate the MSE between predictions and targets. Assume the shape of the input starts with the timesteps.
+    @param predictions: Model predictions (rescaled)
+    @param targets: Ground truth
+    @param masks: Masks that contain information on missing data
+    @return: MSE, same shape as input without time dimension
+    """
+
+    ps = predictions.reshape(predictions.shape[0], -1)
+    gt = targets.reshape(targets.shape[0], -1)
+
+    res = np.zeros((ps.shape[1]))
+    res[...] = np.nan
+    if masks is None:
+        for i in range(ps.shape[1]):
+            res[i] = mean_squared_error(ps[:, i], gt[:, i], squared=True)
+    else:
+        masks = masks.reshape(masks.shape[0], -1)
+        for i in range(ps.shape[1]):
+            if np.sum(~masks[:, i]) > 0:
+                res[i] = mean_squared_error(
+                    ps[~masks[:, i], i], gt[~masks[:, i], i], squared=True
+                )
+    return res.reshape(*predictions.shape[1:])
 
 def get_r2(predictions, targets, masks=None):
     """
     Calculate the R^2-score between predictions and targets.
+    The R^2 score is defined as 1 - MSE/variance.
     Assume the shape of the input starts with the timesteps.
     Careful: Arguments are not commututive!
 
     @param predictions: Model predictions (rescaled)
     @param targets: Ground truth
-    @param masks: Masks that contain information on missing data
+    @param masks: Masks that contain information on missing data.
     @return: R^2-score, same shape as input without time dimension
     """
-    rmse = get_rmse(predictions, targets, masks)  # calculate the RMSE
-    std = np.nanstd(
+    mse = get_mse(predictions, targets, masks)  # calculate the RMSE
+    var = np.nanvar(
         targets, axis=0
-    )  # calculate the standard deviation of the ground truth
-    if (std == 0).any():
-        if np.logical_and(std == 0, np.sum(~masks, axis=(0, 1)) <= 1).any():
-            std[std == 0] = np.nan
-    return 1 - rmse / std
+    )  # calculate the variance of the ground truth
+    if (var == 0).any():
+        if np.logical_and(var == 0, np.sum(~masks, axis=(0, 1)) <= 1).any():
+            var[var == 0] = np.nan  # if the variance is zero for a pixel, where masks indicate missing data, we set the variance to nan.
+    return 1 - mse / var
 
 
 def get_weighted_average(data, dataset_description):
