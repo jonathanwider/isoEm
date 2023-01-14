@@ -72,6 +72,7 @@ The repository contains tools to:
 | ```Experiments_yearly.ipynb``` | Experiments on yearly data. Only producing datasets, training models and making predictions|
 | ```Experiments_yearly_evaluate.ipynb``` | Evaluate the results of previously run experiments on yearly data|
 | ```Plot_MNIST_digits.ipynb``` | Plots some of the digits from the icoMNIST dataset.|
+| ```Plot_results.ipynb``` | Generate plots presented in the paper given that datasets and models have been trained an created previously|
 | ```base.py``` | Defines some basic functions that are used in the construction of the flat and icosahedral UNets.|
 | ```datasets.py``` | Functions to create data sets used in training from climate model data. Here e.g. the split into test and training set happens and the used variables are selected.|
 | ```download_required_files.py``` | Downloads the climate model data from [zenodo](https://zenodo.org/record/6610684) and applies preprocessing, see [isotope emulation workflow](#Workflow). |
