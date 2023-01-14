@@ -71,7 +71,6 @@ The repository contains tools to:
 | ```Experiments_validate_MNIST.ipynb``` | Recreation of a task from [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf) to validate our implementation of the icosahedral neural network|
 | ```Experiments_yearly.ipynb``` | Experiments on yearly data. Only producing datasets, training models and making predictions|
 | ```Experiments_yearly_evaluate.ipynb``` | Evaluate the results of previously run experiments on yearly data|
-| ```Plot_3d.ipynb``` | An example application of a plotting function that can plot icosahedral data in 3d, including coastlines. todo: maybe move/delete this|
 | ```Plot_MNIST_digits.ipynb``` | Plots some of the digits from the icoMNIST dataset.|
 | ```base.py``` | Defines some basic functions that are used in the construction of the flat and icosahedral UNets.|
 | ```datasets.py``` | Functions to create data sets used in training from climate model data. Here e.g. the split into test and training set happens and the used variables are selected.|
