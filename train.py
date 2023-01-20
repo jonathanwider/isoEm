@@ -458,6 +458,7 @@ def train_unet(dataset_description, model_training_description, base_folder, use
     assert "LOSS" in model_training_description.keys()
     assert "DEVICE" in model_training_description.keys()
     assert "OPTIMIZER" in model_training_description.keys()
+    assert "LEARNING_RATE" in model_training_description.keys()
 
     if not dataset_description["GRID_TYPE"] == "Ico":
         assert model_training_description["LOSS"] in [
@@ -505,7 +506,7 @@ def train_unet(dataset_description, model_training_description, base_folder, use
                        norm_type=model_training_description["NORMALIZATION"])
 
     # translate the options that are stored in the model_training_description
-    optimizer_dict = {"Adam": torch.optim.Adam(unet.parameters())}
+    optimizer_dict = {"Adam": torch.optim.Adam(unet.parameters(), lr=model_training_description["LEARNING_RATE"])}
     loss_dict = {}
     if dataset_description["GRID_TYPE"] == "Flat":
         loss_dict["Masked_AreaWeightedMSELoss"] = get_masked_area_weighted_mse_loss(dataset_description,
