@@ -11,4 +11,5 @@ data
 *.pt
 *.tfevents*
 MNIST_data*
+Test_notebooks*
 __pycache__/
