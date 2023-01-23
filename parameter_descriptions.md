@@ -16,8 +16,8 @@ During data set creation, set up of the ML methods and the training, choices can
 | SPLIT_YEAR                 | Alternatively to giving a TEST_FRACTION, one can also provide a year, based on which the data will be split into test and training set                                                                                                                                       |
 | CLIMATE_MODEL              | Specify which climate model is used: Valid arguments: "iHadCM3", "GISS", "ECHAM5", "isoGSM", "iCESM"                |
 | LATITUDES_SLICE            | If using a flat grid,  exclude this number of pixels at bottom and top of latitude, e.g. [1,-1] excludes the first and last latitude value. (flat grid only)                                                                                                                   |
-| LATITUDES                  | Array containing the latitudes of the used flat grid (flat grids only)                                              |
-| LONGITUDES                 | Array containing the longitudes of the used flat grid (flat grids only)                                             |
+| LATITUDES                  | Array containing the latitudes of the used flat grid (flat grids only), is filled automatically.                    |
+| LONGITUDES                 | Array containing the longitudes of the used flat grid (flat grids only), is filled automatically                    |
 | START_YEAR                 | Year with which the valid part of the last millennium run starts                                                    |
 | END_YEAR                   | Year with which the valid part of the last millennium run ends                                                      |
 | DATASETS_NO_GAPS           | Datasets containing variables of which we require variables to be present at each time step.                        |
