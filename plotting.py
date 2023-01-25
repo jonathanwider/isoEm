@@ -74,6 +74,8 @@ std_style["NORM"] = matplotlib.colors.BoundaryNorm(
 std_style["CBAR_LABEL"] = r"$\delta{}^{18}$O [‰]"
 std_style["CBAR_EXTEND"] = "max"
 
+
+
 # for plotting maps of correlations
 corr_style = dict(map_style)
 corr_style["CMAPS"] = {"tsurf": matplotlib.colors.ListedColormap(["#fff", "#A6DCA6", "#70C170", "#3E9E3E"]),
@@ -85,6 +87,14 @@ corr_style["CBAR_LABELS"] = {"tsurf": "Temperature",
                              "slp": "Sea-level pressure"}
 corr_style["CBAR_EXTEND"] = "neither"
 corr_style["ASPECT_RATIO"] = 9/5
+
+
+# for plotting rms differences in correlations:
+corr_diff_style = dict(map_style)
+corr_diff_style["CMAP"] = matplotlib.colors.ListedColormap(["#edf8fb", "#b3cde3", "#8c96c6", "#8856a7", "#810f7c"])
+corr_diff_style["NORM"] = matplotlib.colors.Normalize(vmin=0, vmax=1)
+corr_diff_style["CBAR_LABEL"] = r"L2 norm intermodel correlation difference"
+corr_diff_style["CBAR_EXTEND"] = "max"
 
 # for plotting maps of temperature
 tsurf_style = dict(map_style)
