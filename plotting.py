@@ -125,6 +125,12 @@ anom_style["NORM"] = matplotlib.colors.Normalize(vmin=-3, vmax=3)
 anom_style["CBAR_EXTEND"] = "both"
 anom_style["CBAR_LABEL"] = r"$\delta{}^{18}$O anomaly [‰]"
 
+diff_coarse_style = dict(map_style)
+diff_coarse_style["CMAP"] = plt.get_cmap("PiYG")
+diff_coarse_style["NORM"] = matplotlib.colors.Normalize(vmin=-1, vmax=1)
+diff_coarse_style["CBAR_LABEL"] = r"$R^2$ score difference"
+diff_coarse_style["CBAR_EXTEND"] = "both"
+
 diff_style = dict(map_style)
 diff_style["CMAP"] = plt.get_cmap("PiYG")
 diff_style["NORM"] = matplotlib.colors.Normalize(vmin=-0.4, vmax=0.4)
