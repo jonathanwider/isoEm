@@ -482,6 +482,10 @@ def plot_timeseries(ax, data_pred, data_gt, loc, loc_label, description, style):
     plt.ylabel(r"$\delta{}^{18}$O [‰]")
 
 
-def add_label_to_axes(ax, label, style):
-    ax.text(.01, .99, label, ha='left', va='top',
+def add_label_to_axes(ax, label, style, fontsize=None):
+    if fontsize is None:
+        ax.text(.01, .99, label, ha='left', va='top',  
             transform=ax.transAxes)
+    else:
+        ax.text(.01, .99, label, ha='left', va='top',  
+            transform=ax.transAxes, fontsize=fontsize)

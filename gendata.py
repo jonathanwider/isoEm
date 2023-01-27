@@ -148,6 +148,7 @@ def main():
 
     print("getting mnist data")
     from torchvision import datasets
+    """
     datasets.MNIST.resources = [
         ('https://ossci-datasets.s3.amazonaws.com/mnist/train-images-idx3-ubyte.gz',
          'f68b3c2dcbeaaa9fbdd348bbdeb94873'),
@@ -158,6 +159,7 @@ def main():
         ('https://ossci-datasets.s3.amazonaws.com/mnist/t10k-labels-idx1-ubyte.gz',
          'ec29112dd5afa0611ce80d1b7f02629c')
     ]
+    """
     trainset = datasets.MNIST(
         root=args.mnist_data_folder, train=True, download=True)
     testset = datasets.MNIST(root=args.mnist_data_folder,
