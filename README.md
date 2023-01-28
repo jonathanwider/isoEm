@@ -64,7 +64,6 @@ The repository contains tools to:
 |```Grids/```| Directory grid description files get stored in. CDO can extract the natural grid from .nc files if necessary.|
 |```Scripts/```| Contains scripts that are used to interpolate between the flat plate carrée grid and the icosahedral grid. These scripts get used by funcitons in ```interpolate.py``` |
 |```Scripts/```| Contains scripts that are used to interpolate between the flat plate carrée grid and the icosahedral grid. These scripts get used by functions in ```interpolate.py```. The directory also contains the used grid description files.|
-| ```Test_notebooks/``` |  Notebooks that were used to test several aspects of the code. Todo: maybe delete this.|
 | ```groupy/``` | A [forked pytorch version of groupy](https://github.com/adambielski/GrouPy) that was adapted to hexagonal convolution as in [hexaconv](https://github.com/ehoogeboom/hexaconv). Used to build the convolutional layers of the icosahedral neural network|
 | ```Experiments_crossprediction.ipynb``` | Crossprediction experiments: Train network on data from one climate model, then predict on other climate models. |
 | ```Experiments_monthly_data.ipynb``` | Experiments on monthly data. On this time scale there are a lot more missing values than on annual scale. |
