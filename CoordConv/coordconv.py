@@ -47,7 +47,7 @@ class AddCoords(nn.Module):  # module that adds coord channels.
         yy_channel = yy_channel.repeat(batch_size_shape, 1, 1, 1)
 
         if self.cylindrical is False:
-            if torch.cuda.is_available and self.use_cuda:
+            if torch.cuda.is_available() and self.use_cuda:
                 input_tensor = input_tensor.cuda()
                 xx_channel = xx_channel.cuda()
                 yy_channel = yy_channel.cuda()
@@ -55,7 +55,7 @@ class AddCoords(nn.Module):  # module that adds coord channels.
         else:
             sin_channel = torch.sin(math.pi * yy_channel)
             cos_channel = torch.cos(math.pi * yy_channel)
-            if torch.cuda.is_available and self.use_cuda:
+            if torch.cuda.is_available() and self.use_cuda:
                 input_tensor = input_tensor.cuda()
                 xx_channel = xx_channel.cuda()
                 sin_channel = sin_channel.cuda()
