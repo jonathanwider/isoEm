@@ -155,6 +155,14 @@ std_anom_style_d18O["NORM"] = matplotlib.colors.Normalize(vmin=-1, vmax=1)
 std_anom_style_d18O["CBAR_LABEL"] = r"Standardized data"
 std_anom_style_d18O["CBAR_EXTEND"] = "both"
 
+percentage_style = dict(map_style)
+percentage_style["CMAP"] = matplotlib.colors.ListedColormap(["#fff7ec", "#fee8c8", "#fdd49e", "#fdbb84", "#fc8d59", "#ef6548", "#990000"])
+
+percentage_style["BOUNDS"] = np.array([0, 1, 5, 10, 15, 20, 25, 30])
+percentage_style["NORM"] = matplotlib.colors.BoundaryNorm(percentage_style["BOUNDS"], len(percentage_style["CMAP"].colors))
+percentage_style["CBAR_LABEL"] = r"Fraction of missiong $\delta{}^{18}$O values [%]"
+percentage_style["CBAR_EXTEND"] = "max"
+
 
 def plot_map(ax, data, description, style, title="", cbar_orientation='horizontal', show_colorbar=True, show_colorbar_label=True, rasterized=True):
     """
