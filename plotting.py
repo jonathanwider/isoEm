@@ -93,7 +93,7 @@ corr_style["ASPECT_RATIO"] = 9/5
 corr_diff_style = dict(map_style)
 corr_diff_style["CMAP"] = matplotlib.colors.ListedColormap(["#edf8fb", "#b3cde3", "#8c96c6", "#8856a7", "#810f7c"])
 corr_diff_style["NORM"] = matplotlib.colors.Normalize(vmin=0, vmax=1)
-corr_diff_style["CBAR_LABEL"] = r"L2 norm intermodel correlation difference"
+corr_diff_style["CBAR_LABEL"] = r"$l^2$ norm intermodel correlation difference"
 corr_diff_style["CBAR_EXTEND"] = "max"
 
 # for plotting maps of temperature
