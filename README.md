@@ -67,7 +67,6 @@ The repository contains tools to:
 | ```groupy/``` | A [forked pytorch version of groupy](https://github.com/adambielski/GrouPy) that was adapted to hexagonal convolution as in [hexaconv](https://github.com/ehoogeboom/hexaconv). Used to build the convolutional layers of the icosahedral neural network|
 | ```Experiments_crossprediction.ipynb``` | Crossprediction experiments: Train network on data from one climate model, then predict on other climate models. |
 | ```Experiments_monthly_data.ipynb``` | Experiments on monthly data. On this time scale there are a lot more missing values than on annual scale. |
-| ```Experiments_validate_MNIST.ipynb``` | Recreation of a task from [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf) to validate our implementation of the icosahedral neural network|
 | ```Experiments_yearly.ipynb``` | Experiments on yearly data. Only producing datasets, training models and making predictions|
 | ```Experiments_yearly_evaluate.ipynb``` | Evaluate the results of previously run experiments on yearly data|
 | ```Plot_MNIST_digits.ipynb``` | Plots some of the digits from the icoMNIST dataset.|
@@ -76,7 +75,7 @@ The repository contains tools to:
 | ```datasets.py``` | Functions to create data sets used in training from climate model data. Here e.g. the split into test and training set happens and the used variables are selected.|
 | ```download_required_files.py``` | Downloads the climate model data from [zenodo](https://zenodo.org/record/6610684) and applies preprocessing, see [isotope emulation workflow](#Workflow). |
 | ```evaluate.py``` | Functions for evaluating trained models (e.g. to compute metrics like correlation or R2-score) |
-| ```gendata.py``` | Download and generate the icoMNIST dataset |
+
 | ```generate_grid_description_files.py``` | Interpolation from and to the icosahedral grid with [CDO](https://code.mpimet.mpg.de/projects/cdo/) requires grid description files of the icosahedral grid. If a configuration that deviates from our choice is to be implemented (e.g. in resolution), this script can generate the corresponding description file. |
 | ```ìco_unet.py``` | Classes for flat and icosahedral UNet architectures. |
 | ```icosahedron.py``` | Defines a class that represents the icosahedral grid. |
@@ -88,6 +87,9 @@ The repository contains tools to:
 | ```train.py``` | Functions to train ML-models on previously created data sets. |
 | ```train_tune_pca.py``` | Defines a function that does hyperparameter selection for the PCA-regression baseline. |
 | ```util.py``` | Small helper functions. |
+| ```validation_experiment_MNIST_gendata.py``` | Download and generate the icoMNIST dataset |
+| ```validation_experiment_MNIST.ipynb``` | Recreation of a task from [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf) to validate our implementation of the icosahedral neural network|
+
 
 # Sources
 
