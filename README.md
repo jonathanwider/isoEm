@@ -35,7 +35,7 @@ pip install -r requirements.txt
 conda install -c conda-forge cartopy
 conda install -c anaconda jupyter
 conda install pytorch==1.9.1 torchvision==0.10.1 torchaudio==0.9.1 cudatoolkit=10.2 -c pytorch
-```.
+```
 
 Using GPUs requires Cudatoolkit 10.2 to be installed.
 
