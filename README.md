@@ -27,9 +27,12 @@ To install the required python packages, we can use conda:
 
 `conda activate <my-env-name>`
 
+After navigating into the directory:
 `pip install -r requirements.txt`
 
-`conda install -c conda-forge cartopy`.
+`conda install -c conda-forge cartopy`
+
+`conda install juypter`
 
 Additionally, depending on the operating system, execution rights need to be added to the `preprocess.sh`, `Scripts/model_to_ico.sh` and `Scripts/ico_to_model.sh` scripts, e.g. by `chmod u+x preprocess.sh Scripts/model_to_ico.sh Scripts/ico_to_model.sh`.
 
