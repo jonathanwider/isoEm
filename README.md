@@ -28,7 +28,7 @@ To install the required python packages, we can use conda:
 
 `conda activate <my-env-name>`
 
-After navigating into the directory:
+After navigating into the repository directory:
 
 ```
 pip install -r requirements.txt
