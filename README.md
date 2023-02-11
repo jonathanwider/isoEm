@@ -21,7 +21,7 @@ The underlying simulation data is not provided with this repository, but a scrip
 
 [Climate Data Operators (CDO)](https://code.mpimet.mpg.de/projects/cdo/) is required to interpolate between grids. If not already installed, it can be done by `sudo apt install cdo`.
 
-To install the requirements, we can use conda:
+To install the required python packages, we can use conda:
 `conda create -n <my-env-name> python=3.8`,
 `conda activate <my-env-name>`
 
