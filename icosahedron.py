@@ -28,11 +28,16 @@ class Icosahedron:
         h_circ = 1 / 5 * np.sqrt(5)  # height (+ and -) of the two circles
 
         vertices = np.array([[0, 0, 1],
-                             [r_circ * np.cos(1 / 5 * (2 * np.pi)), r_circ * np.sin(1 / 5 * (2 * np.pi)), h_circ],
-                             [r_circ * np.cos(2 / 5 * (2 * np.pi)), r_circ * np.sin(2 / 5 * (2 * np.pi)), h_circ],
-                             [r_circ * np.cos(3 / 5 * (2 * np.pi)), r_circ * np.sin(3 / 5 * (2 * np.pi)), h_circ],
-                             [r_circ * np.cos(4 / 5 * (2 * np.pi)), r_circ * np.sin(4 / 5 * (2 * np.pi)), h_circ],
-                             [r_circ * np.cos(0 / 5 * (2 * np.pi)), r_circ * np.sin(0 / 5 * (2 * np.pi)), h_circ],
+                             [r_circ * np.cos(1 / 5 * (2 * np.pi)), r_circ *
+                              np.sin(1 / 5 * (2 * np.pi)), h_circ],
+                             [r_circ * np.cos(2 / 5 * (2 * np.pi)), r_circ *
+                              np.sin(2 / 5 * (2 * np.pi)), h_circ],
+                             [r_circ * np.cos(3 / 5 * (2 * np.pi)), r_circ *
+                              np.sin(3 / 5 * (2 * np.pi)), h_circ],
+                             [r_circ * np.cos(4 / 5 * (2 * np.pi)), r_circ *
+                              np.sin(4 / 5 * (2 * np.pi)), h_circ],
+                             [r_circ * np.cos(0 / 5 * (2 * np.pi)), r_circ *
+                              np.sin(0 / 5 * (2 * np.pi)), h_circ],
                              [0, 0, -1],
                              [r_circ * np.cos((1 / 10 + 3 / 5) * (2 * np.pi)),
                               r_circ * np.sin((1 / 10 + 3 / 5) * (2 * np.pi)), -h_circ],
@@ -113,15 +118,19 @@ class Icosahedron:
         assert self.charts.shape[-1] == 3
 
         # create a new chart of the correct shape
-        new_charts = np.zeros((5, 2 * self.charts.shape[1] - 1, 2 * self.charts.shape[2] - 1, 3))
+        new_charts = np.zeros(
+            (5, 2 * self.charts.shape[1] - 1, 2 * self.charts.shape[2] - 1, 3))
         # copy already created points
         new_charts[:, ::2, ::2, :] = self.charts
         # consider "horizontal" axes of the old chart
-        new_charts[:, ::2, 1::2, :] = self.calculate_midpoints(self.charts[:, :, 1:, :], self.charts[:, :, :-1, :])
+        new_charts[:, ::2, 1::2, :] = self.calculate_midpoints(
+            self.charts[:, :, 1:, :], self.charts[:, :, :-1, :])
         # consider "vertical" axes of the old chart
-        new_charts[:, 1::2, ::2, :] = self.calculate_midpoints(self.charts[:, 1:, :, :], self.charts[:, :-1, :, :])
+        new_charts[:, 1::2, ::2, :] = self.calculate_midpoints(
+            self.charts[:, 1:, :, :], self.charts[:, :-1, :, :])
         # consider "diagonal" axes of the old chart:
-        new_charts[:, 1::2, 1::2, :] = self.calculate_midpoints(self.charts[:, :-1, 1:, :], self.charts[:, 1:, :-1, :])
+        new_charts[:, 1::2, 1::2, :] = self.calculate_midpoints(
+            self.charts[:, :-1, 1:, :], self.charts[:, 1:, :-1, :])
         self.r_level += 1
         return new_charts
 
@@ -164,7 +173,8 @@ class Icosahedron:
         # format in HadCM3: lat:(-90,90), lon(0,360)
         theta = 90 - np.arccos(z / r) * 180 / np.pi  # to degrees
         phi = 180 + np.arctan2(y, x) * 180 / np.pi
-        return np.array([r, theta, phi]).transpose((1, 2, 3, 0))  # careful, this will only work if the shape is correct
+        # careful, this will only work if the shape is correct
+        return np.array([r, theta, phi]).transpose((1, 2, 3, 0))
 
     def get_rotated_charts_cut(self, rot):
         """
@@ -189,7 +199,8 @@ class Icosahedron:
         :param new_radius: New radius (should be >0)
         """
         assert new_radius > 0
-        self.charts = (self.charts - self.center) * (new_radius / self.radius) + self.center
+        self.charts = (self.charts - self.center) * \
+            (new_radius / self.radius) + self.center
         self.radius = new_radius
 
     def get_charts_cut(self):
@@ -219,7 +230,8 @@ class Icosahedron:
         counts = np.zeros(len(points))
 
         for i, point in enumerate(points[2:]):
-            neighbors = sv.vertices[sv.regions[i + 2]]  # +2 because we need to drop the poles
+            # +2 because we need to drop the poles
+            neighbors = sv.vertices[sv.regions[i + 2]]
 
             # calculate normal vectors
             x = np.cross(north, point)
@@ -230,9 +242,11 @@ class Icosahedron:
             y_n = np.dot(neighbors, y)
 
             points_tangent = np.array([x_n, y_n])
-            points_tangent = points_tangent / np.linalg.norm(points_tangent, axis=0)[np.newaxis, ...]
+            points_tangent = points_tangent / \
+                np.linalg.norm(points_tangent, axis=0)[np.newaxis, ...]
 
-            angle = np.arctan2(points_tangent[0, ...], points_tangent[1, ...]) * 360 / 2 / np.pi
+            angle = np.arctan2(
+                points_tangent[0, ...], points_tangent[1, ...]) * 360 / 2 / np.pi
             rolled_angle = np.roll(angle, axis=0, shift=1)
             diff = angle - rolled_angle
 
@@ -322,7 +336,8 @@ def rand_rotation_icosahedron():
 
     NP_neighbors = np.roll(neighbor_indices[new_NP, ...], shift=rot_state)
 
-    new_perm = np.concatenate(([new_NP], NP_neighbors, [antipode(new_NP)], antipode(NP_neighbors)))
+    new_perm = np.concatenate(
+        ([new_NP], NP_neighbors, [antipode(new_NP)], antipode(NP_neighbors)))
     return new_perm
 
 
@@ -352,8 +367,10 @@ def all_rotations_icosahedron():
     all_perms = np.zeros((12*5, 12), dtype='int')
     for new_NP in range(12):
         for rot_state in range(5):
-            NP_neighbors = np.roll(neighbor_indices[new_NP, ...], shift=rot_state)
-            all_perms[5*new_NP + rot_state] = np.concatenate(([new_NP], NP_neighbors, [antipode(new_NP)], antipode(NP_neighbors)))
+            NP_neighbors = np.roll(
+                neighbor_indices[new_NP, ...], shift=rot_state)
+            all_perms[5*new_NP + rot_state] = np.concatenate(
+                ([new_NP], NP_neighbors, [antipode(new_NP)], antipode(NP_neighbors)))
     return all_perms
 
 
