@@ -19,19 +19,18 @@ The underlying simulation data is not provided with this repository, but a scrip
 
 # Installation
 
-After cloning this repository, the required packages can be installed to a virtual or conda environment using `pip`. When working with `conda`, create and activate an environment 
-`conda create -n my-env`,
-`conda activate my-env`
+[Climate Data Operators (CDO)](https://code.mpimet.mpg.de/projects/cdo/) is required to interpolate between grids. If not already installed, it can be done by `sudo apt install cdo`.
 
-and install `pip`:
-`conda install pip`.
+To install the requirements, we can use conda:
+`conda create -n <my-env-name> python=3.8`,
+`conda activate <my-env-name>`
 
 The required packages can then be installed with 
 `pip install -r requirements.txt`
+and 
+`conda install -c conda-forge cartopy`
 
-Additionally, to create some of the plots, `cartopy` must be installed via `conda` or `pip`. To open the jupyter notebooks, use `pip install notebook`, if not already installed.
 
-[Climate Data Operators (CDO)](https://code.mpimet.mpg.de/projects/cdo/) is required to interpolate between grids.
 
 
 # Content-description
