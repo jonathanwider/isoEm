@@ -28,7 +28,7 @@ To install the requirements, we can use conda:
 The required packages can then be installed with 
 `pip install -r requirements.txt`
 and 
-`conda install -c conda-forge cartopy`
+`conda install -c conda-forge cartopy`.
 
 
 
