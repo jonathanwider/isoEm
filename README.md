@@ -88,7 +88,7 @@ The repository contains tools to:
 | ```train_tune_pca.py``` | Defines a function that does hyperparameter selection for the PCA-regression baseline. |
 | ```util.py``` | Small helper functions. |
 | ```validation_experiment_MNIST_gendata.py``` | Download and generate the icoMNIST dataset |
-| ```validation_experiment_MNIST.ipynb``` | Recreation of a task from [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf) to validate our implementation of the icosahedral neural network|
+| ```Validation_experiment_MNIST.ipynb``` | Recreation of a task from [Gauge Equivariant Convolutional Networks and the Icosahedral CNN](http://proceedings.mlr.press/v97/cohen19d/cohen19d.pdf) to validate our implementation of the icosahedral neural network|
 
 
 # Sources
