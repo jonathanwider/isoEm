@@ -34,7 +34,7 @@ After navigating into the directory:
 
 `conda install juypter`
 
-For pytorch to work with CUDA (cudatoolkit 10.2): `conda install pytorch=1.9.1 torchvision=0.10.1 cudatoolkit=10.2 -c pytorch`.
+For pytorch to work with CUDA (cudatoolkit 10.2): `pip uninstall torch`, `conda install pytorch=1.9.1 torchvision=0.10.1 cudatoolkit=10.2 -c pytorch`.
 
 Additionally, depending on the operating system, execution rights need to be added to the `preprocess.sh`, `Scripts/model_to_ico.sh` and `Scripts/ico_to_model.sh` scripts, e.g. by `chmod u+x preprocess.sh Scripts/model_to_ico.sh Scripts/ico_to_model.sh`.
 
