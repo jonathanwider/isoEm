@@ -4,7 +4,10 @@ data
 *.idea
 *.ipynb_checkpoints
 *.nc
-Images*
+*.pdf
+*.svg
+*.png
+*.jpg
 *.pt
 *.tfevents*
 MNIST_data*
